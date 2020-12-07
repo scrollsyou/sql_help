@@ -47,7 +47,7 @@
 
 ### 支持数据库
 
-| Name | Version | Supported          |
+| 名称 | 版本 | 是否支持          |
 | ---- | ------- | ------------------ |
 | mysql| 5.6.x   | :white_check_mark: |
 | oracle| x.x.x   | :x:               |

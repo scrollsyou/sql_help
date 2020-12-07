@@ -45,6 +45,10 @@
 - [ ] 查询条件采用example方式进行拼接
 - [ ] 支持对常用sql进行缓存，无需频繁生成
 
-### 警告
+### 支持数据库
 
-* 注意该框架目前只实现了mysql语法。
+| Name | Version | Supported          |
+| ---- | ------- | ------------------ |
+| mysql| 5.6.x   | :white_check_mark: |
+| oracle| x.x.x   | :x:               |
+| sqlserver| x.x.x   | :x:               |

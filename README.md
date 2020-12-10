@@ -52,3 +52,8 @@
 | mysql| 5.6.x   | :white_check_mark: |
 | oracle| x.x.x   | :x:               |
 | sqlserver| x.x.x   | :x:               |
+
+### 计划中功能
+- [ ] 支持Mongodb非关系型数据库
+- [ ] 支持异步查询逻辑
+- [ ] 支持通过maven-plugin进行编辑时生成SQL，使运行时性能更优

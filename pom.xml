@@ -7,9 +7,21 @@
   <description>sql生成器，用于动态生成sql代码功能</description>
 	<dependencies>
 		<dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.12</version>
+    </dependency>
+		<dependency>
 			<groupId>org.javassist</groupId>
 			<artifactId>javassist</artifactId>
 			<version>3.26.0-GA</version>
 		</dependency>
+		<dependency>
+	    <groupId>junit</groupId>
+	    <artifactId>junit</artifactId>
+	    <version>4.13.1</version>
+	    <scope>test</scope>
+		</dependency>
+    
 	</dependencies>
 </project>

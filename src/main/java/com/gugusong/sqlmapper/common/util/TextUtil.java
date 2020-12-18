@@ -1,9 +1,9 @@
-package com.gugusong.sqlmapper.util;
+package com.gugusong.sqlmapper.common.util;
 
 import lombok.NonNull;
 
 /**
- * 文本工具类
+ * 文本处理工具类
  * @author yousongshu
  *
  */
@@ -50,7 +50,11 @@ public class TextUtil {
 				newName.append((char)(nameChars[i] - CODE_DIFF));
 				hasUpperCase = false;
 			}else {
-				newName.append(nameChars[i]);
+				if(nameChars[i] >= 65 && nameChars[i] <= 90) {
+					newName.append((char)(nameChars[i] + CODE_DIFF));
+				}else {
+					newName.append(nameChars[i]);
+				}
 			}
 		}
 		return newName.toString();

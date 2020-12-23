@@ -1,6 +1,13 @@
 package com.gugusong.sqlmapper.db.mysql;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+
+import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
+import com.gugusong.sqlmapper.common.util.BeanReflectUtil;
 import com.gugusong.sqlmapper.db.ISqlHelp;
 
 /**
@@ -43,9 +50,34 @@ public class MysqlSqlHelp implements ISqlHelp{
 		return null;
 	}
 
-	public String getSqlToSelect(BeanWrapper poClazz, boolean hasFormat) {
+	/**
+	 * 生成单表查询sql
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 * @throws Exception 
+	 */
+	public String getSqlToSelect(BeanWrapper poClazz, boolean hasFormat) throws Exception {
 		// TODO Auto-generated method stub
-		return null;
+		Class cl = poClazz.getPoClazz();
+		Map<String, Object> resultMap = BeanReflectUtil.getTableColumn(cl);
+		System.out.println("MysqlSqlHelp.getSqlToSelect.result=" + resultMap);
+		String tableName = (String) resultMap.get("table");
+		System.out.println("表名：" + tableName);
+		LinkedHashMap<String, BeanColumn> columnsMap = (LinkedHashMap<String, BeanColumn>) resultMap.get("columns");
+		Set<String> columnNameSet = columnsMap.keySet();
+		if (columnNameSet != null && columnNameSet.size() > 0) {
+			throw new Exception("没有字段");
+		}
+		StringBuffer sqlBuffer = new StringBuffer("select ");
+		StringBuffer columnSqlBuffer = new StringBuffer();
+		Iterator<String> it = columnNameSet.iterator();
+		while (it.hasNext()) {
+			columnSqlBuffer.append(tableName).append(".").append(it.next()).append(",");
+		}
+		sqlBuffer.append(columnSqlBuffer.substring(0, columnSqlBuffer.length() - 1)).append(" from ").append(tableName).append(" as ").append(tableName);
+		System.out.println("select sql ：" + sqlBuffer);
+		return sqlBuffer.toString();
 	}
 
 	public String getSqlToUpdate(BeanWrapper poClazz, boolean hasFormat) {

@@ -1,4 +1,4 @@
-package sql_help;
+package sql_help.entity;
 
 import com.gugusong.sqlmapper.annotation.Entity;
 

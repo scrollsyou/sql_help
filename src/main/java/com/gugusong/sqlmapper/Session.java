@@ -37,8 +37,9 @@ public interface Session {
 	 * @param example 条件example
 	 * @param E 返回列表类型/不限entity类
 	 * @return
+	 * @throws Exception 
 	 */
-	public <E> List<E> findAll(Example example, Class<E> E);
+	public <E> List<E> findAll(Example example, Class<E> E) throws Exception;
 	/**
 	 * 按条件查询单行数据
 	 * @param example 条件example

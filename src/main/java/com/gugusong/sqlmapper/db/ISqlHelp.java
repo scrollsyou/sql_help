@@ -22,8 +22,9 @@ public interface ISqlHelp {
 	 * @param poClazz
 	 * @param hasFormat
 	 * @return
+	 * @throws Exception 
 	 */
-	String getSqlToSelect(BeanWrapper poClazz, boolean hasFormat);
+	String getSqlToSelect(BeanWrapper poClazz, boolean hasFormat) throws Exception;
 	/**
 	 * 生成更新sql
 	 * 如 update test set id=?,name=?

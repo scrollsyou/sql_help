@@ -13,7 +13,7 @@ import com.gugusong.sqlmapper.db.mysql.MysqlSqlHelp;
  * @author yousongshu
  *
  */
-public class ISession implements Session {
+public class SessionImpl implements Session {
 	
 	/**
 	 * 保存实体对象 返回带ID主键的持久化对象

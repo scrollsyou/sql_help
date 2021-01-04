@@ -21,4 +21,9 @@ public @interface Column {
 	 * @return
 	 */
 	String name() default "";
+	/**
+	 * 属性数据库中排序
+	 * @return
+	 */
+	String sort() default "0";
 }

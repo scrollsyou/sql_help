@@ -10,6 +10,7 @@ import lombok.NonNull;
 public class TextUtil {
 	
 	private static final byte Z_CODE = 90;
+	private static final byte A_CODE = 64;
 	private static final byte CODE_DIFF = 32;
 	private static final char __CODE = '_';
 
@@ -22,8 +23,10 @@ public class TextUtil {
 		char[] nameChars = name.toCharArray();
 		StringBuilder newName = new StringBuilder();
 		for (int i = 0; i < nameChars.length; i++) {
-			if(nameChars[i] <= Z_CODE) {
-				newName.append(__CODE);
+			if(nameChars[i] <= Z_CODE && nameChars[i] >= A_CODE) {
+				if(i != 0) {
+					newName.append(__CODE);
+				}
 				newName.append((char)(nameChars[i] + CODE_DIFF));
 			}else {
 				newName.append(nameChars[i]);

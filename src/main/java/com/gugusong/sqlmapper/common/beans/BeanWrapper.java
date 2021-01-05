@@ -61,8 +61,8 @@ public class BeanWrapper {
 				Column column = physicalField.getAnnotation(Column.class);
 				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(column.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):column.name(), 
 								Strings.isNullOrEmpty(column.dateType())?null:column.dateType(), 
-								Strings.isNullOrEmpty(column.length())?null:Integer.parseInt(column.length()),
-								false, null, physicalField, Integer.parseInt(column.sort()));
+								column.length()==0?null:column.length(),
+								false, null, physicalField, column.sort());
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
 			}else {

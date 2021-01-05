@@ -25,7 +25,7 @@ public @interface Column {
 	 * 属性数据库中排序
 	 * @return
 	 */
-	String sort() default "0";
+	public int sort() default 0;
 	/**
 	 * 数据库类型
 	 * @return
@@ -35,5 +35,5 @@ public @interface Column {
 	 * 数据库类型长度
 	 * @return
 	 */
-	String length() default ""; 
+	int length() default 0; 
 }

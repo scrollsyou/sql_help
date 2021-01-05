@@ -26,4 +26,14 @@ public @interface Column {
 	 * @return
 	 */
 	String sort() default "0";
+	/**
+	 * 数据库类型
+	 * @return
+	 */
+	String dateType() default "";
+	/**
+	 * 数据库类型长度
+	 * @return
+	 */
+	String length() default ""; 
 }

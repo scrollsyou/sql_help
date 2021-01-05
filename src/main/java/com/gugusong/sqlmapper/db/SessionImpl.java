@@ -58,9 +58,9 @@ public class SessionImpl implements Session {
 	 */
 	public <E> List<E> findAll(Example example, Class<E> E) throws Exception {
 		ISqlHelp iSqlHelp = new MysqlSqlHelp();
-		BeanWrapper beanWrapper = new BeanWrapper();
-		beanWrapper.setPoClazz(E);
-		String sql = iSqlHelp.getSqlToSelect(beanWrapper, false);
+//		BeanWrapper beanWrapper = new BeanWrapper();
+//		beanWrapper.setPoClazz(E);
+//		String sql = iSqlHelp.getSqlToSelect(beanWrapper, false);
 		return null;
 	}
 

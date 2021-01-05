@@ -3,6 +3,8 @@ package com.gugusong.sqlmapper.config;
 import javax.sql.DataSource;
 
 import com.gugusong.sqlmapper.common.util.SnowFlake;
+import com.gugusong.sqlmapper.db.ColumnTypeMapping;
+import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.strategy.ImplicitNamingStrategy;
 import com.gugusong.sqlmapper.strategy.impl.DefaultJDBCImplicitNamingStrategyImpl;
 
@@ -38,4 +40,11 @@ public class GlogalConfig {
 	@Getter
 	@Setter
 	private ImplicitNamingStrategy implicitNamingStrategy = new DefaultJDBCImplicitNamingStrategyImpl();
+	
+	/**
+	 * 字段类型映射
+	 */
+	@Getter
+	@Setter
+	private ColumnTypeMapping columnTypeMapping = new ColumnTypeMappingImpl();
 }

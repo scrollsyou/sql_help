@@ -19,37 +19,6 @@ import com.gugusong.sqlmapper.db.ISqlHelp;
  */
 public class MysqlSqlHelp implements ISqlHelp{
 
-
-	public void aaa() {
-		System.out.println("aaa" + this.getClass().getClassLoader().toString());
-		System.out.println("aaa" + MysqlSqlHelp.class.getClassLoader().toString());
-	}
-
-	public String getSqlToCreateTable(Class poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getSqlToSelect(Class poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getSqlToUpdate(Class poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getSqlToInsert(Class poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getSqlToCreateTable(BeanWrapper poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	/**
 	 * 生成单表查询sql
 	 * @param poClazz
@@ -91,6 +60,11 @@ public class MysqlSqlHelp implements ISqlHelp{
 	}
 
 	public String getSqlToDelete(BeanWrapper poClazz, boolean hasFormat) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public String getSqlToCreateTable(BeanWrapper wrapper, boolean hasFormat) {
 		// TODO Auto-generated method stub
 		return null;
 	}

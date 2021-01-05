@@ -29,10 +29,8 @@ public class TestMysqlSqlHelp {
 			 System.out.println("aaa" + TestMysqlSqlHelp.class.getClassLoader().toString());
 			 aaaMethod.insertBefore("{System.out.println(\"1234565\");}"); 
 			 aa = (MysqlSqlHelp) ctClass.toClass().newInstance(); 
-			 aa.aaa();
 			 System.out.println(" ===================== ");
 			 aa = new MysqlSqlHelp();
-			 aa.aaa();
 			 
 			 
 			

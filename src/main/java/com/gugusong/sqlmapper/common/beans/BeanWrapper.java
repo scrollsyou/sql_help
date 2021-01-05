@@ -9,12 +9,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -36,10 +36,7 @@ public class BeanWrapper {
 	private Class<?> poClazz;
 	
 	@Getter
-	@Setter
-	private Field[] fields;
-	@Getter
-	private String[] columnNames;
+	private List<BeanColumn> columns;
 	@Getter
 	private String tableName;
 	
@@ -49,42 +46,42 @@ public class BeanWrapper {
 		this.poClazz = poClazz;
 		this.config = config;
 		Field[] physicalFields = poClazz.getDeclaredFields();
-		List<Field> fieldList = new ArrayList<Field>(physicalFields.length);
+		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
 		for (Field physicalField : physicalFields) {
 			if(physicalField.isAnnotationPresent(Transient.class)) {
 				continue;
 			}
-			fieldList.add(physicalField);
+			if(physicalField.isAnnotationPresent(Id.class)) {
+				Id id = physicalField.getAnnotation(Id.class);
+				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(id.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):id.name(), 
+						null, 11, true, id.stragegy(), physicalField, -1);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
+			}else if(physicalField.isAnnotationPresent(Column.class)) {
+				Column column = physicalField.getAnnotation(Column.class);
+				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(column.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):column.name(), 
+								Strings.isNullOrEmpty(column.dateType())?null:column.dateType(), 
+								Strings.isNullOrEmpty(column.length())?null:Integer.parseInt(column.length()),
+								false, null, physicalField, Integer.parseInt(column.sort()));
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
+			}else {
+				BeanColumn beanColumn = new BeanColumn(config.getImplicitNamingStrategy().getColumntName(physicalField.getName()), 
+						null, null, false, null, physicalField, Integer.MAX_VALUE);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
+			}
 		}
-		fieldList.sort(new Comparator<Field>() {
+		columnList.sort(new Comparator<BeanColumn>() {
 			@Override
-			public int compare(Field o1, Field o2) {
-				Column annotation1 = o1.getAnnotation(Column.class);
-				Column annotation2 = o2.getAnnotation(Column.class);
-				int sort1 = Integer.MAX_VALUE;
-				int sort2 = Integer.MAX_VALUE;
-				if(annotation1 != null) {
-					sort1 = Integer.parseInt(annotation1.sort());
-				}else if(o1.isAnnotationPresent(Id.class)) {
-					sort1 = -1;
-				}
-				if(annotation2 != null) {
-					sort2 = Integer.parseInt(annotation2.sort());
-				}else if(o2.isAnnotationPresent(Id.class)) {
-					sort2 = -1;
-				}
-				return sort1 - sort2;
+			public int compare(BeanColumn o1, BeanColumn o2) {
+				return o1.getSort() - o2.getSort();
 			}
 		});
-		fields = fieldList.toArray(new Field[] {});
-		columnNames = new String[fields.length];
-		for (int i = 0; i < fields.length; i++) {
-			Field field = fields[i];
-			columnNames[i] = config.getImplicitNamingStrategy().getColumntName(field.getName());
-		}
+		columns = new ArrayList<BeanColumn>(columnList.size());
+		columns.addAll(columnList);
 		List<String> splitPackage = Splitter.on(CharMatcher.anyOf(".$")).splitToList(poClazz.getName());
 		tableName = config.getImplicitNamingStrategy().getTableName(splitPackage.get(splitPackage.size() - 1));
-		
 	}
 	
 	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config) {

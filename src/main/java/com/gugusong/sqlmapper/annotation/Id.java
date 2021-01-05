@@ -18,4 +18,9 @@ public @interface Id {
 	 * @return
 	 */
 	GenerationType stragegy() default GenerationType.DEFAULT;
+	/**
+	 * 指定映射名称
+	 * @return
+	 */
+	String name() default "";
 }

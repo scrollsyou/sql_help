@@ -21,14 +21,24 @@ import com.gugusong.sqlmapper.db.ISqlHelp;
 public class MysqlSqlHelp implements ISqlHelp{
 	
 	private static final String SELECT = "select";
+	private static final String UPDATE = "update";
+	private static final String INSERT_INTO = "insert into";
+	private static final String VALUES = "values";
+	private static final String SET = "set";
+	private static final String EQUEST = "=";
+	private static final String PARAM_TOKEN = "?";
 	private static final String FROM = "from";
 	private static final String AS = "as";
 	private static final String WHERE = "where";
+	private static final String AND = "and";
+	private static final String OR = "or";
 	private static final String POINT = ".";
 	private static final String COMMA = ",";
 	private static final String SPLIT = " ";
 	private static final String RETRACT = "    ";
 	private static final String ENTER = "\n";
+	private static final String LEFT_PARENTHESIS = "(";
+	private static final String RIGHT_PARENTHESIS = ")";
 	
 	private static final String SQL_SELECT_METHOD = "getSqlToSelect";
 	private static final String SQL_UPDATE_METHOD = "getSqlToUpdate";
@@ -50,25 +60,57 @@ public class MysqlSqlHelp implements ISqlHelp{
 		}
 		StringBuilder sqlsb = new StringBuilder();
 		sqlsb.append(SELECT);
-		sqlsb.append(ENTER);
-		sqlsb.append(RETRACT);
+		sqlsb.append(SPLIT);
 		sqlsb.append(Joiner.on(COMMA + SPLIT).join(poClazz.getColumns().stream().map(c -> c.getName()).toArray()));
-		sqlsb.append(ENTER);
+		sqlsb.append(SPLIT);
 		sqlsb.append(FROM);
-		sqlsb.append(ENTER);
-		sqlsb.append(RETRACT);
+		sqlsb.append(SPLIT);
 		sqlsb.append(poClazz.getTableName());
 		return sqlsb.toString();
 	}
 
 	public String getSqlToUpdate(BeanWrapper poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
+		String sql = poClazz.getSql(SQL_UPDATE_METHOD);
+		if(sql != null) {
+			return sql;
+		}
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(UPDATE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getTableName());
+		sqlsb.append(SPLIT);
+		sqlsb.append(SET);
+		sqlsb.append(SPLIT);
+		sqlsb.append(Joiner.on(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + COMMA ).join(poClazz.getColumns().stream().filter(c -> !c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT);
+		sqlsb.append(WHERE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(Joiner.on(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT + AND + SPLIT).join(poClazz.getColumns().stream().filter(c -> c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(SPLIT);
+		sqlsb.append(EQUEST);
+		sqlsb.append(SPLIT);
+		sqlsb.append(PARAM_TOKEN);
+		return sqlsb.toString();
 	}
 
 	public String getSqlToInsert(BeanWrapper poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
+		String sql = poClazz.getSql(SQL_INSERT_METHOD);
+		if(sql != null) {
+			return sql;
+		}
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(INSERT_INTO);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getTableName());
+		sqlsb.append(LEFT_PARENTHESIS);
+		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(RIGHT_PARENTHESIS);
+		sqlsb.append(SPLIT);
+		sqlsb.append(VALUES);
+		sqlsb.append(LEFT_PARENTHESIS);
+		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !c.isIdFlag()).map(c -> PARAM_TOKEN).toArray()));
+		sqlsb.append(RIGHT_PARENTHESIS);
+		return sqlsb.toString();
 	}
 
 	public String getSqlToDelete(BeanWrapper poClazz, boolean hasFormat) {

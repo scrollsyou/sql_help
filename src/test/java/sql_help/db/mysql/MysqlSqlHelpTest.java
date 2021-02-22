@@ -21,14 +21,16 @@ public class MysqlSqlHelpTest {
 		System.out.println(help.getSqlToSelect(BeanWrapper.instrance(TestEntityA.class, new GlogalConfig()), true));
 	}
 
-	public String getSqlToUpdate(BeanWrapper wrapper, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
+	@Test
+	public void getSqlToUpdate() throws Exception {
+		MysqlSqlHelp help = new MysqlSqlHelp();
+		System.out.println(help.getSqlToUpdate(BeanWrapper.instrance(TestEntityA.class, new GlogalConfig()), true));
 	}
 
-	public String getSqlToInsert(BeanWrapper wrapper, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
+	@Test
+	public void getSqlToInsert() throws Exception {
+		MysqlSqlHelp help = new MysqlSqlHelp();
+		System.out.println(help.getSqlToInsert(BeanWrapper.instrance(TestEntityA.class, new GlogalConfig()), true));
 	}
 
 	public String getSqlToDelete(BeanWrapper wrapper, boolean hasFormat) {

@@ -28,6 +28,7 @@ public class Test {
 		
 		EventBus bus = new EventBus();
 		bus.register(new AA());
+		System.out.println("当前线程：" + Thread.currentThread().getName());
 		bus.post(new TestEvent());
 		
 		List<String> names = Lists.newArrayList();
@@ -67,6 +68,7 @@ public class Test {
 		@Subscribe
 		public void testSubEvent(TestEvent e) {
 			System.out.println("事件已触发!");
+			System.out.println("当前线程：" + Thread.currentThread().getName());
 		}
 	} 
 	

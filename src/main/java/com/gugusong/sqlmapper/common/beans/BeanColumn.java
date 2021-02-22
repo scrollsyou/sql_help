@@ -1,6 +1,7 @@
 package com.gugusong.sqlmapper.common.beans;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import com.gugusong.sqlmapper.strategy.GenerationType;
 
@@ -41,6 +42,14 @@ public class BeanColumn {
 	 * 对应字段
 	 */
 	private Field field;
+	/**
+	 * get方法
+	 */
+	private Method readMethod;
+	/**
+	 * set方法
+	 */
+	private Method writeMethod;
 	/**
 	 * 排序字段
 	 */

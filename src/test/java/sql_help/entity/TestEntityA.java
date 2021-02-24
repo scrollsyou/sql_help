@@ -6,8 +6,11 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 
+import lombok.Data;
+
 //@Entity(tableName="entity_aBB")
 //@Entity(tableName="entity_a")
+@Data
 @Entity
 public class TestEntityA {
 

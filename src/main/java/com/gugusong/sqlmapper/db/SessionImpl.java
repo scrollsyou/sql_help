@@ -13,6 +13,7 @@ import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.util.UUIDUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
+import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.db.mysql.MysqlSqlHelp;
 import com.gugusong.sqlmapper.strategy.GenerationType;
 
@@ -70,8 +71,13 @@ public class SessionImpl implements Session {
 		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
 			ResultSet resultSet = preSta.getGeneratedKeys();
 			if(resultSet.next()) {
-				Object id = resultSet.getObject(1, entityWrapper.getIdColumn().getField().getType());
-				entityWrapper.getIdColumn().getWriteMethod().invoke(entity, id);
+				if(ColumnTypeMappingImpl.INT_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+					entityWrapper.getIdColumn().getWriteMethod().invoke(entity, resultSet.getInt(1));
+				}else if(ColumnTypeMappingImpl.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+					entityWrapper.getIdColumn().getWriteMethod().invoke(entity, resultSet.getLong(1));
+				}else {
+					throw new Exception("数据库自增长id类型不为int/long！");
+				}
 			}
 		}
 		return entity;

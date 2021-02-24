@@ -28,6 +28,7 @@ public class SessionTest {
 		SessionTestEntity testEntity = new SessionTestEntity();
 		testEntity.setName("aaaa");
 		openSession.save(testEntity);
+		System.out.println(testEntity.getId() + ":" + testEntity.getName());
 	}
 
 	public <T> int update(T entity) {

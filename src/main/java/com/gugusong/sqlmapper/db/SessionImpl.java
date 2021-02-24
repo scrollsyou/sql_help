@@ -1,13 +1,20 @@
 package com.gugusong.sqlmapper.db;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 import com.gugusong.sqlmapper.Example;
 import com.gugusong.sqlmapper.Session;
+import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
+import com.gugusong.sqlmapper.common.util.UUIDUtil;
+import com.gugusong.sqlmapper.config.GlogalConfig;
 import com.gugusong.sqlmapper.db.mysql.MysqlSqlHelp;
+import com.gugusong.sqlmapper.strategy.GenerationType;
 
 import lombok.NonNull;
 
@@ -20,9 +27,13 @@ import lombok.NonNull;
 public class SessionImpl implements Session {
 	
 	private Connection conn;
+	private ISqlHelp sqlHelp;
+	private GlogalConfig config;
 	
-	public SessionImpl(@NonNull Connection conn, @NonNull ISqlHelp sqlHelp) {
+	public SessionImpl(@NonNull Connection conn, @NonNull ISqlHelp sqlHelp, @NonNull GlogalConfig config) {
 		this.conn = conn;
+		this.sqlHelp = sqlHelp;
+		this.config = config;
 	}
 	/**
 	 * 保存实体对象 返回带ID主键的持久化对象
@@ -30,9 +41,40 @@ public class SessionImpl implements Session {
 	 * @param        <T>
 	 * @param entity
 	 * @return
+	 * @throws Exception 
 	 */
-	public <T> T save(T entity) {
-		return null;
+	public <T> T save(T entity) throws Exception {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		String sqlToInsert = sqlHelp.getSqlToInsert(entityWrapper, false);
+		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
+			entityWrapper.getIdColumn().getWriteMethod().invoke(entity, UUIDUtil.getUUID());
+		}else if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
+			entityWrapper.getIdColumn().getWriteMethod().invoke(entity, config.getSnowFlake().nextId());
+		}
+		PreparedStatement preSta = null;
+		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+			preSta = this.conn.prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
+		}else {
+			preSta = this.conn.prepareStatement(sqlToInsert);
+		}
+		List<BeanColumn> columns = entityWrapper.getColumns();
+		int i = 1;
+		for (BeanColumn beanColumn : columns) {
+			if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
+				continue;
+			}
+			preSta.setObject(i, beanColumn.getReadMethod().invoke(entity));
+			i++;
+		}
+		preSta.executeUpdate();
+		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+			ResultSet resultSet = preSta.getGeneratedKeys();
+			if(resultSet.next()) {
+				Object id = resultSet.getObject(1, entityWrapper.getIdColumn().getField().getType());
+				entityWrapper.getIdColumn().getWriteMethod().invoke(entity, id);
+			}
+		}
+		return entity;
 	}
 
 	/**

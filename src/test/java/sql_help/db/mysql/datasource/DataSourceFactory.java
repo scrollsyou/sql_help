@@ -17,7 +17,7 @@ public class DataSourceFactory {
 	 */
 	public static DataSource getDataSource() {
 		DruidDataSource dataSource = new DruidDataSource();
-		dataSource.setUrl("jdbc:mysql://192.168.1.184:3306/cloud-canteen?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8");
+		dataSource.setUrl("jdbc:mysql://192.168.1.184:3306/sql_help?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8");
 		dataSource.setUsername("root");
 		dataSource.setPassword("you");
 		return dataSource;

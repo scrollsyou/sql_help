@@ -16,6 +16,7 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.gugusong.sqlmapper.annotation.Column;
+import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
 import com.gugusong.sqlmapper.common.constants.ErrorCodeConstant;
@@ -33,6 +34,7 @@ import lombok.Setter;
  */
 public class BeanWrapper {
 
+	// TODO 后期所有Map都需进行优化，可能会重写个轻量的String为key的Map
 	private static final Map<Class<?>, BeanWrapper> cacheMap = new ConcurrentHashMap<Class<?>, BeanWrapper>();
 	/**
 	 * po类
@@ -40,7 +42,8 @@ public class BeanWrapper {
 	@Getter
 	@Setter
 	private Class<?> poClazz;
-	
+	@Getter
+	private BeanColumn idColumn;
 	@Getter
 	private List<BeanColumn> columns;
 	@Getter
@@ -72,6 +75,7 @@ public class BeanWrapper {
 						null, 11, true, id.stragegy(), physicalField,propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), -1);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
+				idColumn = beanColumn;
 			}else if(physicalField.isAnnotationPresent(Column.class)) {
 				Column column = physicalField.getAnnotation(Column.class);
 				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(column.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):column.name(), 
@@ -95,7 +99,12 @@ public class BeanWrapper {
 		columns = new ArrayList<BeanColumn>(columnList.size());
 		columns.addAll(columnList);
 		List<String> splitPackage = Splitter.on(CharMatcher.anyOf(".$")).splitToList(poClazz.getName());
-		tableName = config.getImplicitNamingStrategy().getTableName(splitPackage.get(splitPackage.size() - 1));
+		Entity annotation = poClazz.getAnnotation(Entity.class);
+		if(annotation != null && annotation.tableName()!=null && !"".equals(annotation.tableName())) {
+			tableName = annotation.tableName();
+		}else {
+			tableName = config.getImplicitNamingStrategy().getTableName(splitPackage.get(splitPackage.size() - 1));
+		}
 	}
 	/**
 	 * 指定属性名查询出Descriptor

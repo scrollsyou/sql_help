@@ -17,8 +17,9 @@ public interface Session {
 	 * @param <T>
 	 * @param entity
 	 * @return
+	 * @throws Exception 
 	 */
-	public <T> T save(T entity);
+	public <T> T save(T entity) throws Exception;
 	/**
 	 * 按id更新实体对象
 	 * @param <T>

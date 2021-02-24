@@ -8,6 +8,11 @@ import java.lang.annotation.Target;
 
 import com.gugusong.sqlmapper.strategy.GenerationType;
 
+/**
+ * @Id 注释字段单Bean类中不可存在多个
+ * @author yousongshu
+ *
+ */
 @Target(FIELD)
 @Retention(RUNTIME)
 public @interface Id {
@@ -18,4 +23,9 @@ public @interface Id {
 	 * @return
 	 */
 	GenerationType stragegy() default GenerationType.DEFAULT;
+	/**
+	 * 指定映射名称
+	 * @return
+	 */
+	String name() default "";
 }

@@ -5,10 +5,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
 import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.util.BeanReflectUtil;
 import com.gugusong.sqlmapper.db.ISqlHelp;
+import com.gugusong.sqlmapper.strategy.GenerationType;
 
 /**
  * mysql5.6 sql生成器
@@ -18,37 +20,33 @@ import com.gugusong.sqlmapper.db.ISqlHelp;
  *
  */
 public class MysqlSqlHelp implements ISqlHelp{
-
-
-	public void aaa() {
-		System.out.println("aaa" + this.getClass().getClassLoader().toString());
-		System.out.println("aaa" + MysqlSqlHelp.class.getClassLoader().toString());
-	}
-
-	public String getSqlToCreateTable(Class poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getSqlToSelect(Class poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getSqlToUpdate(Class poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getSqlToInsert(Class poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getSqlToCreateTable(BeanWrapper poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
+	private static final String SELECT = "select";
+	private static final String UPDATE = "update";
+	private static final String DELETE = "delete";
+	private static final String INSERT_INTO = "insert into";
+	private static final String VALUES = "values";
+	private static final String SET = "set";
+	private static final String EQUEST = "=";
+	private static final String PARAM_TOKEN = "?";
+	private static final String FROM = "from";
+	private static final String AS = "as";
+	private static final String WHERE = "where";
+	private static final String AND = "and";
+	private static final String OR = "or";
+	private static final String POINT = ".";
+	private static final String COMMA = ",";
+	private static final String SPLIT = " ";
+	private static final String RETRACT = "    ";
+	private static final String ENTER = "\n";
+	private static final String LEFT_PARENTHESIS = "(";
+	private static final String RIGHT_PARENTHESIS = ")";
+	
+	private static final String SQL_SELECT_METHOD = "getSqlToSelect";
+	private static final String SQL_UPDATE_METHOD = "getSqlToUpdate";
+	private static final String SQL_INSERT_METHOD = "getSqlToInsert";
+	private static final String SQL_DELETE_METHOD = "getSqlToDelete";
+	private static final String SQL_CREATE_METHOD = "getSqlToCreateTable";
 
 	/**
 	 * 生成单表查询sql
@@ -58,39 +56,88 @@ public class MysqlSqlHelp implements ISqlHelp{
 	 * @throws Exception 
 	 */
 	public String getSqlToSelect(BeanWrapper poClazz, boolean hasFormat) throws Exception {
-		// TODO Auto-generated method stub
-		Class cl = poClazz.getPoClazz();
-		Map<String, Object> resultMap = BeanReflectUtil.getTableColumn(cl);
-		System.out.println("MysqlSqlHelp.getSqlToSelect.result=" + resultMap);
-		String tableName = (String) resultMap.get("table");
-		System.out.println("表名：" + tableName);
-		LinkedHashMap<String, BeanColumn> columnsMap = (LinkedHashMap<String, BeanColumn>) resultMap.get("columns");
-		Set<String> columnNameSet = columnsMap.keySet();
-		if (columnNameSet != null && columnNameSet.size() > 0) {
-			throw new Exception("没有字段");
+		String sql = poClazz.getSql(SQL_SELECT_METHOD);
+		if(sql != null) {
+			return sql;
 		}
-		StringBuffer sqlBuffer = new StringBuffer("select ");
-		StringBuffer columnSqlBuffer = new StringBuffer();
-		Iterator<String> it = columnNameSet.iterator();
-		while (it.hasNext()) {
-			columnSqlBuffer.append(tableName).append(".").append(it.next()).append(",");
-		}
-		sqlBuffer.append(columnSqlBuffer.substring(0, columnSqlBuffer.length() - 1)).append(" from ").append(tableName).append(" as ").append(tableName);
-		System.out.println("select sql ：" + sqlBuffer);
-		return sqlBuffer.toString();
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(SELECT);
+		sqlsb.append(SPLIT);
+		sqlsb.append(Joiner.on(COMMA + SPLIT).join(poClazz.getColumns().stream().map(c -> c.getName()).toArray()));
+		sqlsb.append(SPLIT);
+		sqlsb.append(FROM);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getTableName());
+		return sqlsb.toString();
 	}
 
 	public String getSqlToUpdate(BeanWrapper poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
+		String sql = poClazz.getSql(SQL_UPDATE_METHOD);
+		if(sql != null) {
+			return sql;
+		}
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(UPDATE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getTableName());
+		sqlsb.append(SPLIT);
+		sqlsb.append(SET);
+		sqlsb.append(SPLIT);
+		sqlsb.append(Joiner.on(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + COMMA ).join(poClazz.getColumns().stream().filter(c -> !c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT);
+		sqlsb.append(WHERE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(Joiner.on(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT + AND + SPLIT).join(poClazz.getColumns().stream().filter(c -> c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(SPLIT);
+		sqlsb.append(EQUEST);
+		sqlsb.append(SPLIT);
+		sqlsb.append(PARAM_TOKEN);
+		return sqlsb.toString();
 	}
 
 	public String getSqlToInsert(BeanWrapper poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
+		String sql = poClazz.getSql(SQL_INSERT_METHOD);
+		if(sql != null) {
+			return sql;
+		}
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(INSERT_INTO);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getTableName());
+		sqlsb.append(LEFT_PARENTHESIS);
+		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !(c.isIdFlag() && c.getIdStragegy()==GenerationType.IDENTITY )).map(c -> c.getName()).toArray()));
+		sqlsb.append(RIGHT_PARENTHESIS);
+		sqlsb.append(SPLIT);
+		sqlsb.append(VALUES);
+		sqlsb.append(LEFT_PARENTHESIS);
+		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !(c.isIdFlag() && c.getIdStragegy()==GenerationType.IDENTITY )).map(c -> PARAM_TOKEN).toArray()));
+		sqlsb.append(RIGHT_PARENTHESIS);
+		return sqlsb.toString();
 	}
 
 	public String getSqlToDelete(BeanWrapper poClazz, boolean hasFormat) {
+		String sql = poClazz.getSql(SQL_DELETE_METHOD);
+		if(sql != null) {
+			return sql;
+		}
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(DELETE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(FROM);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getTableName());
+		sqlsb.append(SPLIT);
+		sqlsb.append(WHERE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(Joiner.on(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT + AND + SPLIT).join(poClazz.getColumns().stream().filter(c -> c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(SPLIT);
+		sqlsb.append(EQUEST);
+		sqlsb.append(SPLIT);
+		sqlsb.append(PARAM_TOKEN);
+		return sqlsb.toString();
+	}
+	@Override
+	public String getSqlToCreateTable(BeanWrapper wrapper, boolean hasFormat) {
 		// TODO Auto-generated method stub
 		return null;
 	}

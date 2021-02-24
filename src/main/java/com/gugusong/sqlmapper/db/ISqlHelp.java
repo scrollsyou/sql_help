@@ -16,7 +16,7 @@ public interface ISqlHelp {
 	 * @param hasFormat 生成sql是否格式化
 	 * @return
 	 */
-	String getSqlToCreateTable(BeanWrapper poClazz, boolean hasFormat);
+	String getSqlToCreateTable(BeanWrapper wrapper, boolean hasFormat);
 	/**
 	 * 生成单表查询sql
 	 * @param poClazz
@@ -24,7 +24,7 @@ public interface ISqlHelp {
 	 * @return
 	 * @throws Exception 
 	 */
-	String getSqlToSelect(BeanWrapper poClazz, boolean hasFormat) throws Exception;
+	String getSqlToSelect(BeanWrapper wrapper, boolean hasFormat) throws Exception;
 	/**
 	 * 生成更新sql
 	 * 如 update test set id=?,name=?
@@ -32,7 +32,7 @@ public interface ISqlHelp {
 	 * @param hasFormat
 	 * @return
 	 */
-	String getSqlToUpdate(BeanWrapper poClazz, boolean hasFormat);
+	String getSqlToUpdate(BeanWrapper wrapper, boolean hasFormat);
 	/**
 	 * 生成插入sql
 	 * 如 insert into test(id,name) values(?,?)
@@ -40,7 +40,7 @@ public interface ISqlHelp {
 	 * @param hasFormat
 	 * @return
 	 */
-	String getSqlToInsert(BeanWrapper poClazz, boolean hasFormat);
+	String getSqlToInsert(BeanWrapper wrapper, boolean hasFormat);
 	/**
 	 * 生成删除sql
 	 * 如 delete from test
@@ -48,6 +48,6 @@ public interface ISqlHelp {
 	 * @param hasFormat
 	 * @return
 	 */
-	String getSqlToDelete(BeanWrapper poClazz, boolean hasFormat);
+	String getSqlToDelete(BeanWrapper wrapper, boolean hasFormat);
 
 }

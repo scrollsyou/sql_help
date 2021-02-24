@@ -1,11 +1,15 @@
 package com.gugusong.sqlmapper.db;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 import com.gugusong.sqlmapper.Example;
 import com.gugusong.sqlmapper.Session;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.db.mysql.MysqlSqlHelp;
+
+import lombok.NonNull;
 
 /**
  * 会话 基础数据操作方法
@@ -15,6 +19,11 @@ import com.gugusong.sqlmapper.db.mysql.MysqlSqlHelp;
  */
 public class SessionImpl implements Session {
 	
+	private Connection conn;
+	
+	public SessionImpl(@NonNull Connection conn, @NonNull ISqlHelp sqlHelp) {
+		this.conn = conn;
+	}
 	/**
 	 * 保存实体对象 返回带ID主键的持久化对象
 	 * 
@@ -84,5 +93,15 @@ public class SessionImpl implements Session {
 	 */
 	public <E> int findCount(Example example, Class<E> E) {
 		return 0;
+	}
+	
+	@Override
+	public void commit() throws SQLException {
+		conn.commit();
+		
+	}
+	@Override
+	public void close() throws SQLException {
+		this.conn.close();
 	}
 }

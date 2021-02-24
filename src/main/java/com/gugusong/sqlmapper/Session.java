@@ -1,5 +1,6 @@
 package com.gugusong.sqlmapper;
 
+import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -54,4 +55,14 @@ public interface Session {
 	 * @return
 	 */
 	public <E> int findCount(Example example, Class<E> E);
+	/**
+	 * 提交事务
+	 * @throws SQLException 
+	 */
+	public void commit() throws SQLException;
+	/**
+	 * 关闭会话
+	 * @throws SQLException 
+	 */
+	public void close() throws SQLException;
 }

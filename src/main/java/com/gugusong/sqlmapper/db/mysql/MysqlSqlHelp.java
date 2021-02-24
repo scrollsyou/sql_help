@@ -10,6 +10,7 @@ import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.util.BeanReflectUtil;
 import com.gugusong.sqlmapper.db.ISqlHelp;
+import com.gugusong.sqlmapper.strategy.GenerationType;
 
 /**
  * mysql5.6 sql生成器
@@ -104,12 +105,12 @@ public class MysqlSqlHelp implements ISqlHelp{
 		sqlsb.append(SPLIT);
 		sqlsb.append(poClazz.getTableName());
 		sqlsb.append(LEFT_PARENTHESIS);
-		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !(c.isIdFlag() && c.getIdStragegy()==GenerationType.IDENTITY )).map(c -> c.getName()).toArray()));
 		sqlsb.append(RIGHT_PARENTHESIS);
 		sqlsb.append(SPLIT);
 		sqlsb.append(VALUES);
 		sqlsb.append(LEFT_PARENTHESIS);
-		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !c.isIdFlag()).map(c -> PARAM_TOKEN).toArray()));
+		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !(c.isIdFlag() && c.getIdStragegy()==GenerationType.IDENTITY )).map(c -> PARAM_TOKEN).toArray()));
 		sqlsb.append(RIGHT_PARENTHESIS);
 		return sqlsb.toString();
 	}

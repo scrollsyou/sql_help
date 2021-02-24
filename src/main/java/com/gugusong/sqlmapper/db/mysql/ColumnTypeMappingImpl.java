@@ -17,17 +17,18 @@ public class ColumnTypeMappingImpl implements ColumnTypeMapping {
 	public static final String DATE_TYPE = "DATETIME";
 	public static final String DOUBLE_TYPE = "DOUBLE";
 	public static final String FLOAT_TYPE = "FLOAT";
+	
+	public static final int VAR_DEFAULT_LENGHT = 255;
 	/**
 	 * 获取数据库字段类型
 	 * @return
 	 */
-	@Override
 	public void convertDbTypeByField(BeanColumn field) {
 		if (Strings.isNullOrEmpty(field.getDateType())) {
 			field.setDateType(mapping(field.getField().getType()));
 		}
 		if(field.getLength() == null) {
-			field.setLength(255);
+			field.setLength(VAR_DEFAULT_LENGHT);
 		}
 	}
 	

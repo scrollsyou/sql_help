@@ -88,7 +88,6 @@ public class BeanWrapper {
 			}
 		}
 		columnList.sort(new Comparator<BeanColumn>() {
-			@Override
 			public int compare(BeanColumn o1, BeanColumn o2) {
 				return o1.getSort() - o2.getSort();
 			}

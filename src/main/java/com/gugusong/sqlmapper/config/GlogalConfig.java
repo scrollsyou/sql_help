@@ -21,6 +21,7 @@ public class GlogalConfig {
 
 	/**
 	 * 需配置数据库连接池
+	 * 需进行数据库操作时不可这空
 	 */
 	@Getter
 	@Setter

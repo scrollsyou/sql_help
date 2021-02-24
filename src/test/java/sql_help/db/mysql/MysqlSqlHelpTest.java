@@ -33,9 +33,10 @@ public class MysqlSqlHelpTest {
 		System.out.println(help.getSqlToInsert(BeanWrapper.instrance(TestEntityA.class, new GlogalConfig()), true));
 	}
 
-	public String getSqlToDelete(BeanWrapper wrapper, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
+	@Test
+	public void getSqlToDelete() throws Exception {
+		MysqlSqlHelp help = new MysqlSqlHelp();
+		System.out.println(help.getSqlToDelete(BeanWrapper.instrance(TestEntityA.class, new GlogalConfig()), true));
 	}
 
 }

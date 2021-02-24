@@ -22,6 +22,7 @@ public class MysqlSqlHelp implements ISqlHelp{
 	
 	private static final String SELECT = "select";
 	private static final String UPDATE = "update";
+	private static final String DELETE = "delete";
 	private static final String INSERT_INTO = "insert into";
 	private static final String VALUES = "values";
 	private static final String SET = "set";
@@ -114,8 +115,25 @@ public class MysqlSqlHelp implements ISqlHelp{
 	}
 
 	public String getSqlToDelete(BeanWrapper poClazz, boolean hasFormat) {
-		// TODO Auto-generated method stub
-		return null;
+		String sql = poClazz.getSql(SQL_DELETE_METHOD);
+		if(sql != null) {
+			return sql;
+		}
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(DELETE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(FROM);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getTableName());
+		sqlsb.append(SPLIT);
+		sqlsb.append(WHERE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(Joiner.on(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT + AND + SPLIT).join(poClazz.getColumns().stream().filter(c -> c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(SPLIT);
+		sqlsb.append(EQUEST);
+		sqlsb.append(SPLIT);
+		sqlsb.append(PARAM_TOKEN);
+		return sqlsb.toString();
 	}
 	@Override
 	public String getSqlToCreateTable(BeanWrapper wrapper, boolean hasFormat) {

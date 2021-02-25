@@ -50,6 +50,9 @@ public class SessionImpl implements Session {
 	public <T> T save(T entity) throws Exception {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToInsert = sqlHelp.getSqlToInsert(entityWrapper, false);
+		if(log.isDebugEnabled()) {
+			log.debug("执行sql: {}", sqlToInsert);
+		}
 		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
 			entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
 		}else if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
@@ -97,6 +100,9 @@ public class SessionImpl implements Session {
 	public <T> int update(T entity) throws Exception {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToUpdate = sqlHelp.getSqlToUpdate(entityWrapper, false);
+		if(log.isDebugEnabled()) {
+			log.debug("执行sql: {}", sqlToUpdate);
+		}
 		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToUpdate);
 		List<BeanColumn> columns = entityWrapper.getColumns();
 		int i = 1;
@@ -122,6 +128,9 @@ public class SessionImpl implements Session {
 	public <T> int delete(T entity) throws Exception {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToDeleteById = sqlHelp.getSqlToDeleteById(entityWrapper, false);
+		if(log.isDebugEnabled()) {
+			log.debug("执行sql: {}", sqlToDeleteById);
+		}
 		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToDeleteById);
 		preSta.setObject(1, entityWrapper.getIdColumn().getVal(entity));
 		return preSta.executeUpdate();
@@ -170,6 +179,9 @@ public class SessionImpl implements Session {
 	public <E> E findOneById(Class<E> e, Object id) throws Exception {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
 		String sqlToSelectById = sqlHelp.getSqlToSelectById(entityWrapper, false);
+		if(log.isDebugEnabled()) {
+			log.debug("执行sql: {}", sqlToSelectById);
+		}
 		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelectById);
 		preSta.setObject(1, id);
 		@Cleanup ResultSet rs = preSta.executeQuery();

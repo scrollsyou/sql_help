@@ -31,5 +31,9 @@ public class TestEntityA {
 	private BigDecimal six;
 	
 	private String sevenStr;
+	
+	public static void aaa() {
+		
+	}
 
 }

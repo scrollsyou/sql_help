@@ -9,4 +9,5 @@ package com.gugusong.sqlmapper;
  */
 public interface Example {
 
+//	Example andEquest();
 }

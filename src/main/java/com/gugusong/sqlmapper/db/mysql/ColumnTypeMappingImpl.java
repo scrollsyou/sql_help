@@ -25,7 +25,7 @@ public class ColumnTypeMappingImpl implements ColumnTypeMapping {
 	 */
 	public void convertDbTypeByField(BeanColumn field) {
 		if (Strings.isNullOrEmpty(field.getDateType())) {
-			field.setDateType(mapping(field.getField().getType()));
+			field.setDateType(mapping(field.getField().getType(), field.getName()));
 		}
 		if(field.getLength() == null) {
 			field.setLength(VAR_DEFAULT_LENGHT);
@@ -35,9 +35,10 @@ public class ColumnTypeMappingImpl implements ColumnTypeMapping {
 	/**
 	 * 返回数据库中字段类型
 	 * @param fieldClazz
+	 * @param fieldName 
 	 * @return
 	 */
-	private String mapping(Class fieldClazz) {
+	private String mapping(Class fieldClazz, String fieldName) {
 		if(String.class == fieldClazz) {
 			return STRING_TYPE;
 		}else if(Date.class == fieldClazz) {
@@ -45,22 +46,22 @@ public class ColumnTypeMappingImpl implements ColumnTypeMapping {
 		}else if(Integer.class == fieldClazz) {
 			return INT_TYPE;
 		}else if(int.class == fieldClazz) {
-			log.warn("字段{}为基础类型，bean类中不建议用基础类型!");
+			log.warn("字段{}为基础类型，bean类中不建议用基础类型!", fieldName);
 			return INT_TYPE;
 		}else if(Long.class == fieldClazz) {
 			return LONG_TYPE;
 		}else if(long.class == fieldClazz) {
-			log.warn("字段{}为基础类型，bean类中不建议用基础类型!");
+			log.warn("字段{}为基础类型，bean类中不建议用基础类型!", fieldName);
 			return LONG_TYPE;
 		}else if(Double.class == fieldClazz) {
 			return DOUBLE_TYPE;
 		}else if(double.class == fieldClazz) {
-			log.warn("字段{}为基础类型，bean类中不建议用基础类型!");
+			log.warn("字段{}为基础类型，bean类中不建议用基础类型!", fieldName);
 			return DOUBLE_TYPE;
 		}else if(Float.class == fieldClazz) {
 			return FLOAT_TYPE;
 		}else if(float.class == fieldClazz) {
-			log.warn("字段{}为基础类型，bean类中不建议用基础类型!");
+			log.warn("字段{}为基础类型，bean类中不建议用基础类型!", fieldName);
 			return FLOAT_TYPE;
 		}
 		return STRING_TYPE;

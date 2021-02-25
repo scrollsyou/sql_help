@@ -1,6 +1,7 @@
 package sql_help.db.mysql;
 
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.List;
 
 import org.junit.Test;
@@ -8,6 +9,7 @@ import org.junit.Test;
 import com.gugusong.sqlmapper.Example;
 import com.gugusong.sqlmapper.Session;
 import com.gugusong.sqlmapper.SessionFactory;
+import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.config.GlogalConfig;
@@ -42,6 +44,7 @@ public class SessionTest {
 		SessionTestEntity testEntity = new SessionTestEntity();
 		testEntity.setId(5);
 		testEntity.setName("bbbb2");
+		testEntity.setAa(new Date());
 		openSession.update(testEntity);
 	}
 
@@ -64,7 +67,7 @@ public class SessionTest {
 	@Test
 	public void findOne() throws Exception {
 		Session openSession = getSession();
-		SessionTestEntity findOneById = openSession.findOneById(SessionTestEntity.class, 5L);
+		SessionTestEntity findOneById = openSession.findOneById(SessionTestEntity.class, 5);
 		System.out.println(findOneById);
 	}
 
@@ -88,8 +91,12 @@ public class SessionTest {
 	@Entity(tableName = "test")
 	public static class SessionTestEntity{
 		@Id(stragegy = GenerationType.IDENTITY)
-		private Integer id;
+		private int id;
 		
 		private String name;
+		@Column(sort = 12)
+		private Date aa;
+		
+		private String dd;
 	}
 }

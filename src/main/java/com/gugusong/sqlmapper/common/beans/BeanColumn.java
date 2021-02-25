@@ -8,7 +8,9 @@ import com.gugusong.sqlmapper.strategy.GenerationType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -60,7 +62,12 @@ public class BeanColumn {
 	}
 	
 	public void setVal(Object entity, Object value) throws Exception {
-		getWriteMethod().invoke(entity, value);
+		try {
+			getWriteMethod().invoke(entity, value);
+		} catch (Exception e) {
+			log.error("数据库查询数据类型不匹配，{} 类型不可配{}字段类型，数据库字段类型需为：{}", value.getClass().getName(), field.getType().getName(), dateType);
+			throw e;
+		}
 	}
 	
 }

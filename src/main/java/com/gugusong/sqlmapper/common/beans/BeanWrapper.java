@@ -72,7 +72,7 @@ public class BeanWrapper {
 			if(physicalField.isAnnotationPresent(Id.class)) {
 				Id id = physicalField.getAnnotation(Id.class);
 				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(id.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):id.name(), 
-						null, 11, true, id.stragegy(), physicalField,propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), -1);
+						null, 11, true, id.stragegy(), physicalField,propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), 0);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
 				idColumn = beanColumn;
@@ -93,7 +93,7 @@ public class BeanWrapper {
 		}
 		columnList.sort(new Comparator<BeanColumn>() {
 			public int compare(BeanColumn o1, BeanColumn o2) {
-				return o1.getSort() - o2.getSort();
+				return  o1.getSort() - o2.getSort();
 			}
 		});
 		columns = new ArrayList<BeanColumn>(columnList.size());

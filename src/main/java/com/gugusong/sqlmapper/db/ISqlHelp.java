@@ -26,6 +26,14 @@ public interface ISqlHelp {
 	 */
 	String getSqlToSelect(BeanWrapper wrapper, boolean hasFormat) throws Exception;
 	/**
+	 * 生成单表按id查询数据
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 * @throws Exception
+	 */
+	String getSqlToSelectById(BeanWrapper poClazz, boolean hasFormat) throws Exception;
+	/**
 	 * 生成更新sql
 	 * 如 update test set id=?,name=?
 	 * @param poClazz
@@ -49,5 +57,14 @@ public interface ISqlHelp {
 	 * @return
 	 */
 	String getSqlToDelete(BeanWrapper wrapper, boolean hasFormat);
+	/**
+	 * 生成删除sql
+	 * 如 delete from test where id=?
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 */
+	String getSqlToDeleteById(BeanWrapper wrapper, boolean hasFormat);
+	
 
 }

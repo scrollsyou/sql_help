@@ -17,7 +17,9 @@ import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.db.mysql.MysqlSqlHelp;
 import com.gugusong.sqlmapper.strategy.GenerationType;
 
+import lombok.Cleanup;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 会话 基础数据操作方法
@@ -25,6 +27,7 @@ import lombok.NonNull;
  * @author yousongshu
  *
  */
+@Slf4j
 public class SessionImpl implements Session {
 	
 	private Connection conn;
@@ -48,11 +51,11 @@ public class SessionImpl implements Session {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToInsert = sqlHelp.getSqlToInsert(entityWrapper, false);
 		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
-			entityWrapper.getIdColumn().getWriteMethod().invoke(entity, UUIDUtil.getUUID());
+			entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
 		}else if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
-			entityWrapper.getIdColumn().getWriteMethod().invoke(entity, config.getSnowFlake().nextId());
+			entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
 		}
-		PreparedStatement preSta = null;
+		@Cleanup PreparedStatement preSta = null;
 		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
 			preSta = this.conn.prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
 		}else {
@@ -64,17 +67,17 @@ public class SessionImpl implements Session {
 			if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
 				continue;
 			}
-			preSta.setObject(i, beanColumn.getReadMethod().invoke(entity));
+			preSta.setObject(i, beanColumn.getVal(entity));
 			i++;
 		}
 		preSta.executeUpdate();
 		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
-			ResultSet resultSet = preSta.getGeneratedKeys();
+			@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
 			if(resultSet.next()) {
 				if(ColumnTypeMappingImpl.INT_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
-					entityWrapper.getIdColumn().getWriteMethod().invoke(entity, resultSet.getInt(1));
+					entityWrapper.getIdColumn().setVal(entity, resultSet.getInt(1));
 				}else if(ColumnTypeMappingImpl.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
-					entityWrapper.getIdColumn().getWriteMethod().invoke(entity, resultSet.getLong(1));
+					entityWrapper.getIdColumn().setVal(entity, resultSet.getLong(1));
 				}else {
 					throw new Exception("数据库自增长id类型不为int/long！");
 				}
@@ -89,9 +92,23 @@ public class SessionImpl implements Session {
 	 * @param        <T>
 	 * @param entity
 	 * @return
+	 * @throws Exception 
 	 */
-	public <T> int update(T entity) {
-		return 0;
+	public <T> int update(T entity) throws Exception {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		String sqlToUpdate = sqlHelp.getSqlToUpdate(entityWrapper, false);
+		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToUpdate);
+		List<BeanColumn> columns = entityWrapper.getColumns();
+		int i = 1;
+		for (BeanColumn beanColumn : columns) {
+			if(beanColumn.isIdFlag()) {
+				continue;
+			}
+			preSta.setObject(i, beanColumn.getVal(entity));
+			i++;
+		}
+		preSta.setObject(i, entityWrapper.getIdColumn().getVal(entity));
+		return preSta.executeUpdate();
 	}
 
 	/**
@@ -100,8 +117,18 @@ public class SessionImpl implements Session {
 	 * @param        <T>
 	 * @param entity
 	 * @return
+	 * @throws Exception 
 	 */
-	public <T> int delete(T entity) {
+	public <T> int delete(T entity) throws Exception {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		String sqlToDeleteById = sqlHelp.getSqlToDeleteById(entityWrapper, false);
+		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToDeleteById);
+		preSta.setObject(1, entityWrapper.getIdColumn().getVal(entity));
+		return preSta.executeUpdate();
+	}
+	
+	public <E> int delete(Example example, Class<E> E) {
+		// TODO Auto-generated method stub
 		return 0;
 	}
 
@@ -131,6 +158,30 @@ public class SessionImpl implements Session {
 	public <E> E findOne(Example example, Class<E> E) {
 		return null;
 	}
+	
+	/**
+	 * 按id查询单行数据
+	 * @param <E>
+	 * @param E
+	 * @param id
+	 * @return
+	 * @throws Exception 
+	 */
+	public <E> E findOneById(Class<E> e, Object id) throws Exception {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
+		String sqlToSelectById = sqlHelp.getSqlToSelectById(entityWrapper, false);
+		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelectById);
+		preSta.setObject(1, id);
+		@Cleanup ResultSet rs = preSta.executeQuery();
+		if (rs.next()) {
+			E entity = e.newInstance();
+			for (BeanColumn column : entityWrapper.getColumns()) {
+				column.setVal(entity, rs.getObject(column.getName()));
+			}
+			return entity;
+		}
+		return null;
+	}
 
 	/**
 	 * 统计总行数
@@ -143,13 +194,17 @@ public class SessionImpl implements Session {
 		return 0;
 	}
 	
-	@Override
 	public void commit() throws SQLException {
 		conn.commit();
-		
 	}
-	@Override
 	public void close() throws SQLException {
 		this.conn.close();
 	}
+	public void setAutoCommit(boolean autoCommit) throws SQLException {
+		this.conn.setAutoCommit(autoCommit);
+	}
+	public void rollback() throws SQLException {
+		this.conn.rollback();
+	}
+	
 }

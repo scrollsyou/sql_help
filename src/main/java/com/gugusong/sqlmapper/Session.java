@@ -25,15 +25,25 @@ public interface Session {
 	 * @param <T>
 	 * @param entity
 	 * @return
+	 * @throws Exception 
 	 */
-	public <T> int update(T entity);
+	public <T> int update(T entity) throws Exception;
 	/**
 	 * 按实体对象进行删除
 	 * @param <T>
 	 * @param entity
 	 * @return
+	 * @throws Exception 
 	 */
-	public <T> int delete(T entity);
+	public <T> int delete(T entity) throws Exception;
+	/**
+	 * 按条件进行删除
+	 * @param <E>
+	 * @param example
+	 * @param E
+	 * @return
+	 */
+	public <E> int delete(Example example, Class<E> E);
 	/**
 	 * 按条件查询数据列表
 	 * @param example 条件example
@@ -49,6 +59,16 @@ public interface Session {
 	 * @return
 	 */
 	public <E> E findOne(Example example, Class<E> E);
+	/**
+	 * 按id查询单行数据
+	 * @param <E>
+	 * @param E
+	 * @param id
+	 * @return
+	 * @throws SQLException 
+	 * @throws Exception 
+	 */
+	public <E> E findOneById(Class<E> E, Object id) throws Exception;
 	/**
 	 * 统计总行数
 	 * @param example 条件
@@ -66,4 +86,15 @@ public interface Session {
 	 * @throws SQLException 
 	 */
 	public void close() throws SQLException;
+	/**
+	 * 是否自动提交
+	 * @param autoCommit
+	 * @throws SQLException 
+	 */
+	public void setAutoCommit(boolean autoCommit) throws SQLException;
+	/**
+	 * 回滚
+	 * @throws SQLException
+	 */
+	public void rollback() throws SQLException;
 }

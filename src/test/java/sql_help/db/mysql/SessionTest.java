@@ -15,30 +15,45 @@ import com.gugusong.sqlmapper.db.SessionFactoryImpl;
 import com.gugusong.sqlmapper.strategy.GenerationType;
 
 import lombok.Data;
+import lombok.ToString;
 import sql_help.db.mysql.datasource.DataSourceFactory;
 
 public class SessionTest {
 
-	@Test
-	public void save() throws Exception {
+	private Session getSession() throws SQLException {
 		GlogalConfig glogalConfig = new GlogalConfig();
 		glogalConfig.setDataSource(DataSourceFactory.getDataSource());
 		SessionFactory factory = new SessionFactoryImpl(glogalConfig);
 		Session openSession = factory.openSession();
+		return openSession;
+	}
+	@Test
+	public void save() throws Exception {
+		Session openSession = getSession();
 		SessionTestEntity testEntity = new SessionTestEntity();
 		testEntity.setName("aaaa");
 		openSession.save(testEntity);
 		System.out.println(testEntity.getId() + ":" + testEntity.getName());
 	}
 
-	public <T> int update(T entity) {
-		// TODO Auto-generated method stub
-		return 0;
+	@Test
+	public void update() throws Exception {
+		Session openSession = getSession();
+		SessionTestEntity testEntity = new SessionTestEntity();
+		testEntity.setId(5);
+		testEntity.setName("bbbb2");
+		openSession.update(testEntity);
 	}
 
-	public <T> int delete(T entity) {
-		// TODO Auto-generated method stub
-		return 0;
+	@Test
+	public void delete() throws Exception {
+		Session openSession = getSession();
+		openSession.setAutoCommit(false);
+		SessionTestEntity testEntity = new SessionTestEntity();
+		testEntity.setId(5);
+		openSession.delete(testEntity);
+		openSession.rollback();
+		openSession.setAutoCommit(true);
 	}
 
 	public <E> List<E> findAll(Example example, Class<E> E) throws Exception {
@@ -46,9 +61,11 @@ public class SessionTest {
 		return null;
 	}
 
-	public <E> E findOne(Example example, Class<E> E) {
-		// TODO Auto-generated method stub
-		return null;
+	@Test
+	public void findOne() throws Exception {
+		Session openSession = getSession();
+		SessionTestEntity findOneById = openSession.findOneById(SessionTestEntity.class, 5L);
+		System.out.println(findOneById);
 	}
 
 	public <E> int findCount(Example example, Class<E> E) {
@@ -67,10 +84,11 @@ public class SessionTest {
 	}
 
 	@Data
+	@ToString
 	@Entity(tableName = "test")
 	public static class SessionTestEntity{
 		@Id(stragegy = GenerationType.IDENTITY)
-		private Long id;
+		private Integer id;
 		
 		private String name;
 	}

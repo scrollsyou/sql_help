@@ -43,9 +43,11 @@ public class MysqlSqlHelp implements ISqlHelp{
 	private static final String RIGHT_PARENTHESIS = ")";
 	
 	private static final String SQL_SELECT_METHOD = "getSqlToSelect";
+	private static final String SQL_SELECT_BY_ID_METHOD = "getSqlToSelectById";
 	private static final String SQL_UPDATE_METHOD = "getSqlToUpdate";
 	private static final String SQL_INSERT_METHOD = "getSqlToInsert";
 	private static final String SQL_DELETE_METHOD = "getSqlToDelete";
+	private static final String SQL_DELETE_BY_ID_METHOD = "getSqlToDeleteById";
 	private static final String SQL_CREATE_METHOD = "getSqlToCreateTable";
 
 	/**
@@ -68,6 +70,32 @@ public class MysqlSqlHelp implements ISqlHelp{
 		sqlsb.append(FROM);
 		sqlsb.append(SPLIT);
 		sqlsb.append(poClazz.getTableName());
+		poClazz.putSql(SQL_SELECT_METHOD, sqlsb.toString());
+		return sqlsb.toString();
+	}
+	
+	public String getSqlToSelectById(BeanWrapper poClazz, boolean hasFormat) throws Exception {
+		String sql = poClazz.getSql(SQL_SELECT_BY_ID_METHOD);
+		if(sql != null) {
+			return sql;
+		}
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(SELECT);
+		sqlsb.append(SPLIT);
+		sqlsb.append(Joiner.on(COMMA + SPLIT).join(poClazz.getColumns().stream().map(c -> c.getName()).toArray()));
+		sqlsb.append(SPLIT);
+		sqlsb.append(FROM);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getTableName());
+		sqlsb.append(SPLIT);
+		sqlsb.append(WHERE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getIdColumn().getName());
+		sqlsb.append(SPLIT);
+		sqlsb.append(EQUEST);
+		sqlsb.append(SPLIT);
+		sqlsb.append(PARAM_TOKEN);
+		poClazz.putSql(SQL_SELECT_BY_ID_METHOD, sqlsb.toString());
 		return sqlsb.toString();
 	}
 
@@ -87,11 +115,12 @@ public class MysqlSqlHelp implements ISqlHelp{
 		sqlsb.append(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT);
 		sqlsb.append(WHERE);
 		sqlsb.append(SPLIT);
-		sqlsb.append(Joiner.on(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT + AND + SPLIT).join(poClazz.getColumns().stream().filter(c -> c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(poClazz.getIdColumn().getName());
 		sqlsb.append(SPLIT);
 		sqlsb.append(EQUEST);
 		sqlsb.append(SPLIT);
 		sqlsb.append(PARAM_TOKEN);
+		poClazz.putSql(SQL_UPDATE_METHOD, sqlsb.toString());
 		return sqlsb.toString();
 	}
 
@@ -112,6 +141,7 @@ public class MysqlSqlHelp implements ISqlHelp{
 		sqlsb.append(LEFT_PARENTHESIS);
 		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !(c.isIdFlag() && c.getIdStragegy()==GenerationType.IDENTITY )).map(c -> PARAM_TOKEN).toArray()));
 		sqlsb.append(RIGHT_PARENTHESIS);
+		poClazz.putSql(SQL_INSERT_METHOD, sqlsb.toString());
 		return sqlsb.toString();
 	}
 
@@ -127,15 +157,33 @@ public class MysqlSqlHelp implements ISqlHelp{
 		sqlsb.append(SPLIT);
 		sqlsb.append(poClazz.getTableName());
 		sqlsb.append(SPLIT);
+		poClazz.putSql(SQL_DELETE_METHOD, sqlsb.toString());
+		return sqlsb.toString();
+	}
+	
+	public String getSqlToDeleteById(BeanWrapper poClazz, boolean hasFormat) {
+		String sql = poClazz.getSql(SQL_DELETE_BY_ID_METHOD);
+		if(sql != null) {
+			return sql;
+		}
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(DELETE);
+		sqlsb.append(SPLIT);
+		sqlsb.append(FROM);
+		sqlsb.append(SPLIT);
+		sqlsb.append(poClazz.getTableName());
+		sqlsb.append(SPLIT);
 		sqlsb.append(WHERE);
 		sqlsb.append(SPLIT);
-		sqlsb.append(Joiner.on(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT + AND + SPLIT).join(poClazz.getColumns().stream().filter(c -> c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlsb.append(poClazz.getIdColumn().getName());
 		sqlsb.append(SPLIT);
 		sqlsb.append(EQUEST);
 		sqlsb.append(SPLIT);
 		sqlsb.append(PARAM_TOKEN);
+		poClazz.putSql(SQL_DELETE_BY_ID_METHOD, sqlsb.toString());
 		return sqlsb.toString();
 	}
+	
 	@Override
 	public String getSqlToCreateTable(BeanWrapper wrapper, boolean hasFormat) {
 		// TODO Auto-generated method stub

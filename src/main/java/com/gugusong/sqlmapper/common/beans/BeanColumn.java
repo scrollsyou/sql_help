@@ -55,4 +55,12 @@ public class BeanColumn {
 	 */
 	private Integer sort;
 	
+	public Object getVal(Object entity) throws Exception {
+		return getReadMethod().invoke(entity);
+	}
+	
+	public void setVal(Object entity, Object value) throws Exception {
+		getWriteMethod().invoke(entity, value);
+	}
+	
 }

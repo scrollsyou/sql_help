@@ -21,4 +21,11 @@ public class TextUtilTest {
 	public void testJdbcHumpToHump() {
 		Assert.assertEquals("转化失败", TextUtil.jdbcHumpToHump("entity_name_aAa"), "entityNameAaa");
 	}
+	
+	@Test
+	public void replaceTemplateParams() {
+		System.out.println(TextUtil.replaceTemplateParams("select * from user where {userName} = ? and {parentName} = ?", propertyName -> {
+			return TextUtil.humpToJdbcHump(propertyName);
+		}));
+	}
 }

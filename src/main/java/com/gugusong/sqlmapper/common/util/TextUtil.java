@@ -1,5 +1,7 @@
 package com.gugusong.sqlmapper.common.util;
 
+import java.util.function.Function;
+
 import lombok.NonNull;
 
 /**
@@ -13,6 +15,8 @@ public class TextUtil {
 	private static final byte A_CODE = 64;
 	private static final byte CODE_DIFF = 32;
 	private static final char __CODE = '_';
+	private static final char TEMP_LEFT_KEY = '{';
+	private static final char TEMP_RIGTH_KEY = '}';
 
 	/**
 	 * 驼峰命名转数据库驼峰命名
@@ -61,6 +65,33 @@ public class TextUtil {
 			}
 		}
 		return newName.toString();
+	}
+	/**
+	 * 匹配模版中变量，替换
+	 * @param template
+	 * @param conver
+	 * @return
+	 */
+	public static String replaceTemplateParams(@NonNull String template, Function<String, String> conver) {
+		StringBuilder newTemplate = new StringBuilder();
+		StringBuilder paramName = new StringBuilder();
+		char[] tempChars = template.toCharArray();
+		for (int i = 0; i < tempChars.length; i++) {
+			if(TEMP_LEFT_KEY == tempChars[i]) {
+				i++;
+				for (; i < tempChars.length; i++) {
+					if(TEMP_RIGTH_KEY == tempChars[i]) {
+						newTemplate.append(conver.apply(paramName.toString()));
+						paramName = new StringBuilder();
+						break;
+					}
+					paramName.append(tempChars[i]);
+				}
+			}else {
+				newTemplate.append(tempChars[i]);
+			}
+		}
+		return newTemplate.toString();
 	}
 	
 }

@@ -42,8 +42,9 @@ public interface Session {
 	 * @param example
 	 * @param E
 	 * @return
+	 * @throws Exception 
 	 */
-	public <E> int delete(Example example, Class<E> E);
+	public <E> int delete(Example example, Class<E> E) throws Exception;
 	/**
 	 * 按条件查询数据列表
 	 * @param example 条件example

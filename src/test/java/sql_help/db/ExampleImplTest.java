@@ -1,9 +1,13 @@
 package sql_help.db;
 
+import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.junit.Test;
+
+import com.gugusong.sqlmapper.Example;
+import com.gugusong.sqlmapper.db.ExampleImpl;
 
 import sql_help.entity.TestEntityA;
 
@@ -14,14 +18,17 @@ import sql_help.entity.TestEntityA;
  */
 public class ExampleImplTest {
 
-	@FunctionalInterface
-	public interface Supplier {
-	    void get();
-	}
-	
+
 	@Test
-	public void andEquest() {
-		TestEntityA aa = new TestEntityA();
-//		(TestEntityA::getFive)
+	public void example() {
+		Example example = ExampleImpl.newInstance();
+		System.out.println(example.equals("name", "小明")
+				.and().gtEquals("age", 18)
+				.and().subCondition()
+					.equals("class", "12班")
+				.upCondition()
+				.and().equals("sex", "女")
+				.and().condition("length({property}) - length({property}) > ?", 12)
+				.and().in("schoolId", new ArrayList<Object>() {}).toString());
 	}
 }

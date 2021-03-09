@@ -141,4 +141,19 @@ public class BeanWrapper {
 	public void putSql(String key, String sql) {
 		sqlCache.put(key, sql);
 	}
+	
+	/**
+	 * 返回字段数据库相关信息
+	 * @param propertyName
+	 * @return
+	 */
+	public BeanColumn getByPropertyName(String propertyName) {
+		// TODO 该功能需做map映射，方便按属性名获取数据库定义
+		for (BeanColumn beanColumn : columns) {
+			if(beanColumn.getField().getName().equals(propertyName)) {
+				return beanColumn;
+			}
+		}
+		return null;
+	}
 }

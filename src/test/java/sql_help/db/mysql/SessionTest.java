@@ -13,6 +13,7 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.config.GlogalConfig;
+import com.gugusong.sqlmapper.db.ExampleImpl;
 import com.gugusong.sqlmapper.db.SessionFactoryImpl;
 import com.gugusong.sqlmapper.strategy.GenerationType;
 
@@ -57,6 +58,15 @@ public class SessionTest {
 		openSession.delete(testEntity);
 		openSession.rollback();
 		openSession.setAutoCommit(true);
+	}
+	
+	@Test
+	public void deleteByExample() throws Exception {
+		Session openSession = getSession();
+//		openSession.setAutoCommit(false);
+		openSession.delete(ExampleImpl.newInstance().equals("name", "aaaa123").or().condition("length({name}) > ? or length({dd}) < ?", 4, 2), SessionTestEntity.class);
+//		openSession.rollback();
+//		openSession.setAutoCommit(true);
 	}
 
 	public <E> List<E> findAll(Example example, Class<E> E) throws Exception {

@@ -136,9 +136,19 @@ public class SessionImpl implements Session {
 		return preSta.executeUpdate();
 	}
 	
-	public <E> int delete(Example example, Class<E> E) {
-		// TODO Auto-generated method stub
-		return 0;
+	public <E> int delete(Example example, Class<E> E) throws Exception {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
+		String sqlToDelete = sqlHelp.getSqlToDelete(entityWrapper, false);
+		sqlToDelete += example.toSql(entityWrapper);
+		if(log.isDebugEnabled()) {
+			log.debug("执行sql: {}", sqlToDelete);
+		}
+		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToDelete);
+		List<Object> values = example.getValues();
+		for (int i = 0; i < values.size(); i++) {
+			preSta.setObject(i+1, values.get(i));
+		}
+		return preSta.executeUpdate();
 	}
 
 	/**

@@ -19,6 +19,7 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
+import com.gugusong.sqlmapper.annotation.vo.VOBean;
 import com.gugusong.sqlmapper.common.constants.ErrorCodeConstant;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 
@@ -48,6 +49,16 @@ public class BeanWrapper {
 	private List<BeanColumn> columns;
 	@Getter
 	private String tableName;
+	/**
+	 * 表别名
+	 */
+	@Getter
+	private String tableAliasName;
+	/**
+	 * 是否是Po类
+	 */
+	@Getter
+	private boolean isPo;
 	
 	private Map<String, String> sqlCache = new TreeMap<String, String>();
 	
@@ -56,6 +67,25 @@ public class BeanWrapper {
 	private BeanWrapper(Class<?> poClazz, GlogalConfig config) throws Exception {
 		this.poClazz = poClazz;
 		this.config = config;
+		Entity antity = poClazz.getAnnotation(Entity.class);
+		VOBean voBean = poClazz.getAnnotation(VOBean.class);
+		if(antity != null) {
+			poInstance(poClazz, config);
+		}else if(voBean != null) {
+			voInstance(poClazz, config);
+		}
+		
+	}
+	/**
+	 * vo 类进行包装
+	 * @param poClazz
+	 * @param config
+	 * @throws Exception
+	 */
+	private void voInstance(Class<?> poClazz, GlogalConfig config) throws Exception {
+		VOBean voBean = poClazz.getAnnotation(VOBean.class);
+		@NonNull
+		Class<?> mainPoClazz = voBean.mainPo();
 		Field[] physicalFields = poClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
 		BeanInfo beanInfo = Introspector.getBeanInfo(poClazz, Object.class);
@@ -100,7 +130,64 @@ public class BeanWrapper {
 		columns.addAll(columnList);
 		List<String> splitPackage = Splitter.on(CharMatcher.anyOf(".$")).splitToList(poClazz.getName());
 		Entity annotation = poClazz.getAnnotation(Entity.class);
-		if(annotation != null && annotation.tableName()!=null && !"".equals(annotation.tableName())) {
+		if(annotation.tableName()!=null && !"".equals(annotation.tableName())) {
+			tableName = annotation.tableName();
+		}else {
+			tableName = config.getImplicitNamingStrategy().getTableName(splitPackage.get(splitPackage.size() - 1));
+		}
+	}
+	/**
+	 * po 类进行包装
+	 * @param poClazz
+	 * @param config
+	 * @throws Exception
+	 */
+	private void poInstance(Class<?> poClazz, GlogalConfig config) throws Exception {
+		Field[] physicalFields = poClazz.getDeclaredFields();
+		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
+		BeanInfo beanInfo = Introspector.getBeanInfo(poClazz, Object.class);
+		PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+		for (Field physicalField : physicalFields) {
+			if(physicalField.isAnnotationPresent(Transient.class)) {
+				continue;
+			}
+			// TODO 为方便后期扩展，需更改为其它模式
+			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
+			if(propertyDesc == null) {
+				throw new Exception(ErrorCodeConstant.NOTBEAN.toString());
+			}
+			if(physicalField.isAnnotationPresent(Id.class)) {
+				Id id = physicalField.getAnnotation(Id.class);
+				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(id.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):id.name(), 
+						null, 11, true, id.stragegy(), physicalField,propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), 0);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
+				idColumn = beanColumn;
+			}else if(physicalField.isAnnotationPresent(Column.class)) {
+				Column column = physicalField.getAnnotation(Column.class);
+				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(column.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):column.name(), 
+								Strings.isNullOrEmpty(column.dateType())?null:column.dateType(), 
+								column.length()==0?null:column.length(),
+								false, null, physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), column.sort());
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
+			}else {
+				BeanColumn beanColumn = new BeanColumn(config.getImplicitNamingStrategy().getColumntName(physicalField.getName()), 
+						null, null, false, null, physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), Integer.MAX_VALUE);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
+			}
+		}
+		columnList.sort(new Comparator<BeanColumn>() {
+			public int compare(BeanColumn o1, BeanColumn o2) {
+				return  o1.getSort() - o2.getSort();
+			}
+		});
+		columns = new ArrayList<BeanColumn>(columnList.size());
+		columns.addAll(columnList);
+		List<String> splitPackage = Splitter.on(CharMatcher.anyOf(".$")).splitToList(poClazz.getName());
+		Entity annotation = poClazz.getAnnotation(Entity.class);
+		if(annotation.tableName()!=null && !"".equals(annotation.tableName())) {
 			tableName = annotation.tableName();
 		}else {
 			tableName = config.getImplicitNamingStrategy().getTableName(splitPackage.get(splitPackage.size() - 1));

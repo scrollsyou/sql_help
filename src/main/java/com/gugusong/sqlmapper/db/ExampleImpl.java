@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.gugusong.sqlmapper.Example;
+import com.gugusong.sqlmapper.Page;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 
 /**
@@ -19,6 +20,8 @@ public class ExampleImpl implements Example {
 	private ConditionFragment currentOrderFragment;
 	private ConditionFragment currentFragment;
 	private final Example parent;
+	private boolean hasPage = false;
+	private Page page;
 	
 	private ExampleImpl() {
 		this(new ConditionFragment("where"), null);
@@ -152,11 +155,12 @@ public class ExampleImpl implements Example {
 			return sb.toString();
 		}
 		sb.append(" order by ");
-		sb.append(orderFragment.toSql(entityWrapper));
-		while (sqlString.getNextFragment() != null) {
-			sqlString = sqlString.getNextFragment();
+		ConditionFragment orderString = this.orderFragment;
+		sb.append(orderString.toSql(entityWrapper));
+		while (orderString.getNextFragment() != null) {
+			orderString = orderString.getNextFragment();
 			sb.append(",");
-			sb.append(sqlString.toSql(entityWrapper));
+			sb.append(orderString.toSql(entityWrapper));
 		}
 		return sb.toString();
 	}
@@ -176,6 +180,24 @@ public class ExampleImpl implements Example {
 			}
 		}
 		return values;
+	}
+	@Override
+	public void page() {
+		this.hasPage = true;
+		
+	}
+	@Override
+	public void page(Page page) {
+		this.hasPage = true;
+		this.page = page;
+	}
+	@Override
+	public boolean isPage() {
+		return this.hasPage;
+	}
+	@Override
+	public Page getPage() {
+		return this.page;
 	}
 
 

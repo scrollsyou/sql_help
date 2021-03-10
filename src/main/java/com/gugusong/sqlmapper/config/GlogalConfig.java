@@ -2,8 +2,10 @@ package com.gugusong.sqlmapper.config;
 
 import javax.sql.DataSource;
 
+import com.gugusong.sqlmapper.PageHelp;
 import com.gugusong.sqlmapper.common.util.SnowFlake;
 import com.gugusong.sqlmapper.db.ColumnTypeMapping;
+import com.gugusong.sqlmapper.db.PageHelpImpl;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.strategy.ImplicitNamingStrategy;
 import com.gugusong.sqlmapper.strategy.impl.DefaultJDBCImplicitNamingStrategyImpl;
@@ -48,4 +50,12 @@ public class GlogalConfig {
 	@Getter
 	@Setter
 	private ColumnTypeMapping columnTypeMapping = new ColumnTypeMappingImpl();
+	
+	/**
+	 * 默认分页逻辑
+	 * 可重写分页逻辑
+	 */
+	@Getter
+	@Setter
+	private PageHelp pageHelp = new PageHelpImpl();
 }

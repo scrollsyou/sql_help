@@ -43,7 +43,7 @@ public class SessionTest {
 	public void update() throws Exception {
 		Session openSession = getSession();
 		SessionTestEntity testEntity = new SessionTestEntity();
-		testEntity.setId(5);
+		testEntity.setId(4);
 		testEntity.setName("bbbb2");
 		testEntity.setAa(new Date());
 		openSession.update(testEntity);
@@ -64,14 +64,19 @@ public class SessionTest {
 	public void deleteByExample() throws Exception {
 		Session openSession = getSession();
 		openSession.setAutoCommit(false);
-		openSession.delete(ExampleImpl.newInstance().equals("name", "aaaa123").or().condition("length({name}) > ? or length({dd}) < ?", 4, 2), SessionTestEntity.class);
+		openSession.delete(ExampleImpl.newInstance().equals("name", "aaaa123").or().condition("length({name}) > ? or length({dd}) < ?", 4, 2).orderByAsc("aa").orderByDesc("dd"), SessionTestEntity.class);
 		openSession.rollback();
 		openSession.setAutoCommit(true);
 	}
 
-	public <E> List<E> findAll(Example example, Class<E> E) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+	@Test
+	public void findAll() throws Exception {
+		Session openSession = getSession();
+		openSession.setAutoCommit(false);
+		List<SessionTestEntity> findAll = openSession.findAll(ExampleImpl.newInstance().equals("name", "bbbb2").or().condition("length({name}) > ? or length({dd}) < ?", 4, 2).orderByAsc("aa").orderByDesc("dd"), SessionTestEntity.class);
+		System.out.println(findAll);
+		openSession.rollback();
+		openSession.setAutoCommit(true);
 	}
 
 	@Test

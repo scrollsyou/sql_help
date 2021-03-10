@@ -9,13 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.gugusong.sqlmapper.Example;
+import com.gugusong.sqlmapper.Page;
 import com.gugusong.sqlmapper.Session;
 import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.util.UUIDUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
-import com.gugusong.sqlmapper.db.mysql.MysqlSqlHelp;
 import com.gugusong.sqlmapper.strategy.GenerationType;
 
 import lombok.Cleanup;
@@ -167,8 +167,17 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToSelect);
 		}
-		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect);
 		List<Object> values = example.getValues();
+		if(example.isPage()) {
+			Page page = example.getPage();
+			if(page == null) {
+				page = config.getPageHelp().getPage();
+			}
+			sqlToSelect += " limit ?,?";
+			values.add((page.getPageIndex() - 1) * page.getPageSize());
+			values.add(page.getPageSize());
+		}
+		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect);
 		for (int i = 0; i < values.size(); i++) {
 			preSta.setObject(i+1, values.get(i));
 		}
@@ -204,7 +213,6 @@ public class SessionImpl implements Session {
 		for (int i = 0; i < values.size(); i++) {
 			preSta.setObject(i+1, values.get(i));
 		}
-		List<E> entitys = new ArrayList<E>();
 		@Cleanup ResultSet rs = preSta.executeQuery();
 		if (rs.next()) {
 			E entity = E.newInstance();

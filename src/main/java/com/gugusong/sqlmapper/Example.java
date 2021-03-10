@@ -55,6 +55,16 @@ public interface Example {
 	 */
 	public List<Object> getValues();
 	/**
+	 * 是否需要分页
+	 * @return
+	 */
+	public boolean isPage();
+	/**
+	 * 分页对象
+	 * @return
+	 */
+	public Page getPage();
+	/**
 	 * 按字段排序
 	 * @param property
 	 * @return
@@ -66,6 +76,15 @@ public interface Example {
 	 * @return
 	 */
 	public Example orderByDesc(String property);
-	
+	/**
+	 * 默认分页
+	 * 通过配置获取通用分页逻辑
+	 */
+	public void page();
+	/**
+	 * 配置分页
+	 * @param page
+	 */
+	public void page(Page page);
 	
 }

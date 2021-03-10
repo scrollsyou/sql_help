@@ -58,8 +58,9 @@ public interface Session {
 	 * @param example 条件example
 	 * @param E 返回类型,不允许基础类型，如接收包装类
 	 * @return
+	 * @throws Exception 
 	 */
-	public <E> E findOne(Example example, Class<E> E);
+	public <E> E findOne(Example example, Class<E> E) throws Exception;
 	/**
 	 * 按id查询单行数据
 	 * @param <E>
@@ -75,8 +76,9 @@ public interface Session {
 	 * @param example 条件
 	 * @param E 查询类/不限entity类
 	 * @return
+	 * @throws Exception 
 	 */
-	public <E> int findCount(Example example, Class<E> E);
+	public <E> int findCount(Example example, Class<E> E) throws Exception;
 	/**
 	 * 提交事务
 	 * @throws SQLException 

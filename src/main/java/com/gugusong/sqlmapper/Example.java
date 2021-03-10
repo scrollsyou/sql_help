@@ -54,6 +54,18 @@ public interface Example {
 	 * @return
 	 */
 	public List<Object> getValues();
+	/**
+	 * 按字段排序
+	 * @param property
+	 * @return
+	 */
+	public Example orderByAsc(String property);
+	/**
+	 * 按字段倒序
+	 * @param property
+	 * @return
+	 */
+	public Example orderByDesc(String property);
 	
 	
 }

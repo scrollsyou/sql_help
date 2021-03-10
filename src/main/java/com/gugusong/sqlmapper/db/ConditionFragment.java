@@ -30,6 +30,10 @@ public class ConditionFragment {
 	 * 带占位符标识，如 length({property}) > ?
 	 */
 	public static final int CONDITION_FRAGMENT_CONDITION = 2;
+	/**
+	 * 排序片断
+	 */
+	public static final int CONDITION_FRAGMENT_ORDER = 3;
 	
 	public ConditionFragment(String token) {
 		this(CONDITION_FRAGMENT_TOKEN, token, null, null);
@@ -89,6 +93,18 @@ public class ConditionFragment {
 		this.nextFragment.nextFragment = currentNext;
 		return this.nextFragment;
 	}
+	/**
+	 * 创建排序
+	 * @param expression
+	 * @param property
+	 * @return
+	 */
+	public  ConditionFragment createNextOrder(String expression, String property) {
+		ConditionFragment currentNext = this.nextFragment;
+		this.nextFragment = new ConditionFragment(CONDITION_FRAGMENT_ORDER, expression, property, null);
+		this.nextFragment.nextFragment = currentNext;
+		return this.nextFragment;
+	}
 	
 	public String toSql(BeanWrapper entityWrapper) {
 		StringBuilder sb = new StringBuilder();
@@ -113,6 +129,13 @@ public class ConditionFragment {
 				return propertyBean.getName();
 			}));
 			sb.append(" ");
+		}else if(CONDITION_FRAGMENT_ORDER == this.type) {
+			@NonNull
+			BeanColumn propertyBean = entityWrapper.getByPropertyName(this.property);
+			sb.append(" ");
+			sb.append(propertyBean.getName());
+			sb.append(" ");
+			sb.append(this.expression);
 		}
 		return sb.toString();
 	}

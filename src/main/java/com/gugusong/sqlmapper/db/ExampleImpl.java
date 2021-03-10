@@ -15,6 +15,8 @@ import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 public class ExampleImpl implements Example {
 
 	private final ConditionFragment sqlFragment;
+	private ConditionFragment orderFragment;
+	private ConditionFragment currentOrderFragment;
 	private ConditionFragment currentFragment;
 	private final Example parent;
 	
@@ -110,6 +112,28 @@ public class ExampleImpl implements Example {
 		}
 		return this.parent;
 	}
+	
+	@Override
+	public Example orderByAsc(String property) {
+		if(orderFragment == null) {
+			orderFragment = new ConditionFragment(ConditionFragment.CONDITION_FRAGMENT_ORDER, "asc", property, null);
+			currentOrderFragment = orderFragment;
+		}else {
+			currentOrderFragment = currentOrderFragment.createNextOrder("asc", property);
+		}
+		return this;
+	}
+	
+	@Override
+	public Example orderByDesc(String property) {
+		if(orderFragment == null) {
+			orderFragment = new ConditionFragment(ConditionFragment.CONDITION_FRAGMENT_ORDER, "desc", property, null);
+			currentOrderFragment = orderFragment;
+		}else {
+			currentOrderFragment = currentOrderFragment.createNextOrder("desc", property);
+		}
+		return this;
+	}
 
 	/**
 	 * 转化为条件sql
@@ -122,6 +146,16 @@ public class ExampleImpl implements Example {
 		sb.append(sqlString.toSql(entityWrapper));
 		while (sqlString.getNextFragment() != null) {
 			sqlString = sqlString.getNextFragment();
+			sb.append(sqlString.toSql(entityWrapper));
+		}
+		if(orderFragment == null) {
+			return sb.toString();
+		}
+		sb.append(" order by ");
+		sb.append(orderFragment.toSql(entityWrapper));
+		while (sqlString.getNextFragment() != null) {
+			sqlString = sqlString.getNextFragment();
+			sb.append(",");
 			sb.append(sqlString.toSql(entityWrapper));
 		}
 		return sb.toString();

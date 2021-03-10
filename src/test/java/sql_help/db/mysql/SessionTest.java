@@ -63,10 +63,10 @@ public class SessionTest {
 	@Test
 	public void deleteByExample() throws Exception {
 		Session openSession = getSession();
-//		openSession.setAutoCommit(false);
+		openSession.setAutoCommit(false);
 		openSession.delete(ExampleImpl.newInstance().equals("name", "aaaa123").or().condition("length({name}) > ? or length({dd}) < ?", 4, 2), SessionTestEntity.class);
-//		openSession.rollback();
-//		openSession.setAutoCommit(true);
+		openSession.rollback();
+		openSession.setAutoCommit(true);
 	}
 
 	public <E> List<E> findAll(Example example, Class<E> E) throws Exception {

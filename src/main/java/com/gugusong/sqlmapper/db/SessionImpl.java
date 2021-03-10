@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.gugusong.sqlmapper.Example;
@@ -160,11 +161,27 @@ public class SessionImpl implements Session {
 	 * @throws Exception 
 	 */
 	public <E> List<E> findAll(Example example, Class<E> E) throws Exception {
-		ISqlHelp iSqlHelp = new MysqlSqlHelp();
-//		BeanWrapper beanWrapper = new BeanWrapper();
-//		beanWrapper.setPoClazz(E);
-//		String sql = iSqlHelp.getSqlToSelect(beanWrapper, false);
-		return null;
+		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
+		String sqlToSelect = sqlHelp.getSqlToSelect(entityWrapper, false);
+		sqlToSelect += example.toSql(entityWrapper);
+		if(log.isDebugEnabled()) {
+			log.debug("执行sql: {}", sqlToSelect);
+		}
+		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect);
+		List<Object> values = example.getValues();
+		for (int i = 0; i < values.size(); i++) {
+			preSta.setObject(i+1, values.get(i));
+		}
+		List<E> entitys = new ArrayList<E>();
+		@Cleanup ResultSet rs = preSta.executeQuery();
+		while (rs.next()) {
+			E entity = E.newInstance();
+			for (BeanColumn column : entityWrapper.getColumns()) {
+				column.setVal(entity, rs.getObject(column.getName()));
+			}
+			entitys.add(entity);
+		}
+		return entitys;
 	}
 
 	/**
@@ -173,8 +190,29 @@ public class SessionImpl implements Session {
 	 * @param example 条件example
 	 * @param E       返回类型,不允许基础类型，如接收包装类
 	 * @return
+	 * @throws Exception 
 	 */
-	public <E> E findOne(Example example, Class<E> E) {
+	public <E> E findOne(Example example, Class<E> E) throws Exception {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
+		String sqlToSelect = sqlHelp.getSqlToSelect(entityWrapper, false);
+		sqlToSelect += example.toSql(entityWrapper);
+		if(log.isDebugEnabled()) {
+			log.debug("执行sql: {}", sqlToSelect);
+		}
+		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect);
+		List<Object> values = example.getValues();
+		for (int i = 0; i < values.size(); i++) {
+			preSta.setObject(i+1, values.get(i));
+		}
+		List<E> entitys = new ArrayList<E>();
+		@Cleanup ResultSet rs = preSta.executeQuery();
+		if (rs.next()) {
+			E entity = E.newInstance();
+			for (BeanColumn column : entityWrapper.getColumns()) {
+				column.setVal(entity, rs.getObject(column.getName()));
+			}
+			return entity;
+		}
 		return null;
 	}
 	
@@ -211,8 +249,24 @@ public class SessionImpl implements Session {
 	 * @param example 条件
 	 * @param E       查询类/不限entity类
 	 * @return
+	 * @throws Exception 
 	 */
-	public <E> int findCount(Example example, Class<E> E) {
+	public <E> int findCount(Example example, Class<E> E) throws Exception {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
+		String sqlToSelect = "select count(*) from " + entityWrapper.getTableName();
+		sqlToSelect += example.toSql(entityWrapper);
+		if(log.isDebugEnabled()) {
+			log.debug("执行sql: {}", sqlToSelect);
+		}
+		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect);
+		List<Object> values = example.getValues();
+		for (int i = 0; i < values.size(); i++) {
+			preSta.setObject(i+1, values.get(i));
+		}
+		@Cleanup ResultSet rs = preSta.executeQuery();
+		if (rs.next()) {
+			return rs.getInt(1);
+		}
 		return 0;
 	}
 	

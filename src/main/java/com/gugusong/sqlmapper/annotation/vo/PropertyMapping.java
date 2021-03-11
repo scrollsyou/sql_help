@@ -6,23 +6,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-/**
- * vo类中的注解
- * 一对多关系配置
- * 注解支持List,Set
- * @author yousongshu
- *
- */
 @Retention(RUNTIME)
 @Target(FIELD)
-public @interface OneToMany {
+public @interface PropertyMapping {
 
 	/**
-	 * 对应关联entity别名
-	 * 必须为Entity类对应别名
+	 * 映射字段
 	 * @return
 	 */
-	String entityAlias();
-	
-	// TODO 关联数据不定为单独bean类，可能为多个
+	String originalName();
 }

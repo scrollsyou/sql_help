@@ -1,14 +1,7 @@
 package com.gugusong.sqlmapper.db.mysql;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.common.base.Joiner;
-import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
-import com.gugusong.sqlmapper.common.util.BeanReflectUtil;
 import com.gugusong.sqlmapper.db.ISqlHelp;
 import com.gugusong.sqlmapper.strategy.GenerationType;
 

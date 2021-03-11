@@ -18,20 +18,11 @@ import java.lang.annotation.Target;
 public @interface ManyToOne {
 
 	/**
-	 * 属性对应当前字段名
+	 * 对应关联entity别名
+	 * 必须为Entity类对应别名
 	 * @return
 	 */
-	String mainProperty();
-	/**
-	 * 目录对象类型
-	 * 必须为Entity类或VO类
-	 * @return
-	 */
-	Class<?> tagerClass();
-	/**
-	 * 目录对象关联字段
-	 * 默认为Id关联
-	 * @return
-	 */
-	String targetProperty() default "id";
+	String entityAlias();
+	// TODO 关联数据不定为单独bean类，可能为多个
+
 }

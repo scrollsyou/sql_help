@@ -7,24 +7,33 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * 明确注解vo类
+ * 数据左关联关系
  * @author yousongshu
  *
  */
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface VOBean {
+public @interface LeftJoin {
 
 	/**
 	 * vo 查询默认对主po关联类
-	 * 属性名默认一一映射
 	 * @return
 	 */
-	Class<?> mainPo();
+	Class<?> po();
 	
 	/**
 	 * 对应关联entity别名
+	 * vo类上所有关联别名不可重复
 	 * @return
 	 */
 	String entityAlias();
+	
+	/**
+	 * 对应关联条件
+	 * 如：别名为user的用户类中属性schoolId跟别名为shcool的学校
+	 * 类通过id进行关联
+	 * {user.schoolId} = {school.id}
+	 * @return
+	 */
+	String joinConditions();
 }

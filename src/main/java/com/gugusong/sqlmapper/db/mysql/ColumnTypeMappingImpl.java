@@ -1,6 +1,8 @@
 package com.gugusong.sqlmapper.db.mysql;
 
+import java.awt.List;
 import java.util.Date;
+import java.util.Set;
 
 import com.google.common.base.Strings;
 import com.gugusong.sqlmapper.common.beans.BeanColumn;
@@ -11,12 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ColumnTypeMappingImpl implements ColumnTypeMapping {
 
-	public static final String STRING_TYPE = "VARCHAR";
-	public static final String INT_TYPE = "INT";
-	public static final String LONG_TYPE = "BIGINT";
-	public static final String DATE_TYPE = "DATETIME";
-	public static final String DOUBLE_TYPE = "DOUBLE";
-	public static final String FLOAT_TYPE = "FLOAT";
 	
 	public static final int VAR_DEFAULT_LENGHT = 255;
 	/**
@@ -63,7 +59,12 @@ public class ColumnTypeMappingImpl implements ColumnTypeMapping {
 		}else if(float.class == fieldClazz) {
 			log.warn("字段{}为基础类型，bean类中不建议用基础类型!", fieldName);
 			return FLOAT_TYPE;
+		}else if(List.class.isAssignableFrom(fieldClazz)) {
+			return LIST_TYPE;
+		}else if(Set.class.isAssignableFrom(fieldClazz)) {
+			return SET_TYPE;
+		}else {
+			return OBJECT_TYPE;
 		}
-		return STRING_TYPE;
 	}
 }

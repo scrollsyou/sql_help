@@ -64,6 +64,7 @@ public class BeanColumn {
 		this.tableAlias = tableAlias;
 		this.aliasName = aliasName;
 		this.fieldBeanWrapper = fieldBeanWrapper;
+		this.sort = 0;
 	}
 
 	/**

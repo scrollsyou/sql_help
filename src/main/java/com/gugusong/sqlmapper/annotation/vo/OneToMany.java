@@ -23,6 +23,10 @@ public @interface OneToMany {
 	 * @return
 	 */
 	String entityAlias();
-	
+	/**
+	 * 关联Vo类
+	 * @return
+	 */
+	Class<?> tagerClass();
 	// TODO 关联数据不定为单独bean类，可能为多个
 }

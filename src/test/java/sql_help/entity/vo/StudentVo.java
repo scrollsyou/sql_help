@@ -20,6 +20,6 @@ public class StudentVo {
 	@PropertyMapping(originalName = "school.name")
 	private String schoolName;
 	
-	@ManyToOne(entityAlias = "school")
+	@ManyToOne(entityAlias = "school", tagerClass = SchoolVo.class)
 	private SchoolVo school;
 }

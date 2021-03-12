@@ -17,12 +17,18 @@ import java.lang.annotation.Target;
 @Target(FIELD)
 public @interface ManyToOne {
 
+	// TODO 需更改为注解在vo类上，因为会有多个别名
 	/**
 	 * 对应关联entity别名
 	 * 必须为Entity类对应别名
 	 * @return
 	 */
 	String entityAlias();
+	/**
+	 * 关联Vo类
+	 * @return
+	 */
+	Class<?> tagerClass();
 	// TODO 关联数据不定为单独bean类，可能为多个
 
 }

@@ -19,10 +19,13 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
+import com.gugusong.sqlmapper.annotation.vo.LeftJoin;
 import com.gugusong.sqlmapper.annotation.vo.ManyToOne;
 import com.gugusong.sqlmapper.annotation.vo.OneToMany;
+import com.gugusong.sqlmapper.annotation.vo.PropertyMapping;
 import com.gugusong.sqlmapper.annotation.vo.VOBean;
 import com.gugusong.sqlmapper.common.constants.ErrorCodeConstant;
+import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 
 import lombok.Getter;
@@ -36,6 +39,12 @@ import lombok.Setter;
  *
  */
 public class BeanWrapper {
+	// po类
+	public static final String BEAN_TYPE_PO = "po";
+	// vo查询类
+	public static final String BEAN_TYPE_VO = "vo";
+	// 普通bean类
+	public static final String BEAN_TYPE_SIMPLE = "simple";
 
 	// TODO 后期所有Map都需进行优化，可能会重写个轻量的String为key的Map
 	private static final Map<Class<?>, BeanWrapper> cacheMap = new ConcurrentHashMap<Class<?>, BeanWrapper>();
@@ -60,24 +69,108 @@ public class BeanWrapper {
 	 * 是否是Po类
 	 */
 	@Getter
-	private boolean poBean;
+	private String beanType;
+	/**
+	 * 关联Bean类映射
+	 */
+	@Getter
+	private Map<String, BeanJoin> joinBeans = new TreeMap<String, BeanJoin>();
 	
 	private Map<String, String> sqlCache = new TreeMap<String, String>();
 	
 	private GlogalConfig config;
 	
-	private BeanWrapper(Class<?> poClazz, GlogalConfig config) throws Exception {
-		this.poClazz = poClazz;
+	private BeanWrapper(Class<?> beanClazz, GlogalConfig config) throws Exception {
+		this(beanClazz, config, null);
+	}
+	private BeanWrapper(Class<?> beanClazz, GlogalConfig config, Map<String, BeanJoin> joinBeans) throws Exception {
+		this.poClazz = beanClazz;
 		this.config = config;
-		Entity antity = poClazz.getAnnotation(Entity.class);
-		VOBean voBean = poClazz.getAnnotation(VOBean.class);
-		if(antity != null) {
-			this.poBean = true;
-			poInstance(poClazz, config);
-		}else if(voBean != null) {
-			this.poBean = false;
-			voInstance(poClazz, config);
+		if(joinBeans != null) {
+			this.joinBeans = joinBeans;
 		}
+		Entity antity = beanClazz.getAnnotation(Entity.class);
+		VOBean voBean = beanClazz.getAnnotation(VOBean.class);
+		if(antity != null) {
+			this.beanType = BEAN_TYPE_PO;
+			poInstance(beanClazz, config);
+		}else if(voBean != null) {
+			this.beanType = BEAN_TYPE_VO;
+			voInstance(beanClazz, config);
+		}else {
+			// TODO 普通bean类，用于附值
+			this.beanType = BEAN_TYPE_SIMPLE;
+			simpleBeanInstanc(beanClazz, config);
+		}
+		
+	}
+	/**
+	 * 普通bean包装
+	 * @param voClazz
+	 * @param config
+	 */
+	private void simpleBeanInstanc(Class<?> voClazz, GlogalConfig config)  throws Exception {
+
+		Field[] physicalFields = voClazz.getDeclaredFields();
+		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
+		BeanInfo beanInfo = Introspector.getBeanInfo(voClazz, Object.class);
+		PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+		for (Field physicalField : physicalFields) {
+			if(physicalField.isAnnotationPresent(Transient.class)) {
+				continue;
+			}
+			// TODO 为方便后期扩展，需更改为其它模式
+			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
+			if(propertyDesc == null) {
+				throw new Exception(ErrorCodeConstant.NOTBEAN.toString());
+			}
+			if(physicalField.isAnnotationPresent(ManyToOne.class)) {
+				ManyToOne manyToOne = physicalField.getAnnotation(ManyToOne.class);
+				@NonNull
+				Class<?> oneClazz = manyToOne.tagerClass();
+				BeanColumn beanColumn = new BeanColumn(null, 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						manyToOne.entityAlias(), null, BeanWrapper.instrance(oneClazz, config, joinBeans));
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
+			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
+				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
+				@NonNull
+				Class<?> manyClazz = oneToMany.tagerClass();
+				BeanColumn beanColumn = new BeanColumn(null, 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						oneToMany.entityAlias(), null, BeanWrapper.instrance(manyClazz, config, joinBeans));
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				// TODO 判断 oneToMany 注解必须在List/Set上
+				columnList.add(beanColumn);
+			}else if(physicalField.isAnnotationPresent(PropertyMapping.class)) {
+				PropertyMapping propertyMapping = physicalField.getAnnotation(PropertyMapping.class);
+				@NonNull
+				String originalName = propertyMapping.originalName();
+				String[] nameSplit = originalName.split("\\.");
+				BeanColumn beanColumn = null;
+				if(nameSplit.length == 1) {
+					throw new RuntimeException("基础bean类中属性必须指定表别名!");
+				}
+				BeanJoin beanJoin = joinBeans.get(nameSplit[0]);
+				BeanColumn byPropertyName = beanJoin.getJoinBeanWrapper().getByPropertyName(nameSplit[1]);
+				beanColumn = new BeanColumn(byPropertyName.getName(), 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						beanJoin.getJoinBeanWrapper().getTableAliasName(), beanJoin.getJoinBeanWrapper().getTableAliasName() + "_" + byPropertyName.getAliasName(), null);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
+			}else {
+				throw new RuntimeException("基础bean类中属性必须指定表别名!");
+			}
+			
+		}
+		columnList.sort(new Comparator<BeanColumn>() {
+			public int compare(BeanColumn o1, BeanColumn o2) {
+				return  o1.getSort() - o2.getSort();
+			}
+		});
+		columns = new ArrayList<BeanColumn>(columnList.size());
+		columns.addAll(columnList);
 		
 	}
 	/**
@@ -95,7 +188,13 @@ public class BeanWrapper {
 		}
 		BeanWrapper mainWrapper = instrance(mainPoClazz, config);
 		this.tableName = mainWrapper.getTableName();
-		this.tableAliasName = "_" + mainWrapper.getTableName();
+		this.tableAliasName = voBean.entityAlias();
+		LeftJoin[] leftJoins = voClazz.getAnnotationsByType(LeftJoin.class);
+		if(leftJoins != null && leftJoins.length > 0) {
+			for (LeftJoin leftJoin : leftJoins) {
+				joinBeans.put(leftJoin.entityAlias(), new BeanJoin("left join", leftJoin.joinConditions(), BeanWrapper.instrance(leftJoin.po(), config), leftJoin.entityAlias()));
+			}
+		}
 		Field[] physicalFields = voClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
 		BeanInfo beanInfo = Introspector.getBeanInfo(voClazz, Object.class);
@@ -110,22 +209,51 @@ public class BeanWrapper {
 				throw new Exception(ErrorCodeConstant.NOTBEAN.toString());
 			}
 			if(physicalField.isAnnotationPresent(ManyToOne.class)) {
-//				ManyToOne manyToOne = physicalField.getAnnotation(ManyToOne.class);
-//				@NonNull
-//				Class<?> oneClazz = manyToOne.tagerClass();
-//				@NonNull
-//				String targetProperty = manyToOne.targetProperty();
-//				@NonNull
-//				String mainProperty = manyToOne.mainProperty();
-//				BeanColumn beanColumn = new BeanColumn(mainWrapper.getByPropertyName(mainProperty).getName(), 
-//						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
-//						config.getImplicitNamingStrategy().getColumntName(physicalField.getName()), null, null);
-//				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
-//				columnList.add(beanColumn);
+				ManyToOne manyToOne = physicalField.getAnnotation(ManyToOne.class);
+				@NonNull
+				Class<?> oneClazz = manyToOne.tagerClass();
+				BeanColumn beanColumn = new BeanColumn(null, 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						manyToOne.entityAlias(), null, BeanWrapper.instrance(oneClazz, config, joinBeans));
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
 			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
-				
+				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
+				@NonNull
+				Class<?> manyClazz = oneToMany.tagerClass();
+				BeanColumn beanColumn = new BeanColumn(null, 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						oneToMany.entityAlias(), null, BeanWrapper.instrance(manyClazz, config, joinBeans));
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				// TODO 判断 oneToMany 注解必须在List/Set上
+				columnList.add(beanColumn);
+			}else if(physicalField.isAnnotationPresent(PropertyMapping.class)) {
+				PropertyMapping propertyMapping = physicalField.getAnnotation(PropertyMapping.class);
+				@NonNull
+				String originalName = propertyMapping.originalName();
+				String[] nameSplit = originalName.split("\\.");
+				BeanColumn beanColumn = null;
+				if(nameSplit.length == 1 || nameSplit[0].equals(this.tableAliasName)) {
+					BeanColumn byPropertyName = mainWrapper.getByPropertyName(nameSplit[0]);
+					beanColumn = new BeanColumn(byPropertyName.getName(), 
+							physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+							this.tableAliasName, this.tableAliasName + "_" + byPropertyName.getAliasName(), null);
+				}else {
+					BeanJoin beanJoin = joinBeans.get(nameSplit[0]);
+					BeanColumn byPropertyName = beanJoin.getJoinBeanWrapper().getByPropertyName(nameSplit[1]);
+					beanColumn = new BeanColumn(byPropertyName.getName(), 
+							physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+							beanJoin.getJoinBeanWrapper().getTableAliasName(), beanJoin.getJoinBeanWrapper().getTableAliasName() + "_" + byPropertyName.getAliasName(), null);
+				}
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
 			}else {
-				
+				BeanColumn byPropertyName = mainWrapper.getByPropertyName(physicalField.getName());
+				BeanColumn beanColumn = new BeanColumn(byPropertyName.getName(), 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						this.tableAliasName, this.tableAliasName + "_" + byPropertyName.getAliasName(), null);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnList.add(beanColumn);
 			}
 			
 		}
@@ -214,6 +342,15 @@ public class BeanWrapper {
 		BeanWrapper instrance = cacheMap.get(poClazz);
 		if(instrance == null) {
 			instrance = new BeanWrapper(poClazz, config);
+			cacheMap.put(poClazz, instrance);
+		}
+		return instrance;
+	}
+	
+	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config, Map<String, BeanJoin> parentJoinBeans) throws Exception {
+		BeanWrapper instrance = cacheMap.get(poClazz);
+		if(instrance == null) {
+			instrance = new BeanWrapper(poClazz, config, parentJoinBeans);
 			cacheMap.put(poClazz, instrance);
 		}
 		return instrance;

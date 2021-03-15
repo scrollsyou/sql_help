@@ -31,6 +31,7 @@ public class BeanColumn {
 			String fieldName, Field field, Method readMethod, Method writeMethod, Integer sort) {
 		super();
 		this.name = name;
+		this.aliasName = name;
 		this.dateType = dateType;
 		this.length = length;
 		this.idFlag = idFlag;
@@ -52,9 +53,10 @@ public class BeanColumn {
 	 * @param tableAlias 关联表别名
 	 * @param aliasName 字段别名，Object/list/set不需要传
 	 * @param fieldBeanWrapper 关联Bean类包装类
+	 * @param groupBy 关联一对多时，分组字段
 	 */
 	public BeanColumn(String name, String fieldName, Field field, Method readMethod, Method writeMethod,
-			String tableAlias, String aliasName, BeanWrapper fieldBeanWrapper) {
+			String tableAlias, String aliasName, BeanWrapper fieldBeanWrapper, String[] groupBy) {
 		super();
 		this.name = name;
 		this.fieldName = fieldName;
@@ -65,6 +67,7 @@ public class BeanColumn {
 		this.aliasName = aliasName;
 		this.fieldBeanWrapper = fieldBeanWrapper;
 		this.sort = 0;
+		this.groupBy = groupBy;
 	}
 
 	/**
@@ -125,6 +128,10 @@ public class BeanColumn {
 	 * 关联对象
 	 */
 	private BeanWrapper fieldBeanWrapper;
+	/**
+	 * 分组字段，针对 oneToMany注解
+	 */
+	private String[] groupBy;
 	
 	
 	public Object getVal(Object entity) throws Exception {

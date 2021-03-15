@@ -19,12 +19,6 @@ public @interface ManyToOne {
 
 	// TODO 需更改为注解在vo类上，因为会有多个别名
 	/**
-	 * 对应关联entity别名
-	 * 必须为Entity类对应别名
-	 * @return
-	 */
-	String entityAlias();
-	/**
 	 * 关联Vo类
 	 * @return
 	 */

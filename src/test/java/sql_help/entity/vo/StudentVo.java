@@ -11,7 +11,7 @@ import sql_help.entity.Student;
 
 @Data
 @VOBean(mainPo = Student.class, entityAlias = "student")
-@LeftJoin(po = School.class, entityAlias = "school", joinConditions = "{student.schoolId} = {school.id}")
+@LeftJoin(po = School.class, entityAlias = "school", joinConditions = "{schoolId} = {school.id}")
 public class StudentVo {
 
 	private Integer id;
@@ -20,6 +20,6 @@ public class StudentVo {
 	@PropertyMapping(originalName = "school.name")
 	private String schoolName;
 	
-	@ManyToOne(entityAlias = "school", tagerClass = SchoolVo.class)
+	@ManyToOne(tagerClass = SchoolVo.class)
 	private SchoolVo school;
 }

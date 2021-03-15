@@ -20,6 +20,7 @@ import com.gugusong.sqlmapper.strategy.GenerationType;
 import lombok.Data;
 import lombok.ToString;
 import sql_help.db.mysql.datasource.DataSourceFactory;
+import sql_help.entity.vo.StudentVo;
 
 public class SessionTest {
 
@@ -85,10 +86,22 @@ public class SessionTest {
 		SessionTestEntity findOneById = openSession.findOneById(SessionTestEntity.class, 5);
 		System.out.println(findOneById);
 	}
+	
+	@Test
+	public void findOneVo() throws Exception {
+		Session openSession = getSession();
+		StudentVo findOneById = openSession.findOneById(StudentVo.class, 1);
+		System.out.println(findOneById);
+	}
 
-	public <E> int findCount(Example example, Class<E> E) {
-		// TODO Auto-generated method stub
-		return 0;
+	@Test
+	public void findCount() throws Exception {
+		Session openSession = getSession();
+		openSession.setAutoCommit(false);
+		int findAll = openSession.findCount(ExampleImpl.newInstance().equals("name", "bbbb2").and().condition("length({name}) > ? and length({dd}) < ?", 5, 2).orderByAsc("aa").orderByDesc("dd"), SessionTestEntity.class);
+		System.out.println(findAll);
+		openSession.rollback();
+		openSession.setAutoCommit(true);
 	}
 
 	public void commit() throws SQLException {

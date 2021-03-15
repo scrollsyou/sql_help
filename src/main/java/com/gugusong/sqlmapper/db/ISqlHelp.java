@@ -10,14 +10,6 @@ import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 public interface ISqlHelp {
 
 	/**
-	 * 通过带@Entity注解的PO类
-	 * 生成建表ddl语句
-	 * @param BeanWrapper po类
-	 * @param hasFormat 生成sql是否格式化
-	 * @return
-	 */
-	String getSqlToCreateTable(BeanWrapper wrapper, boolean hasFormat);
-	/**
 	 * 生成单表查询sql
 	 * @param poClazz
 	 * @param hasFormat
@@ -25,6 +17,14 @@ public interface ISqlHelp {
 	 * @throws Exception 
 	 */
 	String getSqlToSelect(BeanWrapper wrapper, boolean hasFormat) throws Exception;
+	/**
+	 * 生成单表查询总数
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 * @throws Exception 
+	 */
+	String getSqlToSelectCount(BeanWrapper wrapper, boolean hasFormat) throws Exception;
 	/**
 	 * 生成单表按id查询数据
 	 * @param poClazz

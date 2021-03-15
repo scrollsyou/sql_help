@@ -7,12 +7,15 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.gugusong.sqlmapper.Example;
 import com.gugusong.sqlmapper.Page;
 import com.gugusong.sqlmapper.Session;
 import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
+import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.common.util.UUIDUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
@@ -214,14 +217,61 @@ public class SessionImpl implements Session {
 			preSta.setObject(i+1, values.get(i));
 		}
 		@Cleanup ResultSet rs = preSta.executeQuery();
-		if (rs.next()) {
-			E entity = E.newInstance();
-			for (BeanColumn column : entityWrapper.getColumns()) {
-				column.setVal(entity, rs.getObject(column.getName()));
+		
+		if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+			if (rs.next()) {
+				E entity = E.newInstance();
+				for (BeanColumn column : entityWrapper.getColumns()) {
+					column.setVal(entity, rs.getObject(column.getName()));
+				}
+				return entity;
 			}
-			return entity;
+		}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+			if (rs.next()) {
+				E entity = E.newInstance();
+				setValues(rs, entity, entityWrapper);
+			}
+		}else {
+			throw new RuntimeException("查询对象非PO/VO对象!");
 		}
+			
 		return null;
+	}
+	
+	/**
+	 * 递归设置数据库查询值
+	 * @param rs
+	 * @param entity
+	 * @param entityWrapper
+	 * @throws Exception
+	 */
+	private void setValues(ResultSet rs, Object entity, BeanWrapper entityWrapper ) throws Exception {
+		for (BeanColumn column : entityWrapper.getColumns()) {
+			if(ColumnTypeMapping.OBJECT_TYPE.equals(column.getDateType())) {
+				Object valObject = column.getVal(entity);
+				if(valObject == null) {
+					valObject = column.getField().getType().newInstance();
+					column.setVal(entity, valObject);
+				}
+				setValues(rs, valObject, column.getFieldBeanWrapper());
+			}else if(ColumnTypeMapping.SET_TYPE.equals(column.getDateType())) {
+				Set<?> setObject = (Set<?>) column.getVal(entity);
+				if(setObject == null) {
+					setObject = new TreeSet<Object>();
+					column.setVal(entity, setObject);
+				}
+				// TODO 一对多需分组，分组逻辑较难
+			}else if(ColumnTypeMapping.SET_TYPE.equals(column.getDateType())) {
+				List<?> listObject = (List<?>) column.getVal(entity);
+				if(listObject == null) {
+					listObject = new ArrayList();
+					column.setVal(entity, listObject);
+				}
+				// TODO 一对多需分组，分组逻辑较难
+			}else {
+				column.setVal(entity, rs.getObject(column.getAliasName()));
+			}
+		}
 	}
 	
 	/**
@@ -241,12 +291,22 @@ public class SessionImpl implements Session {
 		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelectById);
 		preSta.setObject(1, id);
 		@Cleanup ResultSet rs = preSta.executeQuery();
-		if (rs.next()) {
-			E entity = e.newInstance();
-			for (BeanColumn column : entityWrapper.getColumns()) {
-				column.setVal(entity, rs.getObject(column.getName()));
+		if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+			if (rs.next()) {
+				E entity = e.newInstance();
+				for (BeanColumn column : entityWrapper.getColumns()) {
+					column.setVal(entity, rs.getObject(column.getName()));
+				}
+				return entity;
 			}
-			return entity;
+		}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+			if (rs.next()) {
+				E entity = e.newInstance();
+				setValues(rs, entity, entityWrapper);
+				return entity;
+			}
+		}else {
+			throw new RuntimeException("查询对象非PO/VO对象!");
 		}
 		return null;
 	}
@@ -261,8 +321,8 @@ public class SessionImpl implements Session {
 	 */
 	public <E> int findCount(Example example, Class<E> E) throws Exception {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
-		String sqlToSelect = "select count(*) from " + entityWrapper.getTableName();
-		sqlToSelect += example.toSql(entityWrapper);
+		String sqlToSelect = sqlHelp.getSqlToSelectCount(entityWrapper, false);
+		sqlToSelect = TextUtil.replaceTemplateParams(sqlToSelect, param -> example.toSql(entityWrapper));
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToSelect);
 		}

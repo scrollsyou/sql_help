@@ -18,11 +18,11 @@ import java.lang.annotation.Target;
 public @interface OneToMany {
 
 	/**
-	 * 对应关联entity别名
-	 * 必须为Entity类对应别名
+	 * 分组字段
+	 * 不能为空
 	 * @return
 	 */
-	String entityAlias();
+	String[] groupBy();
 	/**
 	 * 关联Vo类
 	 * @return

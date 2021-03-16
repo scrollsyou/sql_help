@@ -230,9 +230,12 @@ public class SessionImpl implements Session {
 			}
 		}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
 			E entity = E.newInstance();
+			E result = null;
 			while (rs.next()) {
+				result = entity;
 				setValues(rs, entity, entityWrapper);
 			}
+			return result;
 		}else {
 			throw new RuntimeException("查询对象非PO/VO对象!");
 		}

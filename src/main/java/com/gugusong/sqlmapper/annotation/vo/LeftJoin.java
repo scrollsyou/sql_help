@@ -3,6 +3,7 @@ package com.gugusong.sqlmapper.annotation.vo;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -11,6 +12,7 @@ import java.lang.annotation.Target;
  * @author yousongshu
  *
  */
+@Repeatable(LeftJoins.class)
 @Retention(RUNTIME)
 @Target(TYPE)
 public @interface LeftJoin {

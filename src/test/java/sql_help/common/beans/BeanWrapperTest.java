@@ -12,6 +12,7 @@ import com.gugusong.sqlmapper.config.GlogalConfig;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import sql_help.entity.vo.SchoolVo;
 import sql_help.entity.vo.StudentVo;
 
 @Slf4j
@@ -23,7 +24,7 @@ public class BeanWrapperTest {
 	 */
 	@Test
 	public void instrance() throws Exception {
-		BeanWrapper studentVo = BeanWrapper.instrance(StudentVo.class, new GlogalConfig());
+		BeanWrapper studentVo = BeanWrapper.instrance(SchoolVo.class, new GlogalConfig());
 		log.debug("切割数级:{}", studentVo);
 		
 	}

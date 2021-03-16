@@ -84,11 +84,13 @@ public class BeanWrapper {
 	private GlogalConfig config;
 	
 	private BeanWrapper(Class<?> beanClazz, GlogalConfig config) throws Exception {
-		this(beanClazz, config, null);
+		this(beanClazz, config, null, null, null);
 	}
-	private BeanWrapper(Class<?> beanClazz, GlogalConfig config, Map<String, BeanJoin> joinBeans) throws Exception {
+	private BeanWrapper(Class<?> beanClazz, GlogalConfig config, Map<String, BeanJoin> joinBeans, String tableAliasName, BeanWrapper mainWrapper) throws Exception {
 		this.poClazz = beanClazz;
 		this.config = config;
+		this.tableAliasName = tableAliasName;
+		this.mainWrapper = mainWrapper;
 		if(joinBeans != null) {
 			this.joinBeans = joinBeans;
 		}
@@ -134,7 +136,7 @@ public class BeanWrapper {
 				Class<?> oneClazz = manyToOne.tagerClass();
 				BeanColumn beanColumn = new BeanColumn(null, 
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
-						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans), null);
+						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper), null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
 			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
@@ -142,7 +144,7 @@ public class BeanWrapper {
 				@NonNull
 				Class<?> manyClazz = oneToMany.tagerClass();
 				// 一对多时，多的一方分组去重条件
-				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans);
+				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans, tableAliasName, mainWrapper);
 				Set<String> groupBy = new HashSet<String>(oneToManyWrapper.columns.size());
 				for (BeanColumn oneToManyColum : oneToManyWrapper.columns) {
 					BeanJoin joinBean = joinBeans.get(oneToManyColum.getTableAlias());
@@ -165,8 +167,13 @@ public class BeanWrapper {
 				if(nameSplit.length == 1) {
 					throw new RuntimeException("基础bean类中属性必须指定表别名!");
 				}
-				BeanJoin beanJoin = joinBeans.get(nameSplit[0]);
-				BeanColumn byPropertyName = beanJoin.getJoinBeanWrapper().getByPropertyName(nameSplit[1]);
+				BeanColumn byPropertyName = null;
+				if(nameSplit[0].equals(tableAliasName)) {
+					byPropertyName = mainWrapper.getByPropertyName(nameSplit[1]);
+				}else {
+					BeanJoin beanJoin = joinBeans.get(nameSplit[0]);
+					byPropertyName = beanJoin.getJoinBeanWrapper().getByPropertyName(nameSplit[1]);
+				}
 				beanColumn = new BeanColumn(byPropertyName.getName(), 
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						nameSplit[0], nameSplit[0] + "_" + byPropertyName.getAliasName(), null, null);
@@ -227,16 +234,19 @@ public class BeanWrapper {
 				Class<?> oneClazz = manyToOne.tagerClass();
 				BeanColumn beanColumn = new BeanColumn(null, 
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
-						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans), null);
+						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper), null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
 			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
 				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
 				@NonNull
 				Class<?> manyClazz = oneToMany.tagerClass();
-				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans);
+				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans, tableAliasName, mainWrapper);
 				Set<String> groupBy = new HashSet<String>(oneToManyWrapper.columns.size());
 				for (BeanColumn oneToManyColum : oneToManyWrapper.columns) {
+					if(oneToManyColum.getTableAlias() == null) {
+						continue;
+					}
 					BeanJoin joinBean = joinBeans.get(oneToManyColum.getTableAlias());
 					if(joinBean != null && joinBean.getJoinBeanWrapper().getIdColumn() != null) {
 						groupBy.add(new StringBuilder(oneToManyColum.getTableAlias()).append("_").append(joinBean.getJoinBeanWrapper().getIdColumn().getName()).toString());
@@ -368,10 +378,10 @@ public class BeanWrapper {
 		return instrance;
 	}
 	
-	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config, Map<String, BeanJoin> parentJoinBeans) throws Exception {
+	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config, Map<String, BeanJoin> parentJoinBeans, String tableAliasName, BeanWrapper mainWrapper) throws Exception {
 		BeanWrapper instrance = cacheMap.get(poClazz);
 		if(instrance == null) {
-			instrance = new BeanWrapper(poClazz, config, parentJoinBeans);
+			instrance = new BeanWrapper(poClazz, config, parentJoinBeans, tableAliasName, mainWrapper);
 			cacheMap.put(poClazz, instrance);
 		}
 		return instrance;

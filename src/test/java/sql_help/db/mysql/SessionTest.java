@@ -20,6 +20,7 @@ import com.gugusong.sqlmapper.strategy.GenerationType;
 import lombok.Data;
 import lombok.ToString;
 import sql_help.db.mysql.datasource.DataSourceFactory;
+import sql_help.entity.vo.SchoolVo;
 import sql_help.entity.vo.StudentVo;
 
 public class SessionTest {
@@ -90,7 +91,7 @@ public class SessionTest {
 	@Test
 	public void findOneVo() throws Exception {
 		Session openSession = getSession();
-		StudentVo findOneById = openSession.findOneById(StudentVo.class, 1);
+		SchoolVo findOneById = openSession.findOneById(SchoolVo.class, 1);
 		System.out.println(findOneById);
 	}
 

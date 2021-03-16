@@ -1,0 +1,34 @@
+package com.gugusong.sqlmapper.common.collection;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class ConverMapToList<E> extends ArrayList<E> {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8337756369863381720L;
+	
+	private transient HashMap<String, E> mapConver;
+	
+	public ConverMapToList(){
+		super();
+		mapConver = new HashMap<String, E>();
+	}
+	
+	/**
+	 * 增加数据
+	 * @param uniqueKey
+	 * @param val
+	 * @return
+	 */
+	public boolean add(String uniqueKey, E val) {
+		if(mapConver.put(uniqueKey, val) == null) {
+			add(val);
+			return true;
+		}
+		return false;
+	}
+
+}

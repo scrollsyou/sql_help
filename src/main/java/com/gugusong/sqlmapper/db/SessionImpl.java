@@ -6,15 +6,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 import com.gugusong.sqlmapper.Example;
 import com.gugusong.sqlmapper.Page;
 import com.gugusong.sqlmapper.Session;
 import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
+import com.gugusong.sqlmapper.common.collection.ConverMapToList;
+import com.gugusong.sqlmapper.common.collection.ConverMapToSet;
 import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.common.util.UUIDUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
@@ -227,8 +229,8 @@ public class SessionImpl implements Session {
 				return entity;
 			}
 		}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-			if (rs.next()) {
-				E entity = E.newInstance();
+			E entity = E.newInstance();
+			while (rs.next()) {
 				setValues(rs, entity, entityWrapper);
 			}
 		}else {
@@ -255,19 +257,63 @@ public class SessionImpl implements Session {
 				}
 				setValues(rs, valObject, column.getFieldBeanWrapper());
 			}else if(ColumnTypeMapping.SET_TYPE.equals(column.getDateType())) {
-				Set<?> setObject = (Set<?>) column.getVal(entity);
-				if(setObject == null) {
-					setObject = new TreeSet<Object>();
+				Set<Object> setObject = (Set<Object>) column.getVal(entity);
+				if(setObject == null || !(setObject instanceof ConverMapToSet)) {
+					setObject = new ConverMapToSet<Object>();
 					column.setVal(entity, setObject);
 				}
 				// TODO 一对多需分组，分组逻辑较难
-			}else if(ColumnTypeMapping.SET_TYPE.equals(column.getDateType())) {
-				List<?> listObject = (List<?>) column.getVal(entity);
-				if(listObject == null) {
-					listObject = new ArrayList();
+				String[] groupBy = column.getGroupBy();
+				if(groupBy == null || groupBy.length == 0) {
+					Object varObject = column.getFieldBeanWrapper().getPoClazz().newInstance();
+					setValues(rs, varObject, column.getFieldBeanWrapper());
+					setObject.add(varObject);
+				}else {
+					boolean hasValue = false;
+					StringBuilder keyAppend = new StringBuilder();
+					for (String key : groupBy) {
+						Object keyObj = rs.getObject(key);
+						if(keyObj != null) {
+							keyAppend.append(keyObj);
+							hasValue = true;
+						}
+					}
+					if(!hasValue) {
+						return;
+					}
+					Object varObject = column.getFieldBeanWrapper().getPoClazz().newInstance();
+					setValues(rs, varObject, column.getFieldBeanWrapper());
+					((ConverMapToSet<Object>)setObject).add(keyAppend.toString(), varObject);
+				}
+			}else if(ColumnTypeMapping.LIST_TYPE.equals(column.getDateType())) {
+				List<Object> listObject = (List<Object>) column.getVal(entity);
+				if(listObject == null|| !(listObject instanceof ConverMapToList)) {
+					listObject = new ConverMapToList();
 					column.setVal(entity, listObject);
 				}
 				// TODO 一对多需分组，分组逻辑较难
+				String[] groupBy = column.getGroupBy();
+				if(groupBy == null || groupBy.length == 0) {
+					Object varObject = column.getFieldBeanWrapper().getPoClazz().newInstance();
+					setValues(rs, varObject, column.getFieldBeanWrapper());
+					listObject.add(varObject);
+				}else {
+					boolean hasValue = false;
+					StringBuilder keyAppend = new StringBuilder();
+					for (String key : groupBy) {
+						Object keyObj = rs.getObject(key);
+						if(keyObj != null) {
+							keyAppend.append(keyObj);
+							hasValue = true;
+						}
+					}
+					if(!hasValue) {
+						return;
+					}
+					Object varObject = column.getFieldBeanWrapper().getPoClazz().newInstance();
+					setValues(rs, varObject, column.getFieldBeanWrapper());
+					((ConverMapToList<Object>)listObject).add(keyAppend.toString(), varObject);
+				}
 			}else {
 				column.setVal(entity, rs.getObject(column.getAliasName()));
 			}
@@ -300,11 +346,13 @@ public class SessionImpl implements Session {
 				return entity;
 			}
 		}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-			if (rs.next()) {
-				E entity = e.newInstance();
+			E entity = e.newInstance();
+			E result = null;
+			while (rs.next()) {
+				result = entity;
 				setValues(rs, entity, entityWrapper);
-				return entity;
 			}
+			return result;
 		}else {
 			throw new RuntimeException("查询对象非PO/VO对象!");
 		}

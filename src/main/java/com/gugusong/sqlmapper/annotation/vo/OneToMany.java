@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
  * vo类中的注解
  * 一对多关系配置
  * 注解支持List,Set
+ * 注解的属性值必须为空
  * @author yousongshu
  *
  */
@@ -17,12 +18,6 @@ import java.lang.annotation.Target;
 @Target(FIELD)
 public @interface OneToMany {
 
-	/**
-	 * 分组字段
-	 * 不能为空
-	 * @return
-	 */
-	String[] groupBy();
 	/**
 	 * 关联Vo类
 	 * @return

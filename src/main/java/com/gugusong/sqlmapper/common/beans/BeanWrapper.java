@@ -6,9 +6,12 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.base.CharMatcher;
@@ -138,9 +141,18 @@ public class BeanWrapper {
 				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
 				@NonNull
 				Class<?> manyClazz = oneToMany.tagerClass();
+				// 一对多时，多的一方分组去重条件
+				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans);
+				Set<String> groupBy = new HashSet<String>(oneToManyWrapper.columns.size());
+				for (BeanColumn oneToManyColum : oneToManyWrapper.columns) {
+					BeanJoin joinBean = joinBeans.get(oneToManyColum.getTableAlias());
+					if(joinBean != null && joinBean.getJoinBeanWrapper().getIdColumn() != null) {
+						groupBy.add(new StringBuilder(oneToManyColum.getTableAlias()).append("_").append(joinBean.getJoinBeanWrapper().getIdColumn().getName()).toString());
+					}
+				}
 				BeanColumn beanColumn = new BeanColumn(null, 
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
-						null, null, BeanWrapper.instrance(manyClazz, config, joinBeans), oneToMany.groupBy());
+						null, null, oneToManyWrapper, groupBy.toArray(new String[] {}));
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				// TODO 判断 oneToMany 注解必须在List/Set上
 				columnList.add(beanColumn);
@@ -222,9 +234,17 @@ public class BeanWrapper {
 				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
 				@NonNull
 				Class<?> manyClazz = oneToMany.tagerClass();
+				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans);
+				Set<String> groupBy = new HashSet<String>(oneToManyWrapper.columns.size());
+				for (BeanColumn oneToManyColum : oneToManyWrapper.columns) {
+					BeanJoin joinBean = joinBeans.get(oneToManyColum.getTableAlias());
+					if(joinBean != null && joinBean.getJoinBeanWrapper().getIdColumn() != null) {
+						groupBy.add(new StringBuilder(oneToManyColum.getTableAlias()).append("_").append(joinBean.getJoinBeanWrapper().getIdColumn().getName()).toString());
+					}
+				}
 				BeanColumn beanColumn = new BeanColumn(null, 
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
-						null, null, BeanWrapper.instrance(manyClazz, config, joinBeans), oneToMany.groupBy());
+						null, null, oneToManyWrapper, groupBy.toArray(new String[] {}));
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				// TODO 判断 oneToMany 注解必须在List/Set上
 				columnList.add(beanColumn);

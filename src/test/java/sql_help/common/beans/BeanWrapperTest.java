@@ -1,11 +1,8 @@
 package sql_help.common.beans;
 
 
-import java.beans.IntrospectionException;
-
 import org.junit.Test;
 
-import com.google.common.base.Splitter;
 import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
@@ -15,7 +12,6 @@ import com.gugusong.sqlmapper.config.GlogalConfig;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import sql_help.entity.TestEntityA;
 import sql_help.entity.vo.StudentVo;
 
 @Slf4j
@@ -29,6 +25,7 @@ public class BeanWrapperTest {
 	public void instrance() throws Exception {
 		BeanWrapper studentVo = BeanWrapper.instrance(StudentVo.class, new GlogalConfig());
 		log.debug("切割数级:{}", studentVo);
+		
 	}
 	
 	@Entity

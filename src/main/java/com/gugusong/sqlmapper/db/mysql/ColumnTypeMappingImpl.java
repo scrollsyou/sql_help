@@ -1,7 +1,7 @@
 package com.gugusong.sqlmapper.db.mysql;
 
-import java.awt.List;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.Strings;

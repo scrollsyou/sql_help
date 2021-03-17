@@ -21,4 +21,19 @@ public @interface Column {
 	 * @return
 	 */
 	String name() default "";
+	/**
+	 * 属性数据库中排序
+	 * @return
+	 */
+	public int sort() default 0;
+	/**
+	 * 数据库类型
+	 * @return
+	 */
+	String dateType() default "";
+	/**
+	 * 数据库类型长度
+	 * @return
+	 */
+	int length() default 0; 
 }

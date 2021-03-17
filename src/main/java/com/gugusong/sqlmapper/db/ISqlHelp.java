@@ -10,20 +10,29 @@ import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 public interface ISqlHelp {
 
 	/**
-	 * 通过带@Entity注解的PO类
-	 * 生成建表ddl语句
-	 * @param BeanWrapper po类
-	 * @param hasFormat 生成sql是否格式化
-	 * @return
-	 */
-	String getSqlToCreateTable(BeanWrapper poClazz, boolean hasFormat);
-	/**
 	 * 生成单表查询sql
 	 * @param poClazz
 	 * @param hasFormat
 	 * @return
+	 * @throws Exception 
 	 */
-	String getSqlToSelect(BeanWrapper poClazz, boolean hasFormat);
+	String getSqlToSelect(BeanWrapper wrapper, boolean hasFormat) throws Exception;
+	/**
+	 * 生成单表查询总数
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 * @throws Exception 
+	 */
+	String getSqlToSelectCount(BeanWrapper wrapper, boolean hasFormat) throws Exception;
+	/**
+	 * 生成单表按id查询数据
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 * @throws Exception
+	 */
+	String getSqlToSelectById(BeanWrapper poClazz, boolean hasFormat) throws Exception;
 	/**
 	 * 生成更新sql
 	 * 如 update test set id=?,name=?
@@ -31,7 +40,7 @@ public interface ISqlHelp {
 	 * @param hasFormat
 	 * @return
 	 */
-	String getSqlToUpdate(BeanWrapper poClazz, boolean hasFormat);
+	String getSqlToUpdate(BeanWrapper wrapper, boolean hasFormat);
 	/**
 	 * 生成插入sql
 	 * 如 insert into test(id,name) values(?,?)
@@ -39,7 +48,7 @@ public interface ISqlHelp {
 	 * @param hasFormat
 	 * @return
 	 */
-	String getSqlToInsert(BeanWrapper poClazz, boolean hasFormat);
+	String getSqlToInsert(BeanWrapper wrapper, boolean hasFormat);
 	/**
 	 * 生成删除sql
 	 * 如 delete from test
@@ -47,6 +56,23 @@ public interface ISqlHelp {
 	 * @param hasFormat
 	 * @return
 	 */
-	String getSqlToDelete(BeanWrapper poClazz, boolean hasFormat);
+	String getSqlToDelete(BeanWrapper wrapper, boolean hasFormat);
+	/**
+	 * 生成删除sql
+	 * 如 delete from test where id=?
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 */
+	String getSqlToDeleteById(BeanWrapper wrapper, boolean hasFormat);
+	/**
+	 * 查询id列表sql
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 * @throws Exception
+	 */
+	String getSqlToSelectId(BeanWrapper poClazz, boolean hasFormat) throws Exception;
+	
 
 }

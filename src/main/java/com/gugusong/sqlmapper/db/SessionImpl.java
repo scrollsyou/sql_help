@@ -1,11 +1,13 @@
 package com.gugusong.sqlmapper.db;
 
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -167,33 +169,88 @@ public class SessionImpl implements Session {
 	 */
 	public <E> List<E> findAll(Example example, Class<E> E) throws Exception {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
-		String sqlToSelect = sqlHelp.getSqlToSelect(entityWrapper, false);
-		sqlToSelect += example.toSql(entityWrapper);
-		if(log.isDebugEnabled()) {
-			log.debug("执行sql: {}", sqlToSelect);
-		}
+		StringBuilder sqlToSelect = new StringBuilder(sqlHelp.getSqlToSelect(entityWrapper, false));
 		List<Object> values = example.getValues();
 		if(example.isPage()) {
 			Page page = example.getPage();
 			if(page == null) {
 				page = config.getPageHelp().getPage();
 			}
-			sqlToSelect += " limit ?,?";
-			values.add((page.getPageIndex() - 1) * page.getPageSize());
-			values.add(page.getPageSize());
+			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+				sqlToSelect.append(example.toSql(entityWrapper));
+				sqlToSelect.append(" limit ?,?");
+				values.add((page.getPageIndex() - 1) * page.getPageSize());
+				values.add(page.getPageSize());
+			}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+				sqlToSelect.append(example.toSql(entityWrapper, false));
+				sqlToSelect.append(" and ")
+					.append(entityWrapper.getTableAliasName())
+					.append(".")
+					.append(entityWrapper.getMainWrapper().getIdColumn().getName())
+					.append(" in (");
+				StringBuilder selectIdSql = new StringBuilder();
+				selectIdSql.append(sqlHelp.getSqlToSelectId(entityWrapper, false))
+					.append(example.toSql(entityWrapper, false))
+					.append(" group by ")
+					.append(entityWrapper.getTableAliasName())
+					.append(".")
+					.append(entityWrapper.getMainWrapper().getIdColumn().getName())
+					.append(" limit ?,?");
+				List<Object> bufferValues = new ArrayList<Object>(values.size() + 2);
+				for (Object object : values) {
+					bufferValues.add(object);
+				}
+				bufferValues.add((page.getPageIndex() - 1) * page.getPageSize());
+				bufferValues.add(page.getPageSize());
+				@Cleanup PreparedStatement bufferPreSta = this.conn.prepareStatement(selectIdSql.toString());
+				for (int i = 0; i < bufferValues.size(); i++) {
+					bufferPreSta.setObject(i+1, bufferValues.get(i));
+				}
+				@Cleanup ResultSet idRs = bufferPreSta.executeQuery();
+				boolean first = true;
+				while (idRs.next()) {
+					if(!first) {
+						sqlToSelect.append(",");
+					}
+					first = false;
+					values.add(idRs.getObject(1));
+					sqlToSelect.append("?");
+				}
+				sqlToSelect.append(")")
+				.append(" ")
+				.append(example.toOrderSql(entityWrapper));
+			}
+		}else {
+			sqlToSelect.append(example.toSql(entityWrapper));
 		}
-		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect);
+		if(log.isDebugEnabled()) {
+			log.debug("findAll执行sql: {}", sqlToSelect);
+		}
+		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect.toString());
 		for (int i = 0; i < values.size(); i++) {
 			preSta.setObject(i+1, values.get(i));
 		}
-		List<E> entitys = new ArrayList<E>();
+		
+		List<E> entitys = new ConverMapToList<E>();
 		@Cleanup ResultSet rs = preSta.executeQuery();
 		while (rs.next()) {
-			E entity = E.newInstance();
-			for (BeanColumn column : entityWrapper.getColumns()) {
-				column.setVal(entity, rs.getObject(column.getName()));
+			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+				E entity = E.newInstance();
+				for (BeanColumn column : entityWrapper.getColumns()) {
+					column.setVal(entity, rs.getObject(column.getName()));
+				}
+				entitys.add(entity);
+			}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+				String uniqueKey = rs.getString(entityWrapper.getTableAliasName() + "_" + entityWrapper.getMainWrapper().getIdColumn().getName());
+				E entity = (E) ((ConverMapToList)entitys).get(uniqueKey);
+				if(entity == null) {
+					entity = E.newInstance();
+					((ConverMapToList)entitys).add(uniqueKey, entity);
+				}
+				setValues(rs, entity, entityWrapper);
+			}else {
+				throw new RuntimeException("查询对象非PO/VO对象!");
 			}
-			entitys.add(entity);
 		}
 		return entitys;
 	}

@@ -48,6 +48,7 @@ public interface Example {
 	 * @param entityWrapper
 	 * @return
 	 */
+	public String toSql(BeanWrapper entityWrapper, boolean hasOrder);
 	public String toSql(BeanWrapper entityWrapper);
 	/**
 	 * 获取变量值
@@ -80,11 +81,17 @@ public interface Example {
 	 * 默认分页
 	 * 通过配置获取通用分页逻辑
 	 */
-	public void page();
+	public Example page();
 	/**
 	 * 配置分页
 	 * @param page
 	 */
-	public void page(Page page);
+	public Example page(Page page);
+	/**
+	 * 生成排序
+	 * @param entityWrapper
+	 * @return
+	 */
+	public String toOrderSql(BeanWrapper entityWrapper);
 	
 }

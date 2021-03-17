@@ -141,9 +141,10 @@ public class ExampleImpl implements Example {
 	/**
 	 * 转化为条件sql
 	 * @param entityWrapper
+	 * @param hasOrder
 	 * @return
 	 */
-	public String toSql(BeanWrapper entityWrapper) {
+	public String toSql(BeanWrapper entityWrapper, boolean hasOrder) {
 		StringBuilder sb = new StringBuilder();
 		ConditionFragment sqlString = this.sqlFragment;
 		sb.append(sqlString.toSql(entityWrapper));
@@ -151,9 +152,26 @@ public class ExampleImpl implements Example {
 			sqlString = sqlString.getNextFragment();
 			sb.append(sqlString.toSql(entityWrapper));
 		}
-		if(orderFragment == null) {
+		if(orderFragment == null || !hasOrder) {
 			return sb.toString();
 		}
+		sb.append(" order by ");
+		ConditionFragment orderString = this.orderFragment;
+		sb.append(orderString.toSql(entityWrapper));
+		while (orderString.getNextFragment() != null) {
+			orderString = orderString.getNextFragment();
+			sb.append(",");
+			sb.append(orderString.toSql(entityWrapper));
+		}
+		return sb.toString();
+	}
+	
+	public String toSql(BeanWrapper entityWrapper) {
+		return toSql(entityWrapper, true);
+	}
+	
+	public String toOrderSql(BeanWrapper entityWrapper) {
+		StringBuilder sb = new StringBuilder();
 		sb.append(" order by ");
 		ConditionFragment orderString = this.orderFragment;
 		sb.append(orderString.toSql(entityWrapper));
@@ -174,7 +192,11 @@ public class ExampleImpl implements Example {
 		while (sqlString.getNextFragment() != null) {
 			sqlString = sqlString.getNextFragment();
 			if(sqlString.getType() == ConditionFragment.CONDITION_FRAGMENT_EXP) {
-				values.add(sqlString.getValue());
+				if("in".equalsIgnoreCase(sqlString.getExpression())) {
+					values.addAll((List)sqlString.getValue());
+				}else {
+					values.add(sqlString.getValue());
+				}
 			}else if(sqlString.getType() == ConditionFragment.CONDITION_FRAGMENT_CONDITION) {
 				values.addAll((List)sqlString.getValue());
 			}
@@ -182,14 +204,16 @@ public class ExampleImpl implements Example {
 		return values;
 	}
 	@Override
-	public void page() {
+	public Example page() {
 		this.hasPage = true;
+		return this;
 		
 	}
 	@Override
-	public void page(Page page) {
+	public Example page(Page page) {
 		this.hasPage = true;
 		this.page = page;
+		return this;
 	}
 	@Override
 	public boolean isPage() {

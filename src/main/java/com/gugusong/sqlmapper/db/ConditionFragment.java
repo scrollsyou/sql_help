@@ -2,7 +2,9 @@ package com.gugusong.sqlmapper.db;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import com.google.common.base.Joiner;
 import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.util.TextUtil;
@@ -118,9 +120,17 @@ public class ConditionFragment {
 			sb.append(" ");
 			sb.append(columnName);
 			sb.append(" ");
-			sb.append(this.expression);
-			sb.append(" ");
-			sb.append("?");
+			if("in".equalsIgnoreCase(this.expression)) {
+				sb.append(this.expression);
+				sb.append(" (");
+				List inValues = (List)this.value;
+				sb.append(Joiner.on(",").join(inValues.stream().map(c -> "?").iterator()));
+				sb.append(") ");
+			}else {
+				sb.append(this.expression);
+				sb.append(" ");
+				sb.append("?");
+			}
 		}else if(CONDITION_FRAGMENT_CONDITION == this.type) {
 			sb.append(" ");
 			sb.append(TextUtil.replaceTemplateParams(this.expression, paramName -> {

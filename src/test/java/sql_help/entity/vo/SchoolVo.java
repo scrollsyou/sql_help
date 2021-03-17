@@ -1,5 +1,6 @@
 package sql_help.entity.vo;
 
+import java.util.List;
 import java.util.Set;
 
 import com.gugusong.sqlmapper.annotation.vo.LeftJoin;
@@ -23,7 +24,7 @@ public class SchoolVo {
 	private String name;
 	
 	@OneToMany(tagerClass = StudentVo.class)
-	private Set<StudentVo> students;
+	private List<StudentVo> students;
 	@OneToMany(tagerClass = ClbumTestVo.class)
 	private Set<ClbumTestVo> clbums;
 	

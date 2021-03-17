@@ -65,6 +65,14 @@ public interface ISqlHelp {
 	 * @return
 	 */
 	String getSqlToDeleteById(BeanWrapper wrapper, boolean hasFormat);
+	/**
+	 * 查询id列表sql
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 * @throws Exception
+	 */
+	String getSqlToSelectId(BeanWrapper poClazz, boolean hasFormat) throws Exception;
 	
 
 }

@@ -1,6 +1,7 @@
 package sql_help.db.mysql;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -75,7 +76,10 @@ public class SessionTest {
 	public void findAll() throws Exception {
 		Session openSession = getSession();
 		openSession.setAutoCommit(false);
-		List<SessionTestEntity> findAll = openSession.findAll(ExampleImpl.newInstance().equals("name", "bbbb2").or().condition("length({name}) > ? or length({dd}) < ?", 4, 2).orderByAsc("aa").orderByDesc("dd"), SessionTestEntity.class);
+		List ids = new ArrayList<Object>();
+		ids.add(1);
+		ids.add(2);
+		List<SchoolVo> findAll = openSession.findAll(ExampleImpl.newInstance().in("school.id", ids).orderByAsc("student.id").page(), SchoolVo.class);
 		System.out.println(findAll);
 		openSession.rollback();
 		openSession.setAutoCommit(true);

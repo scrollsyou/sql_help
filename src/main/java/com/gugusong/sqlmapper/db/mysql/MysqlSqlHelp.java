@@ -45,6 +45,7 @@ public class MysqlSqlHelp implements ISqlHelp{
 	private static final String RIGHT_PARENTHESIS = ")";
 	
 	private static final String SQL_SELECT_METHOD = "getSqlToSelect";
+	private static final String SQL_SELECT_ID_METHOD = "getSqlToSelectId";
 	private static final String SQL_SELECT_COUNT_METHOD = "getSqlToSelectCount";
 	private static final String SQL_SELECT_BY_ID_METHOD = "getSqlToSelectById";
 	private static final String SQL_UPDATE_METHOD = "getSqlToUpdate";
@@ -126,6 +127,68 @@ public class MysqlSqlHelp implements ISqlHelp{
 			throw new RuntimeException("该Bean类不支持查询，查询操作只支持VO/PO类!");
 		}
 		poClazz.putSql(SQL_SELECT_METHOD, sqlsb.toString());
+		return sqlsb.toString();
+	}
+	/**
+	 * 查询id
+	 * @param poClazz
+	 * @param hasFormat
+	 * @return
+	 * @throws Exception
+	 */
+	@Override
+	public String getSqlToSelectId(BeanWrapper poClazz, boolean hasFormat) throws Exception {
+		String sql = poClazz.getSql(SQL_SELECT_ID_METHOD);
+		if(sql != null) {
+			return sql;
+		}
+		StringBuilder sqlsb = new StringBuilder();
+		if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+			sqlsb.append(SELECT);
+			sqlsb.append(SPLIT);
+			sqlsb.append(poClazz.getIdColumn().getName());
+			sqlsb.append(SPLIT);
+			sqlsb.append(FROM);
+			sqlsb.append(SPLIT);
+			sqlsb.append(poClazz.getTableName());
+		}else if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+			sqlsb.append(SELECT);
+			sqlsb.append(SPLIT);
+			// TODO 后期更改为VO中指定字段进行查询
+			sqlsb.append(poClazz.getTableAliasName());
+			sqlsb.append(POINT);
+			sqlsb.append(poClazz.getMainWrapper().getIdColumn().getName());
+			sqlsb.append(SPLIT);
+			sqlsb.append(FROM);
+			sqlsb.append(SPLIT);
+			sqlsb.append(poClazz.getTableName());
+			sqlsb.append(SPLIT);
+			sqlsb.append(poClazz.getTableAliasName());
+			for (Entry<String, BeanJoin> entry : poClazz.getJoinBeans().entrySet()) {
+				sqlsb.append(SPLIT);
+				String joinTableAlias = entry.getKey();
+				BeanJoin beanJoin = entry.getValue();
+				BeanWrapper joinBeanWrapper = beanJoin.getJoinBeanWrapper();
+				sqlsb.append(beanJoin.getToken());
+				sqlsb.append(SPLIT);
+				sqlsb.append(joinBeanWrapper.getTableName());
+				sqlsb.append(SPLIT);
+				sqlsb.append(joinTableAlias);
+				sqlsb.append(SPLIT);
+				sqlsb.append(ON + LEFT_PARENTHESIS);
+				sqlsb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
+					@NonNull
+					String columnName = poClazz.getColumnNameByPropertyName(paramName);
+					return columnName;
+				}));
+				sqlsb.append(RIGHT_PARENTHESIS);
+				sqlsb.append(SPLIT);
+				
+			}
+		}else {
+			throw new RuntimeException("该Bean类不支持查询，查询操作只支持VO/PO类!");
+		}
+		poClazz.putSql(SQL_SELECT_ID_METHOD, sqlsb.toString());
 		return sqlsb.toString();
 	}
 	

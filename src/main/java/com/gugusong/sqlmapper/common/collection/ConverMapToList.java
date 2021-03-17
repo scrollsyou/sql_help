@@ -30,5 +30,14 @@ public class ConverMapToList<E> extends ArrayList<E> {
 		}
 		return false;
 	}
+	
+	/**
+	 * 返回map中存的数据
+	 * @param uniqueKey
+	 * @return
+	 */
+	public E get(String uniqueKey) {
+		return mapConver.get(uniqueKey);
+	}
 
 }

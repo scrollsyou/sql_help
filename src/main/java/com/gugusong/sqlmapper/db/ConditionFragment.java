@@ -114,9 +114,9 @@ public class ConditionFragment {
 			sb.append(" ");
 		}else if(CONDITION_FRAGMENT_EXP == this.type) {
 			@NonNull
-			BeanColumn propertyBean = entityWrapper.getByPropertyName(this.property);
+			String columnName = entityWrapper.getColumnNameByPropertyName(this.property);
 			sb.append(" ");
-			sb.append(propertyBean.getName());
+			sb.append(columnName);
 			sb.append(" ");
 			sb.append(this.expression);
 			sb.append(" ");
@@ -125,15 +125,15 @@ public class ConditionFragment {
 			sb.append(" ");
 			sb.append(TextUtil.replaceTemplateParams(this.expression, paramName -> {
 				@NonNull
-				BeanColumn propertyBean = entityWrapper.getByPropertyName(paramName);
-				return propertyBean.getName();
+				String columnName = entityWrapper.getColumnNameByPropertyName(paramName);
+				return columnName;
 			}));
 			sb.append(" ");
 		}else if(CONDITION_FRAGMENT_ORDER == this.type) {
 			@NonNull
-			BeanColumn propertyBean = entityWrapper.getByPropertyName(this.property);
+			String columnName = entityWrapper.getColumnNameByPropertyName(this.property);
 			sb.append(" ");
-			sb.append(propertyBean.getName());
+			sb.append(columnName);
 			sb.append(" ");
 			sb.append(this.expression);
 		}

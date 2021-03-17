@@ -91,6 +91,14 @@ public class SessionTest {
 	@Test
 	public void findOneVo() throws Exception {
 		Session openSession = getSession();
+		Example example = ExampleImpl.newInstance().equals("clbum.id", 1);
+		SchoolVo findOneById = openSession.findOne(example, SchoolVo.class);
+		System.out.println(findOneById);
+	}
+	
+	@Test
+	public void findOneById() throws Exception {
+		Session openSession = getSession();
 		SchoolVo findOneById = openSession.findOneById(SchoolVo.class, 1);
 		System.out.println(findOneById);
 	}
@@ -99,7 +107,7 @@ public class SessionTest {
 	public void findCount() throws Exception {
 		Session openSession = getSession();
 		openSession.setAutoCommit(false);
-		int findAll = openSession.findCount(ExampleImpl.newInstance().equals("name", "bbbb2").and().condition("length({name}) > ? and length({dd}) < ?", 5, 2).orderByAsc("aa").orderByDesc("dd"), SessionTestEntity.class);
+		int findAll = openSession.findCount(ExampleImpl.newInstance().like("name", "%大%"), SchoolVo.class);
 		System.out.println(findAll);
 		openSession.rollback();
 		openSession.setAutoCommit(true);

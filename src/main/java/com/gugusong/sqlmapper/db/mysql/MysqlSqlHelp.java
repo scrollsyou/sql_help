@@ -325,6 +325,7 @@ public class MysqlSqlHelp implements ISqlHelp{
 			sqlsb.append("count(*)");
 			sqlsb.append(SPLIT);
 			sqlsb.append(FROM);
+			sqlsb.append(SPLIT);
 			sqlsb.append(LEFT_PARENTHESIS);
 			sqlsb.append(SELECT);
 			sqlsb.append(SPLIT);
@@ -358,13 +359,14 @@ public class MysqlSqlHelp implements ISqlHelp{
 				sqlsb.append(RIGHT_PARENTHESIS);
 				sqlsb.append(SPLIT);
 			}
+			sqlsb.append(SPLIT);
+			sqlsb.append("{where}");
+			sqlsb.append(SPLIT);
 			sqlsb.append(GROUP_BY);
 			sqlsb.append(SPLIT);
 			sqlsb.append(poClazz.getTableAliasName());
 			sqlsb.append(POINT);
 			sqlsb.append(poClazz.getMainWrapper().getIdColumn().getName());
-			sqlsb.append(SPLIT);
-			sqlsb.append("{where}");
 			sqlsb.append(RIGHT_PARENTHESIS);
 			sqlsb.append(SPLIT);
 			sqlsb.append("buffer");

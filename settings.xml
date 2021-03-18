@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+  <servers>
+    <server>
+      <id>qinghongkeji-qinghongbase-tool</id>
+      <username>${env.MY_MAVEN_USERNAME}</username>
+      <password>${env.MY_MAVEN_PASSWORD}</password>
+    </server>
+  </servers>
+ <profiles>
+        <profile>
+            <id>Repository Proxy</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>qinghongkeji-qinghongbase-tool</id>
+                    <name>tool</name>
+                    <url>https://qinghongkeji-maven.pkg.coding.net/repository/qinghongbase/tool/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+</settings>

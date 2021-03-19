@@ -19,6 +19,8 @@ import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.collection.ConverMapToList;
 import com.gugusong.sqlmapper.common.collection.ConverMapToSet;
+import com.gugusong.sqlmapper.common.exception.SqlException;
+import com.gugusong.sqlmapper.common.exception.StructureException;
 import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.common.util.UUIDUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
@@ -27,6 +29,7 @@ import com.gugusong.sqlmapper.strategy.GenerationType;
 
 import lombok.Cleanup;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -55,7 +58,8 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception 
 	 */
-	public <T> T save(T entity) throws Exception {
+	@SneakyThrows
+	public <T> T save(T entity) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToInsert = sqlHelp.getSqlToInsert(entityWrapper, false);
 		if(log.isDebugEnabled()) {
@@ -90,7 +94,7 @@ public class SessionImpl implements Session {
 				}else if(ColumnTypeMappingImpl.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
 					entityWrapper.getIdColumn().setVal(entity, resultSet.getLong(1));
 				}else {
-					throw new Exception("数据库自增长id类型不为int/long！");
+					throw new StructureException("数据库自增长id类型不为int/long！");
 				}
 			}
 		}
@@ -105,7 +109,8 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception 
 	 */
-	public <T> int update(T entity) throws Exception {
+	@SneakyThrows
+	public <T> int update(T entity) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToUpdate = sqlHelp.getSqlToUpdate(entityWrapper, false);
 		if(log.isDebugEnabled()) {
@@ -133,7 +138,8 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception 
 	 */
-	public <T> int delete(T entity) throws Exception {
+	@SneakyThrows
+	public <T> int delete(T entity) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToDeleteById = sqlHelp.getSqlToDeleteById(entityWrapper, false);
 		if(log.isDebugEnabled()) {
@@ -144,7 +150,8 @@ public class SessionImpl implements Session {
 		return preSta.executeUpdate();
 	}
 	
-	public <E> int delete(Example example, Class<E> E) throws Exception {
+	@SneakyThrows
+	public <E> int delete(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
 		String sqlToDelete = sqlHelp.getSqlToDelete(entityWrapper, false);
 		sqlToDelete += example.toSql(entityWrapper);
@@ -167,7 +174,8 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception 
 	 */
-	public <E> List<E> findAll(Example example, Class<E> E) throws Exception {
+	@SneakyThrows
+	public <E> List<E> findAll(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
 		StringBuilder sqlToSelect = new StringBuilder(sqlHelp.getSqlToSelect(entityWrapper, false));
 		List<Object> values = example.getValues();
@@ -263,7 +271,8 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception 
 	 */
-	public <E> E findOne(Example example, Class<E> E) throws Exception {
+	@SneakyThrows
+	public <E> E findOne(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
 		String sqlToSelect = sqlHelp.getSqlToSelect(entityWrapper, false);
 		sqlToSelect += example.toSql(entityWrapper);
@@ -388,7 +397,8 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception 
 	 */
-	public <E> E findOneById(Class<E> e, Object id) throws Exception {
+	@SneakyThrows
+	public <E> E findOneById(Class<E> e, Object id) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
 		String sqlToSelectById = sqlHelp.getSqlToSelectById(entityWrapper, false);
 		if(log.isDebugEnabled()) {
@@ -427,7 +437,8 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception 
 	 */
-	public <E> int findCount(Example example, Class<E> E) throws Exception {
+	@SneakyThrows
+	public <E> int findCount(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
 		String sqlToSelect = sqlHelp.getSqlToSelectCount(entityWrapper, false);
 		sqlToSelect = TextUtil.replaceTemplateParams(sqlToSelect, param -> example.toSql(entityWrapper));
@@ -446,16 +457,20 @@ public class SessionImpl implements Session {
 		return 0;
 	}
 	
-	public void commit() throws SQLException {
+	@SneakyThrows
+	public void commit() {
 		conn.commit();
 	}
-	public void close() throws SQLException {
+	@SneakyThrows
+	public void close() {
 		this.conn.close();
 	}
-	public void setAutoCommit(boolean autoCommit) throws SQLException {
+	@SneakyThrows
+	public void setAutoCommit(boolean autoCommit) {
 		this.conn.setAutoCommit(autoCommit);
 	}
-	public void rollback() throws SQLException {
+	@SneakyThrows
+	public void rollback() {
 		this.conn.rollback();
 	}
 	

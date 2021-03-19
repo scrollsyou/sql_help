@@ -1,6 +1,7 @@
 package com.gugusong.sqlmapper.common.beans;
 
 import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
@@ -27,11 +28,13 @@ import com.gugusong.sqlmapper.annotation.vo.OneToMany;
 import com.gugusong.sqlmapper.annotation.vo.PropertyMapping;
 import com.gugusong.sqlmapper.annotation.vo.VOBean;
 import com.gugusong.sqlmapper.common.constants.ErrorCodeConstant;
+import com.gugusong.sqlmapper.common.exception.StructureException;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.SneakyThrows;
 
 /**
  * bean类包装器，用于解析类属性
@@ -83,10 +86,10 @@ public class BeanWrapper {
 	
 	private GlogalConfig config;
 	
-	private BeanWrapper(Class<?> beanClazz, GlogalConfig config) throws Exception {
+	private BeanWrapper(Class<?> beanClazz, GlogalConfig config) {
 		this(beanClazz, config, null, null, null);
 	}
-	private BeanWrapper(Class<?> beanClazz, GlogalConfig config, Map<String, BeanJoin> joinBeans, String tableAliasName, BeanWrapper mainWrapper) throws Exception {
+	private BeanWrapper(Class<?> beanClazz, GlogalConfig config, Map<String, BeanJoin> joinBeans, String tableAliasName, BeanWrapper mainWrapper) {
 		this.poClazz = beanClazz;
 		this.config = config;
 		this.tableAliasName = tableAliasName;
@@ -115,11 +118,16 @@ public class BeanWrapper {
 	 * @param voClazz
 	 * @param config
 	 */
-	private void simpleBeanInstanc(Class<?> voClazz, GlogalConfig config)  throws Exception {
+	private void simpleBeanInstanc(Class<?> voClazz, GlogalConfig config) {
 
 		Field[] physicalFields = voClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
-		BeanInfo beanInfo = Introspector.getBeanInfo(voClazz, Object.class);
+		BeanInfo beanInfo = null;
+		try {
+			beanInfo = Introspector.getBeanInfo(voClazz, Object.class);
+		} catch (IntrospectionException e) {
+			throw new StructureException(e);
+		}
 		PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
 		for (Field physicalField : physicalFields) {
 			if(physicalField.isAnnotationPresent(Transient.class)) {
@@ -128,7 +136,7 @@ public class BeanWrapper {
 			// TODO 为方便后期扩展，需更改为其它模式
 			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
 			if(propertyDesc == null) {
-				throw new Exception(ErrorCodeConstant.NOTBEAN.toString());
+				throw new StructureException(ErrorCodeConstant.NOTBEAN);
 			}
 			if(physicalField.isAnnotationPresent(ManyToOne.class)) {
 				ManyToOne manyToOne = physicalField.getAnnotation(ManyToOne.class);
@@ -199,7 +207,7 @@ public class BeanWrapper {
 	 * @param config
 	 * @throws Exception
 	 */
-	private void voInstance(Class<?> voClazz, GlogalConfig config) throws Exception {
+	private void voInstance(Class<?> voClazz, GlogalConfig config) {
 		VOBean voBean = voClazz.getAnnotation(VOBean.class);
 		@NonNull
 		Class<?> mainPoClazz = voBean.mainPo();
@@ -217,7 +225,12 @@ public class BeanWrapper {
 		}
 		Field[] physicalFields = voClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
-		BeanInfo beanInfo = Introspector.getBeanInfo(voClazz, Object.class);
+		BeanInfo beanInfo = null;
+		try {
+			beanInfo = Introspector.getBeanInfo(voClazz, Object.class);
+		} catch (IntrospectionException e) {
+			throw new StructureException(e);
+		}
 		PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
 		for (Field physicalField : physicalFields) {
 			if(physicalField.isAnnotationPresent(Transient.class)) {
@@ -226,7 +239,7 @@ public class BeanWrapper {
 			// TODO 为方便后期扩展，需更改为其它模式
 			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
 			if(propertyDesc == null) {
-				throw new Exception(ErrorCodeConstant.NOTBEAN.toString());
+				throw new StructureException(ErrorCodeConstant.NOTBEAN);
 			}
 			if(physicalField.isAnnotationPresent(ManyToOne.class)) {
 				ManyToOne manyToOne = physicalField.getAnnotation(ManyToOne.class);
@@ -303,10 +316,15 @@ public class BeanWrapper {
 	 * @param config
 	 * @throws Exception
 	 */
-	private void poInstance(Class<?> poClazz, GlogalConfig config) throws Exception {
+	private void poInstance(Class<?> poClazz, GlogalConfig config) {
 		Field[] physicalFields = poClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
-		BeanInfo beanInfo = Introspector.getBeanInfo(poClazz, Object.class);
+		BeanInfo beanInfo = null;
+		try {
+			beanInfo = Introspector.getBeanInfo(poClazz, Object.class);
+		} catch (IntrospectionException e) {
+			throw new StructureException(e);
+		}
 		PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
 		for (Field physicalField : physicalFields) {
 			if(physicalField.isAnnotationPresent(Transient.class)) {
@@ -315,7 +333,7 @@ public class BeanWrapper {
 			// TODO 为方便后期扩展，需更改为其它模式
 			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
 			if(propertyDesc == null) {
-				throw new Exception(ErrorCodeConstant.NOTBEAN.toString());
+				throw new StructureException(ErrorCodeConstant.NOTBEAN);
 			}
 			if(physicalField.isAnnotationPresent(Id.class)) {
 				Id id = physicalField.getAnnotation(Id.class);
@@ -369,7 +387,7 @@ public class BeanWrapper {
 		return null;
 	}
 	
-	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config) throws Exception {
+	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config) {
 		BeanWrapper instrance = cacheMap.get(poClazz);
 		if(instrance == null) {
 			instrance = new BeanWrapper(poClazz, config);
@@ -378,7 +396,7 @@ public class BeanWrapper {
 		return instrance;
 	}
 	
-	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config, Map<String, BeanJoin> parentJoinBeans, String tableAliasName, BeanWrapper mainWrapper) throws Exception {
+	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config, Map<String, BeanJoin> parentJoinBeans, String tableAliasName, BeanWrapper mainWrapper) {
 		BeanWrapper instrance = cacheMap.get(poClazz);
 		if(instrance == null) {
 			instrance = new BeanWrapper(poClazz, config, parentJoinBeans, tableAliasName, mainWrapper);

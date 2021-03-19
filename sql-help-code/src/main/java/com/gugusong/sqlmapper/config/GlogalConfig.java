@@ -21,6 +21,25 @@ import lombok.Setter;
  */
 public class GlogalConfig {
 
+	public GlogalConfig() {
+		this(null, new SnowFlake(1, 1), new DefaultJDBCImplicitNamingStrategyImpl(), 
+				new ColumnTypeMappingImpl(), new PageHelpImpl());
+	}
+	public GlogalConfig(DataSource dataSource) {
+		this(dataSource, new SnowFlake(1, 1), new DefaultJDBCImplicitNamingStrategyImpl(), 
+				new ColumnTypeMappingImpl(), new PageHelpImpl());
+	}
+	
+	public GlogalConfig(DataSource dataSource, SnowFlake snowFlake, ImplicitNamingStrategy implicitNamingStrategy,
+			ColumnTypeMapping columnTypeMapping, PageHelp pageHelp) {
+		super();
+		this.dataSource = dataSource;
+		this.snowFlake = snowFlake;
+		this.implicitNamingStrategy = implicitNamingStrategy;
+		this.columnTypeMapping = columnTypeMapping;
+		this.pageHelp = pageHelp;
+	}
+
 	/**
 	 * 需配置数据库连接池
 	 * 需进行数据库操作时不可这空

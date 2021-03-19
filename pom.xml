@@ -17,5 +17,6 @@
    </distributionManagement>
    <modules>
    	<module>sql-help-code</module>
+   	<module>sql-help-spring-boot-starter</module>
    </modules>
 </project>

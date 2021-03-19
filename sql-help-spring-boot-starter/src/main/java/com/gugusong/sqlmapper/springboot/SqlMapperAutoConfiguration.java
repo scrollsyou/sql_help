@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Configuration
 @EnableConfigurationProperties(SqlMapperProperties.class)
-@ConditionalOnBean(DataSource.class)
+//@ConditionalOnBean(DataSource.class)
 public class SqlMapperAutoConfiguration implements DisposableBean {
 
 	@Resource
@@ -51,7 +51,7 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 	 */
 	@ConditionalOnMissingBean(SnowFlake.class)
 	@Bean
-	public SnowFlake snowFlake() {
+	public SnowFlake sqlHelpSnowFlake() {
 		return new SnowFlake(properties.getDatacenterId(), properties.getMachineId());
 	}
 	
@@ -61,7 +61,7 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 	 */
 	@ConditionalOnMissingBean(ImplicitNamingStrategy.class)
 	@Bean
-	public ImplicitNamingStrategy implicitNamingStrategy() {
+	public ImplicitNamingStrategy sqlHelpImplicitNamingStrategy() {
 		return new DefaultJDBCImplicitNamingStrategyImpl();
 	}
 	
@@ -71,7 +71,7 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 	 */
 	@ConditionalOnMissingBean(ColumnTypeMapping.class)
 	@Bean
-	public ColumnTypeMapping columnTypeMapping() {
+	public ColumnTypeMapping sqlHelpColumnTypeMapping() {
 		return new ColumnTypeMappingImpl();
 	}
 	
@@ -81,26 +81,26 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 	 */
 	@ConditionalOnMissingBean(PageHelp.class)
 	@Bean
-	public PageHelp pageHelp() {
+	public PageHelp sqlHelpPageHelp() {
 		return new PageHelpImpl();
 	}
 	
 	@ConditionalOnMissingBean(GlogalConfig.class)
 	@Bean
-	public GlogalConfig glogalConfig(DataSource dataSource, SnowFlake snowFlake, ImplicitNamingStrategy implicitNamingStrategy,
+	public GlogalConfig sqlHelpGlogalConfig(DataSource dataSource, SnowFlake snowFlake, ImplicitNamingStrategy implicitNamingStrategy,
 			ColumnTypeMapping columnTypeMapping, PageHelp pageHelp) {
 		return new GlogalConfig(dataSource, snowFlake, implicitNamingStrategy, columnTypeMapping, pageHelp);
 	}
 	
 	@ConditionalOnMissingBean(SessionFactory.class)
 	@Bean
-	public SessionFactory sessionFactory(GlogalConfig config) {
+	public SessionFactory sqlHelpSessionFactory(GlogalConfig config) {
 		return new SessionFactoryImpl(config);
 	}
 	
 	@Bean
 	@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-	public Session session(SessionFactory factory) throws SQLException {
+	public Session sqlHelpSession(SessionFactory factory) throws SQLException {
 		return factory.openSession();
 	}
 	

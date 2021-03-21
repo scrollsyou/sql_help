@@ -71,32 +71,39 @@ public class SessionImpl implements Session {
 			entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
 		}
 		@Cleanup PreparedStatement preSta = null;
-		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
-			preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
-		}else {
-			preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert);
-		}
-		List<BeanColumn> columns = entityWrapper.getColumns();
-		int i = 1;
-		for (BeanColumn beanColumn : columns) {
-			if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
-				continue;
+		try {
+			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
+			}else {
+				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert);
 			}
-			preSta.setObject(i, beanColumn.getVal(entity));
-			i++;
-		}
-		preSta.executeUpdate();
-		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
-			@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
-			if(resultSet.next()) {
-				if(ColumnTypeMappingImpl.INT_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
-					entityWrapper.getIdColumn().setVal(entity, resultSet.getInt(1));
-				}else if(ColumnTypeMappingImpl.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
-					entityWrapper.getIdColumn().setVal(entity, resultSet.getLong(1));
-				}else {
-					throw new StructureException("数据库自增长id类型不为int/long！");
+			List<BeanColumn> columns = entityWrapper.getColumns();
+			int i = 1;
+			for (BeanColumn beanColumn : columns) {
+				if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
+					continue;
+				}
+				preSta.setObject(i, beanColumn.getVal(entity));
+				i++;
+			}
+			preSta.executeUpdate();
+			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
+				if(resultSet.next()) {
+					if(ColumnTypeMappingImpl.INT_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, resultSet.getInt(1));
+					}else if(ColumnTypeMappingImpl.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, resultSet.getLong(1));
+					}else {
+						throw new StructureException("数据库自增长id类型不为int/long！");
+					}
 				}
 			}
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
 		}
 		return entity;
 	}
@@ -116,18 +123,25 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToUpdate);
 		}
-		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
-		List<BeanColumn> columns = entityWrapper.getColumns();
-		int i = 1;
-		for (BeanColumn beanColumn : columns) {
-			if(beanColumn.isIdFlag()) {
-				continue;
+		try {
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
+			List<BeanColumn> columns = entityWrapper.getColumns();
+			int i = 1;
+			for (BeanColumn beanColumn : columns) {
+				if(beanColumn.isIdFlag()) {
+					continue;
+				}
+				preSta.setObject(i, beanColumn.getVal(entity));
+				i++;
 			}
-			preSta.setObject(i, beanColumn.getVal(entity));
-			i++;
+			preSta.setObject(i, entityWrapper.getIdColumn().getVal(entity));
+			return preSta.executeUpdate();
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
 		}
-		preSta.setObject(i, entityWrapper.getIdColumn().getVal(entity));
-		return preSta.executeUpdate();
 	}
 
 	/**
@@ -145,9 +159,16 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToDeleteById);
 		}
-		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDeleteById);
-		preSta.setObject(1, entityWrapper.getIdColumn().getVal(entity));
-		return preSta.executeUpdate();
+		try {
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDeleteById);
+			preSta.setObject(1, entityWrapper.getIdColumn().getVal(entity));
+			return preSta.executeUpdate();
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
+		}
 	}
 	
 	@SneakyThrows
@@ -158,12 +179,19 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToDelete);
 		}
-		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDelete);
-		List<Object> values = example.getValues();
-		for (int i = 0; i < values.size(); i++) {
-			preSta.setObject(i+1, values.get(i));
+		try {
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDelete);
+			List<Object> values = example.getValues();
+			for (int i = 0; i < values.size(); i++) {
+				preSta.setObject(i+1, values.get(i));
+			}
+			return preSta.executeUpdate();
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
 		}
-		return preSta.executeUpdate();
 	}
 
 	/**
@@ -210,19 +238,26 @@ public class SessionImpl implements Session {
 				}
 				bufferValues.add((page.getPageIndex() - 1) * page.getPageSize());
 				bufferValues.add(page.getPageSize());
-				@Cleanup PreparedStatement bufferPreSta = this.connHolper.getTagerConnection().prepareStatement(selectIdSql.toString());
-				for (int i = 0; i < bufferValues.size(); i++) {
-					bufferPreSta.setObject(i+1, bufferValues.get(i));
-				}
-				@Cleanup ResultSet idRs = bufferPreSta.executeQuery();
-				boolean first = true;
-				while (idRs.next()) {
-					if(!first) {
-						sqlToSelect.append(",");
+				try {
+					@Cleanup PreparedStatement bufferPreSta = this.connHolper.getTagerConnection().prepareStatement(selectIdSql.toString());
+					for (int i = 0; i < bufferValues.size(); i++) {
+						bufferPreSta.setObject(i+1, bufferValues.get(i));
 					}
-					first = false;
-					values.add(idRs.getObject(1));
-					sqlToSelect.append("?");
+					@Cleanup ResultSet idRs = bufferPreSta.executeQuery();
+					boolean first = true;
+					while (idRs.next()) {
+						if(!first) {
+							sqlToSelect.append(",");
+						}
+						first = false;
+						values.add(idRs.getObject(1));
+						sqlToSelect.append("?");
+					}
+				} catch (SQLException e) {
+					this.close();
+					throw e;
+				}finally {
+					this.close();
 				}
 				sqlToSelect.append(")")
 				.append(" ")
@@ -234,33 +269,40 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("findAll执行sql: {}", sqlToSelect);
 		}
-		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect.toString());
-		for (int i = 0; i < values.size(); i++) {
-			preSta.setObject(i+1, values.get(i));
-		}
-		
-		List<E> entitys = new ConverMapToList<E>();
-		@Cleanup ResultSet rs = preSta.executeQuery();
-		while (rs.next()) {
-			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-				E entity = E.newInstance();
-				for (BeanColumn column : entityWrapper.getColumns()) {
-					column.setVal(entity, rs.getObject(column.getName()));
-				}
-				entitys.add(entity);
-			}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-				String uniqueKey = rs.getString(entityWrapper.getTableAliasName() + "_" + entityWrapper.getMainWrapper().getIdColumn().getName());
-				E entity = (E) ((ConverMapToList)entitys).get(uniqueKey);
-				if(entity == null) {
-					entity = E.newInstance();
-					((ConverMapToList)entitys).add(uniqueKey, entity);
-				}
-				setValues(rs, entity, entityWrapper);
-			}else {
-				throw new RuntimeException("查询对象非PO/VO对象!");
+		try {
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect.toString());
+			for (int i = 0; i < values.size(); i++) {
+				preSta.setObject(i+1, values.get(i));
 			}
+			
+			List<E> entitys = new ConverMapToList<E>();
+			@Cleanup ResultSet rs = preSta.executeQuery();
+			while (rs.next()) {
+				if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+					E entity = E.newInstance();
+					for (BeanColumn column : entityWrapper.getColumns()) {
+						column.setVal(entity, rs.getObject(column.getName()));
+					}
+					entitys.add(entity);
+				}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+					String uniqueKey = rs.getString(entityWrapper.getTableAliasName() + "_" + entityWrapper.getMainWrapper().getIdColumn().getName());
+					E entity = (E) ((ConverMapToList)entitys).get(uniqueKey);
+					if(entity == null) {
+						entity = E.newInstance();
+						((ConverMapToList)entitys).add(uniqueKey, entity);
+					}
+					setValues(rs, entity, entityWrapper);
+				}else {
+					throw new RuntimeException("查询对象非PO/VO对象!");
+				}
+			}
+			return entitys;
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
 		}
-		return entitys;
 	}
 
 	/**
@@ -279,33 +321,39 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToSelect);
 		}
-		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
-		List<Object> values = example.getValues();
-		for (int i = 0; i < values.size(); i++) {
-			preSta.setObject(i+1, values.get(i));
-		}
-		@Cleanup ResultSet rs = preSta.executeQuery();
-		
-		if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-			if (rs.next()) {
-				E entity = E.newInstance();
-				for (BeanColumn column : entityWrapper.getColumns()) {
-					column.setVal(entity, rs.getObject(column.getName()));
-				}
-				return entity;
+		try {
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
+			List<Object> values = example.getValues();
+			for (int i = 0; i < values.size(); i++) {
+				preSta.setObject(i+1, values.get(i));
 			}
-		}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-			E entity = E.newInstance();
-			E result = null;
-			while (rs.next()) {
-				result = entity;
-				setValues(rs, entity, entityWrapper);
-			}
-			return result;
-		}else {
-			throw new RuntimeException("查询对象非PO/VO对象!");
-		}
+			@Cleanup ResultSet rs = preSta.executeQuery();
 			
+			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+				if (rs.next()) {
+					E entity = E.newInstance();
+					for (BeanColumn column : entityWrapper.getColumns()) {
+						column.setVal(entity, rs.getObject(column.getName()));
+					}
+					return entity;
+				}
+			}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+				E entity = E.newInstance();
+				E result = null;
+				while (rs.next()) {
+					result = entity;
+					setValues(rs, entity, entityWrapper);
+				}
+				return result;
+			}else {
+				throw new RuntimeException("查询对象非PO/VO对象!");
+			}
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
+		}	
 		return null;
 	}
 	
@@ -404,27 +452,34 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToSelectById);
 		}
-		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelectById);
-		preSta.setObject(1, id);
-		@Cleanup ResultSet rs = preSta.executeQuery();
-		if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-			if (rs.next()) {
-				E entity = e.newInstance();
-				for (BeanColumn column : entityWrapper.getColumns()) {
-					column.setVal(entity, rs.getObject(column.getName()));
+		try {
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelectById);
+			preSta.setObject(1, id);
+			@Cleanup ResultSet rs = preSta.executeQuery();
+			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+				if (rs.next()) {
+					E entity = e.newInstance();
+					for (BeanColumn column : entityWrapper.getColumns()) {
+						column.setVal(entity, rs.getObject(column.getName()));
+					}
+					return entity;
 				}
-				return entity;
+			}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+				E entity = e.newInstance();
+				E result = null;
+				while (rs.next()) {
+					result = entity;
+					setValues(rs, entity, entityWrapper);
+				}
+				return result;
+			}else {
+				throw new RuntimeException("查询对象非PO/VO对象!");
 			}
-		}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-			E entity = e.newInstance();
-			E result = null;
-			while (rs.next()) {
-				result = entity;
-				setValues(rs, entity, entityWrapper);
-			}
-			return result;
-		}else {
-			throw new RuntimeException("查询对象非PO/VO对象!");
+		} catch (SQLException sqlE) {
+			this.close();
+			throw sqlE;
+		}finally {
+			this.close();
 		}
 		return null;
 	}
@@ -445,14 +500,21 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToSelect);
 		}
-		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
-		List<Object> values = example.getValues();
-		for (int i = 0; i < values.size(); i++) {
-			preSta.setObject(i+1, values.get(i));
-		}
-		@Cleanup ResultSet rs = preSta.executeQuery();
-		if (rs.next()) {
-			return rs.getInt(1);
+		try {
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
+			List<Object> values = example.getValues();
+			for (int i = 0; i < values.size(); i++) {
+				preSta.setObject(i+1, values.get(i));
+			}
+			@Cleanup ResultSet rs = preSta.executeQuery();
+			if (rs.next()) {
+				return rs.getInt(1);
+			}
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
 		}
 		return 0;
 	}
@@ -463,7 +525,7 @@ public class SessionImpl implements Session {
 	}
 	@SneakyThrows
 	public void close() {
-		this.connHolper.getTagerConnection().close();
+		this.connHolper.releaseConnection();
 	}
 	@SneakyThrows
 	public void setAutoCommit(boolean autoCommit) {

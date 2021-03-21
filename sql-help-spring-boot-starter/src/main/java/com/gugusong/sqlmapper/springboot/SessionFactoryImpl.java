@@ -1,19 +1,24 @@
-package com.gugusong.sqlmapper.db;
+package com.gugusong.sqlmapper.springboot;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.springframework.jdbc.datasource.DataSourceUtils;
+
 import com.gugusong.sqlmapper.Session;
 import com.gugusong.sqlmapper.SessionFactory;
 import com.gugusong.sqlmapper.config.GlogalConfig;
+import com.gugusong.sqlmapper.db.ConnectionHolper;
+import com.gugusong.sqlmapper.db.ISqlHelp;
+import com.gugusong.sqlmapper.db.SessionImpl;
 import com.gugusong.sqlmapper.db.mysql.MysqlSqlHelp;
 
 import lombok.NonNull;
 
 /**
- * 简单的jdbc操作
+ * 对spring jdbc进行封装适配
  * @author yousongshu
  *
  */
@@ -35,22 +40,13 @@ public class SessionFactoryImpl implements SessionFactory {
 			private Connection targerConn;
 			@Override
 			public Connection getTagerConnection() {
-				// TODO Auto-generated method stub
-				try {
-					targerConn = dataSource.getConnection();
-					return targerConn;
-				} catch (SQLException e) {
-					throw new RuntimeException(e);
-				}
+				targerConn = DataSourceUtils.getConnection(dataSource);
+				return targerConn;
 			}
 
 			@Override
 			public void releaseConnection() {
-				try {
-					targerConn.close();
-				} catch (SQLException e) {
-					throw new RuntimeException(e);
-				}
+				DataSourceUtils.releaseConnection(targerConn, dataSource);
 			}
 		}, sqlHelp, config);
 	}

@@ -7,7 +7,6 @@ import java.sql.Connection;
  * @author yousongshu
  *
  */
-@FunctionalInterface
 public interface ConnectionHolper {
 
 	/**
@@ -15,4 +14,9 @@ public interface ConnectionHolper {
 	 * @return
 	 */
 	public Connection getTagerConnection();
+	
+	/**
+	 * 释放连接
+	 */
+	public void releaseConnection();
 }

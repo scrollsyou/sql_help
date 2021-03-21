@@ -4,17 +4,14 @@ import java.sql.SQLException;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
-import javax.xml.ws.FaultAction;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 
 import com.gugusong.sqlmapper.PageHelp;
 import com.gugusong.sqlmapper.Session;
@@ -23,7 +20,6 @@ import com.gugusong.sqlmapper.common.util.SnowFlake;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 import com.gugusong.sqlmapper.db.ColumnTypeMapping;
 import com.gugusong.sqlmapper.db.PageHelpImpl;
-import com.gugusong.sqlmapper.db.SessionFactoryImpl;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.strategy.ImplicitNamingStrategy;
 import com.gugusong.sqlmapper.strategy.impl.DefaultJDBCImplicitNamingStrategyImpl;
@@ -99,7 +95,6 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 	}
 	
 	@Bean
-	@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 	public Session sqlHelpSession(SessionFactory factory) throws SQLException {
 		return factory.openSession();
 	}

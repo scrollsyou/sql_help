@@ -41,12 +41,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SessionImpl implements Session {
 	
-	private Connection conn;
+	private ConnectionHolper connHolper;
 	private ISqlHelp sqlHelp;
 	private GlogalConfig config;
 	
-	public SessionImpl(@NonNull Connection conn, @NonNull ISqlHelp sqlHelp, @NonNull GlogalConfig config) {
-		this.conn = conn;
+	public SessionImpl(@NonNull ConnectionHolper connHolper, @NonNull ISqlHelp sqlHelp, @NonNull GlogalConfig config) {
+		this.connHolper = connHolper;
 		this.sqlHelp = sqlHelp;
 		this.config = config;
 	}
@@ -72,9 +72,9 @@ public class SessionImpl implements Session {
 		}
 		@Cleanup PreparedStatement preSta = null;
 		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
-			preSta = this.conn.prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
+			preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
 		}else {
-			preSta = this.conn.prepareStatement(sqlToInsert);
+			preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert);
 		}
 		List<BeanColumn> columns = entityWrapper.getColumns();
 		int i = 1;
@@ -116,7 +116,7 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToUpdate);
 		}
-		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToUpdate);
+		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
 		List<BeanColumn> columns = entityWrapper.getColumns();
 		int i = 1;
 		for (BeanColumn beanColumn : columns) {
@@ -145,7 +145,7 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToDeleteById);
 		}
-		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToDeleteById);
+		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDeleteById);
 		preSta.setObject(1, entityWrapper.getIdColumn().getVal(entity));
 		return preSta.executeUpdate();
 	}
@@ -158,7 +158,7 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToDelete);
 		}
-		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToDelete);
+		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDelete);
 		List<Object> values = example.getValues();
 		for (int i = 0; i < values.size(); i++) {
 			preSta.setObject(i+1, values.get(i));
@@ -210,7 +210,7 @@ public class SessionImpl implements Session {
 				}
 				bufferValues.add((page.getPageIndex() - 1) * page.getPageSize());
 				bufferValues.add(page.getPageSize());
-				@Cleanup PreparedStatement bufferPreSta = this.conn.prepareStatement(selectIdSql.toString());
+				@Cleanup PreparedStatement bufferPreSta = this.connHolper.getTagerConnection().prepareStatement(selectIdSql.toString());
 				for (int i = 0; i < bufferValues.size(); i++) {
 					bufferPreSta.setObject(i+1, bufferValues.get(i));
 				}
@@ -234,7 +234,7 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("findAll执行sql: {}", sqlToSelect);
 		}
-		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect.toString());
+		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect.toString());
 		for (int i = 0; i < values.size(); i++) {
 			preSta.setObject(i+1, values.get(i));
 		}
@@ -279,7 +279,7 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToSelect);
 		}
-		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect);
+		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
 		List<Object> values = example.getValues();
 		for (int i = 0; i < values.size(); i++) {
 			preSta.setObject(i+1, values.get(i));
@@ -404,7 +404,7 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToSelectById);
 		}
-		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelectById);
+		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelectById);
 		preSta.setObject(1, id);
 		@Cleanup ResultSet rs = preSta.executeQuery();
 		if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
@@ -445,7 +445,7 @@ public class SessionImpl implements Session {
 		if(log.isDebugEnabled()) {
 			log.debug("执行sql: {}", sqlToSelect);
 		}
-		@Cleanup PreparedStatement preSta = this.conn.prepareStatement(sqlToSelect);
+		@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
 		List<Object> values = example.getValues();
 		for (int i = 0; i < values.size(); i++) {
 			preSta.setObject(i+1, values.get(i));
@@ -459,19 +459,19 @@ public class SessionImpl implements Session {
 	
 	@SneakyThrows
 	public void commit() {
-		conn.commit();
+		this.connHolper.getTagerConnection().commit();
 	}
 	@SneakyThrows
 	public void close() {
-		this.conn.close();
+		this.connHolper.getTagerConnection().close();
 	}
 	@SneakyThrows
 	public void setAutoCommit(boolean autoCommit) {
-		this.conn.setAutoCommit(autoCommit);
+		this.connHolper.getTagerConnection().setAutoCommit(autoCommit);
 	}
 	@SneakyThrows
 	public void rollback() {
-		this.conn.rollback();
+		this.connHolper.getTagerConnection().rollback();
 	}
 	
 }

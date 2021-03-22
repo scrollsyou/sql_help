@@ -8,6 +8,8 @@ import com.gugusong.sqlmapper.Example;
 import com.gugusong.sqlmapper.Page;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 
+import lombok.NonNull;
+
 /**
  * 非线程安全类
  * @author yousongshu
@@ -54,18 +56,65 @@ public class ExampleImpl implements Example {
 	
 	@Override
 	public Example equals(String property, Object value) {
-		currentFragment = currentFragment.createNextExp("=", property, value);
+		return equals(property, value, false);
+	}
+	
+	/**
+	 * 判断相等
+	 * @param property
+	 * @param value
+	 * @param nullIsTrue 当值为空时，条件是否永真
+	 * @return
+	 */
+	@Override
+	public Example equals(String property, Object value, boolean nullIsTrue) {
+		if(nullIsTrue) {
+			if(value ==null) {
+				currentFragment = currentFragment.createNextCondition("1=1");
+				return this;
+			}else {
+				currentFragment = currentFragment.createNextExp("=", property, value);
+				return this;
+			}
+		}else {
+			if(value == null) {
+				return isNull(property);
+			}else {
+				currentFragment = currentFragment.createNextExp("=", property, value);
+				return this;
+			}
+		}
+	}
+	
+	@Override
+	public Example isNull(String property) {
+		currentFragment = currentFragment.createNextCondition("{" + property + "} is null");
+		return this;
+	}
+	@Override
+	public Example startWith(String property, String value) {
+		like(property, value==null?"%":value+"%");
+		return this;
+	}
+	@Override
+	public Example contains(String property, String value) {
+		like(property, value==null?"%":"%" + value + "%");
+		return this;
+	}
+	@Override
+	public Example endsWith(String property, String value) {
+		like(property, value==null?"%":"%" + value);
 		return this;
 	}
 
 	@Override
-	public Example in(String property, List<Object> value) {
+	public Example in(String property, @NonNull List<Object> value) {
 		currentFragment = currentFragment.createNextExp("in", property, value);
 		return this;
 	}
 
 	@Override
-	public Example like(String property, Object value) {
+	public Example like(String property, @NonNull String value) {
 		currentFragment = currentFragment.createNextExp("like", property, value);
 		return this;
 	}
@@ -75,11 +124,27 @@ public class ExampleImpl implements Example {
 		currentFragment = currentFragment.createNextExp(">", property, value);
 		return this;
 	}
+	@Override
+	public Example gt(String property, Object value, boolean nullIsTrue) {
+		if(nullIsTrue && value == null) {
+			currentFragment = currentFragment.createNextCondition("1=1");
+			return this;
+		}
+		return gt(property, value);
+	}
 
 	@Override
 	public Example gtEquals(String property, Object value) {
 		currentFragment = currentFragment.createNextExp(">=", property, value);
 		return this;
+	}
+	@Override
+	public Example gtEquals(String property, Object value, boolean nullIsTrue) {
+		if(nullIsTrue && value == null) {
+			currentFragment = currentFragment.createNextCondition("1=1");
+			return this;
+		}
+		return gtEquals(property, value);
 	}
 
 	@Override
@@ -87,11 +152,27 @@ public class ExampleImpl implements Example {
 		currentFragment = currentFragment.createNextExp("<", property, value);
 		return this;
 	}
+	@Override
+	public Example lt(String property, Object value, boolean nullIsTrue) {
+		if(nullIsTrue && value == null) {
+			currentFragment = currentFragment.createNextCondition("1=1");
+			return this;
+		}
+		return lt(property, value);
+	}
 
 	@Override
 	public Example ltEquals(String property, Object value) {
 		currentFragment = currentFragment.createNextExp("<=", property, value);
 		return this;
+	}
+	@Override
+	public Example ltEquals(String property, Object value, boolean nullIsTrue) {
+		if(nullIsTrue && value == null) {
+			currentFragment = currentFragment.createNextCondition("1=1");
+			return this;
+		}
+		return ltEquals(property, value);
 	}
 
 	@Override

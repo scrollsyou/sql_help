@@ -22,6 +22,7 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
+import com.gugusong.sqlmapper.annotation.vo.InnerJoin;
 import com.gugusong.sqlmapper.annotation.vo.LeftJoin;
 import com.gugusong.sqlmapper.annotation.vo.ManyToOne;
 import com.gugusong.sqlmapper.annotation.vo.OneToMany;
@@ -221,6 +222,12 @@ public class BeanWrapper {
 		if(leftJoins != null && leftJoins.length > 0) {
 			for (LeftJoin leftJoin : leftJoins) {
 				joinBeans.put(leftJoin.entityAlias(), new BeanJoin("left join", leftJoin.joinConditions(), BeanWrapper.instrance(leftJoin.po(), config), leftJoin.entityAlias()));
+			}
+		}
+		InnerJoin[] innerJoins = voClazz.getAnnotationsByType(InnerJoin.class);
+		if(innerJoins != null && innerJoins.length > 0) {
+			for (InnerJoin innerJoin : innerJoins) {
+				joinBeans.put(innerJoin.entityAlias(), new BeanJoin("inner join", innerJoin.joinConditions(), BeanWrapper.instrance(innerJoin.po(), config), innerJoin.entityAlias()));
 			}
 		}
 		Field[] physicalFields = voClazz.getDeclaredFields();

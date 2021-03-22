@@ -1,16 +1,20 @@
 package com.gugusong.sqlmapper.db;
 
 import com.gugusong.sqlmapper.Page;
-import com.gugusong.sqlmapper.PageHelp;
 
 import lombok.NonNull;
 
-public class PageHelpImpl implements PageHelp {
+/**
+ * 默认分页逻辑
+ * 
+ * @author yousongshu
+ *
+ */
+public class PageHolder{
 	
 	private static final ThreadLocal<Page> threadLocal = new ThreadLocal<Page>();
 
-	@Override
-	public Page getPage() {
+	public static Page getPage() {
 		Page page = threadLocal.get();
 		if(page == null) {
 			page = new Page(1, 10);
@@ -22,7 +26,7 @@ public class PageHelpImpl implements PageHelp {
 	 * 自定义传递分页参数
 	 * @param page
 	 */
-	public void setPage(@NonNull Page page) {
+	public static void setPage(@NonNull Page page) {
 		threadLocal.set(page);
 	}
 

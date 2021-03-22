@@ -2,10 +2,8 @@ package com.gugusong.sqlmapper.config;
 
 import javax.sql.DataSource;
 
-import com.gugusong.sqlmapper.PageHelp;
 import com.gugusong.sqlmapper.common.util.SnowFlake;
 import com.gugusong.sqlmapper.db.ColumnTypeMapping;
-import com.gugusong.sqlmapper.db.PageHelpImpl;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.strategy.ImplicitNamingStrategy;
 import com.gugusong.sqlmapper.strategy.impl.DefaultJDBCImplicitNamingStrategyImpl;
@@ -23,21 +21,20 @@ public class GlogalConfig {
 
 	public GlogalConfig() {
 		this(null, new SnowFlake(1, 1), new DefaultJDBCImplicitNamingStrategyImpl(), 
-				new ColumnTypeMappingImpl(), new PageHelpImpl());
+				new ColumnTypeMappingImpl());
 	}
 	public GlogalConfig(DataSource dataSource) {
 		this(dataSource, new SnowFlake(1, 1), new DefaultJDBCImplicitNamingStrategyImpl(), 
-				new ColumnTypeMappingImpl(), new PageHelpImpl());
+				new ColumnTypeMappingImpl());
 	}
 	
 	public GlogalConfig(DataSource dataSource, SnowFlake snowFlake, ImplicitNamingStrategy implicitNamingStrategy,
-			ColumnTypeMapping columnTypeMapping, PageHelp pageHelp) {
+			ColumnTypeMapping columnTypeMapping) {
 		super();
 		this.dataSource = dataSource;
 		this.snowFlake = snowFlake;
 		this.implicitNamingStrategy = implicitNamingStrategy;
 		this.columnTypeMapping = columnTypeMapping;
-		this.pageHelp = pageHelp;
 	}
 
 	/**
@@ -70,11 +67,4 @@ public class GlogalConfig {
 	@Setter
 	private ColumnTypeMapping columnTypeMapping = new ColumnTypeMappingImpl();
 	
-	/**
-	 * 默认分页逻辑
-	 * 可重写分页逻辑
-	 */
-	@Getter
-	@Setter
-	private PageHelp pageHelp = new PageHelpImpl();
 }

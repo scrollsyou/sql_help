@@ -6,12 +6,10 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 
 import com.gugusong.sqlmapper.PageHelp;
 import com.gugusong.sqlmapper.Session;

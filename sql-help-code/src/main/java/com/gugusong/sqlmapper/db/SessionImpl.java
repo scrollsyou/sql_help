@@ -218,6 +218,16 @@ public class SessionImpl implements Session {
 			if(page == null) {
 				page = config.getPageHelp().getPage();
 			}
+			if(page.getPropertyAsc() != null) {
+				for (String propertyAsc : page.getPropertyAsc()) {
+					example.orderByAsc(propertyAsc);
+				}
+			}
+			if(page.getPropertyDesc() != null) {
+				for (String propertyDesc : page.getPropertyAsc()) {
+					example.orderByDesc(propertyDesc);
+				}
+			}
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
 				sqlToSelect.append(example.toSql(entityWrapper));
 				sqlToSelect.append(" limit ?,?");

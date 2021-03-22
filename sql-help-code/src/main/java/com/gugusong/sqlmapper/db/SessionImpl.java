@@ -68,7 +68,13 @@ public class SessionImpl implements Session {
 		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
 			entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
 		}else if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
-			entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
+			if(ColumnTypeMapping.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+				entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
+			}else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+				entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId()+"");
+			}else {
+				throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配int/string类型字段!");
+			}
 		}
 		@Cleanup PreparedStatement preSta = null;
 		try {

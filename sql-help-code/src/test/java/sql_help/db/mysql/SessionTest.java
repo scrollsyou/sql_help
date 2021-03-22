@@ -53,8 +53,14 @@ public class SessionTest {
 	}
 
 	@Test
-	public void delete() throws Exception {
-		Session openSession = getSession();
+	public void delete(){
+		Session openSession = null;
+		try {
+			openSession = getSession();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		openSession.setAutoCommit(false);
 		SessionTestEntity testEntity = new SessionTestEntity();
 		testEntity.setId(5);

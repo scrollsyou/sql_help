@@ -81,6 +81,44 @@
 					<skipTests>true</skipTests>
 				</configuration>
 			</plugin>
+			<!-- <plugin>
+        <groupId>com.github.wvengen</groupId>
+        <artifactId>proguard-maven-plugin</artifactId>
+        <executions>
+           <execution>
+               <phase>package</phase>
+               <goals><goal>proguard</goal></goals>
+           </execution>
+        </executions>
+        <configuration>
+        		<attach>true</attach>
+        		<attachArtifactClassifier>out</attachArtifactClassifier>
+        		<putLibraryJarsInTempDir>true</putLibraryJarsInTempDir>
+            <options>
+            		<option>-allowaccessmodification</option>
+                <option>-dontshrink</option>
+                <option>-dontoptimize</option>
+                <option>-useuniqueclassmembernames</option>
+                <option>-adaptclassstrings</option>
+                <option>-dontusemixedcaseclassnames</option>
+                <option><![CDATA[-keepattributes Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,*Annotation*,EnclosingMethod]]></option>
+                <option><![CDATA[-keep public interface com.gugusong.sqlmapper.** {*;}]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.config.*]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.strategy.**]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.mysql.*]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.ExampleImpl]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.PageHelpImpl]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.SessionImpl]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.SessionFactoryImpl {*;}]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.common.util.* {*;}]]></option>
+                <option><![CDATA[-keepclassmembers enum * { *; }]]></option>
+            </options>
+            <libs>
+                <lib>${java.home}/lib/rt.jar</lib>
+                <lib>${java.home}/lib/jce.jar</lib>
+            </libs>
+        </configuration>
+    </plugin> -->
 		</plugins>
 	</build>
 </project>

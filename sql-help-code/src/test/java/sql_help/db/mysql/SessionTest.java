@@ -46,7 +46,7 @@ public class SessionTest {
 	public void update() throws Exception {
 		Session openSession = getSession();
 		SessionTestEntity testEntity = new SessionTestEntity();
-		testEntity.setId(4);
+		testEntity.setId("4");
 		testEntity.setName("bbbb2");
 		testEntity.setAa(new Date());
 		openSession.update(testEntity);
@@ -63,7 +63,7 @@ public class SessionTest {
 		}
 		openSession.setAutoCommit(false);
 		SessionTestEntity testEntity = new SessionTestEntity();
-		testEntity.setId(5);
+		testEntity.setId("5");
 		openSession.delete(testEntity);
 		openSession.rollback();
 		openSession.setAutoCommit(true);
@@ -135,10 +135,10 @@ public class SessionTest {
 
 	@Data
 	@ToString
-	@Entity(tableName = "test")
+	@Entity(tableName = "test2")
 	public static class SessionTestEntity{
-		@Id(stragegy = GenerationType.IDENTITY)
-		private int id;
+		@Id(stragegy = GenerationType.SNOWFLAKE)
+		private String id;
 		
 		private String name;
 		@Column(sort = 12)

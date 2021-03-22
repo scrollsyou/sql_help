@@ -30,7 +30,7 @@ public interface Example {
 	public Example upCondition();
 	public Example equals(String property, Object value);
 	public Example in(String property, List<Object> value);
-	public Example like(String property, Object value);
+	public Example like(String property, String value);
 	public Example gt(String property, Object value);
 	public Example gtEquals(String property, Object value);
 	public Example lt(String property, Object value);
@@ -93,5 +93,44 @@ public interface Example {
 	 * @return
 	 */
 	public String toOrderSql(BeanWrapper entityWrapper);
+	/**
+	 * 判断相等
+	 * @param property
+	 * @param value
+	 * @param nullIsTrue 为true时，空值条件不生效
+	 * @return
+	 */
+	Example equals(String property, Object value, boolean nullIsTrue);
+	/**
+	 * 判断字段值为空，等价于equals中值传null
+	 * @param property
+	 * @return
+	 */
+	Example isNull(String property);
+	/**
+	 * 判断字符开头，空时为true
+	 * @param property
+	 * @param value
+	 * @return
+	 */
+	Example startWith(String property, String value);
+	/**
+	 * 判断字符包含，空时为true
+	 * @param property
+	 * @param value
+	 * @return
+	 */
+	Example contains(String property, String value);
+	/**
+	 * 判断字符结尾,空时为true
+	 * @param property
+	 * @param value
+	 * @return
+	 */
+	Example endsWith(String property, String value);
+	Example gt(String property, Object value, boolean nullIsTrue);
+	Example gtEquals(String property, Object value, boolean nullIsTrue);
+	Example lt(String property, Object value, boolean nullIsTrue);
+	Example ltEquals(String property, Object value, boolean nullIsTrue);
 	
 }

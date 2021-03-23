@@ -227,7 +227,7 @@ public class SessionImpl implements Session {
 					example.orderByDesc(propertyDesc);
 				}
 			}
-			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO || !entityWrapper.isPageSubSql()) {
 				sqlToSelect.append(example.toSql(entityWrapper));
 				sqlToSelect.append(" limit ?,?");
 				values.add((page.getPageIndex() - 1) * page.getPageSize());
@@ -307,8 +307,8 @@ public class SessionImpl implements Session {
 					}
 					entitys.add(entity);
 				}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-					if(entityWrapper.getMainWrapper().getIdColumn() == null) {
-						log.warn("vo类中指定{}未存在ID键，无法进行分组!", entityWrapper.getMainWrapper().getTableName());
+					if(entityWrapper.getMainWrapper().getIdColumn() == null || !entityWrapper.isPageSubSql()) {
+//						log.warn("vo类中指定{}未存在ID键，无法进行分组!", entityWrapper.getMainWrapper().getTableName());
 						E entity = E.newInstance();
 						setValues(rs, entity, entityWrapper);
 						entitys.add(entity);

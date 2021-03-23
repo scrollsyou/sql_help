@@ -296,6 +296,13 @@ public class SessionImpl implements Session {
 					}
 					entitys.add(entity);
 				}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+					if(entityWrapper.getMainWrapper().getIdColumn() == null) {
+						log.warn("vo类中指定{}未存在ID键，无法进行分组!", entityWrapper.getMainWrapper().getTableName());
+						E entity = E.newInstance();
+						setValues(rs, entity, entityWrapper);
+						entitys.add(entity);
+						continue;
+					}
 					String uniqueKey = rs.getString(entityWrapper.getTableAliasName() + "_" + entityWrapper.getMainWrapper().getIdColumn().getName());
 					E entity = (E) ((ConverMapToList)entitys).get(uniqueKey);
 					if(entity == null) {

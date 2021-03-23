@@ -3,7 +3,7 @@ package sql_help.entity.vo;
 import java.util.List;
 import java.util.Set;
 
-import com.gugusong.sqlmapper.annotation.vo.LeftJoin;
+import com.gugusong.sqlmapper.annotation.vo.Join;
 import com.gugusong.sqlmapper.annotation.vo.ManyToOne;
 import com.gugusong.sqlmapper.annotation.vo.OneToMany;
 import com.gugusong.sqlmapper.annotation.vo.PropertyMapping;
@@ -16,8 +16,8 @@ import sql_help.entity.Student;
 
 @Data
 @VOBean(mainPo = School.class, entityAlias = "school")
-@LeftJoin(entityAlias = "student", po = Student.class, joinConditions = "{student.schoolId} = {id}")
-@LeftJoin(entityAlias = "clbum", po = Clbum.class, joinConditions = "{id} = {clbum.schoolId}")
+@Join(entityAlias = "student", po = Student.class, joinConditions = "{student.schoolId} = {id}")
+@Join(entityAlias = "clbum", po = Clbum.class, joinConditions = "{id} = {clbum.schoolId}")
 public class SchoolVo {
 
 	private Integer id;

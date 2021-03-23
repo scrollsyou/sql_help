@@ -8,15 +8,19 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * 数据左关联关系
+ * 数据关联关系
+ * 关联顺序对表别名有关系
+ * 在on条件中有相互依赖顺序
  * @author yousongshu
  *
  */
-@Repeatable(LeftJoins.class)
+@Repeatable(Joins.class)
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface LeftJoin {
+public @interface Join {
 
+	public static final String LEFT_JOIN_TYPE = "left join";
+	public static final String INNER_JOIN_TYPE = "inner join";
 	/**
 	 * vo 查询默认对主po关联类
 	 * @return
@@ -38,4 +42,9 @@ public @interface LeftJoin {
 	 * @return
 	 */
 	String joinConditions();
+	/**
+	 * 指定关联类型
+	 * @return
+	 */
+	String joinType() default LEFT_JOIN_TYPE;
 }

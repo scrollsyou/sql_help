@@ -246,6 +246,8 @@ public class SessionImpl implements Session {
 					.append(entityWrapper.getTableAliasName())
 					.append(".")
 					.append(entityWrapper.getMainWrapper().getIdColumn().getName())
+					.append(" ")
+					.append(example.toOrderSql(entityWrapper))
 					.append(" limit ?,?");
 				List<Object> bufferValues = new ArrayList<Object>(values.size() + 2);
 				for (Object object : values) {

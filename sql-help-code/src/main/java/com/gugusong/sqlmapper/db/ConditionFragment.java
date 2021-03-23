@@ -1,11 +1,9 @@
 package com.gugusong.sqlmapper.db;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.base.Joiner;
-import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.util.TextUtil;
 
@@ -45,6 +43,12 @@ public class ConditionFragment {
 		this.expression = expression;
 		this.property = property;
 		this.value = value;
+		if("and".equalsIgnoreCase(expression) || "or".equalsIgnoreCase(expression)
+				|| "where".equalsIgnoreCase(expression)
+				|| "(".equalsIgnoreCase(expression)
+				|| ")".equalsIgnoreCase(expression)) {
+			this.logicShip = true;
+		}
 	}
 	/**
 	 * sql片段类型
@@ -56,17 +60,24 @@ public class ConditionFragment {
 	private String expression;
 	private String property;
 	private Object value;
+	private boolean logicShip = false;
 	
 	private ConditionFragment nextFragment;
+	
+	private ConditionFragment beforeFragment;
 	
 	/**创建逻辑关系
 	 * @param token
 	 * @return
 	 */
 	public  ConditionFragment createNextToken(String token) {
+		if(("and".equals(token) || "or".equals(token)) && this.logicShip) {
+			return this;
+		}
 		ConditionFragment currentNext = this.nextFragment;
 		this.nextFragment = new ConditionFragment(CONDITION_FRAGMENT_TOKEN, token, null, null);
 		this.nextFragment.nextFragment = currentNext;
+		this.nextFragment.beforeFragment = this;
 		return this.nextFragment;
 	}
 	/**
@@ -80,6 +91,7 @@ public class ConditionFragment {
 		ConditionFragment currentNext = this.nextFragment;
 		this.nextFragment = new ConditionFragment(CONDITION_FRAGMENT_EXP, token, property, value);
 		this.nextFragment.nextFragment = currentNext;
+		this.nextFragment.beforeFragment = this;
 		return this.nextFragment;
 	}
 	/**
@@ -93,7 +105,22 @@ public class ConditionFragment {
 		ConditionFragment currentNext = this.nextFragment;
 		this.nextFragment = new ConditionFragment(CONDITION_FRAGMENT_CONDITION, expression, null, Arrays.asList(value));
 		this.nextFragment.nextFragment = currentNext;
+		this.nextFragment.beforeFragment = this;
 		return this.nextFragment;
+	}
+	/**
+	 * 删除当前条件及上级逻辑条件
+	 * @return
+	 */
+	public ConditionFragment removeCondition() {
+		if("and".equals(this.expression) || "or".equals(this.expression)) {
+			ConditionFragment current =  this.beforeFragment;
+			current.setNextFragment(this.nextFragment);
+			this.beforeFragment = null;
+			this.nextFragment = null;
+			return current;
+		}
+		return this;
 	}
 	/**
 	 * 创建排序

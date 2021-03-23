@@ -63,19 +63,14 @@ public class ExampleImpl implements Example {
 	 * 判断相等
 	 * @param property
 	 * @param value
-	 * @param nullIsTrue 当值为空时，条件是否永真
+	 * @param ignone 条件是忽略
 	 * @return
 	 */
 	@Override
-	public Example equals(String property, Object value, boolean nullIsTrue) {
-		if(nullIsTrue) {
-			if(value ==null) {
-				currentFragment = currentFragment.createNextCondition("1=1");
-				return this;
-			}else {
-				currentFragment = currentFragment.createNextExp("=", property, value);
-				return this;
-			}
+	public Example equals(String property, Object value, boolean ignone) {
+		if(ignone) {
+			currentFragment = currentFragment.removeCondition();
+			return this;
 		}else {
 			if(value == null) {
 				return isNull(property);
@@ -125,9 +120,9 @@ public class ExampleImpl implements Example {
 		return this;
 	}
 	@Override
-	public Example gt(String property, Object value, boolean nullIsTrue) {
-		if(nullIsTrue && value == null) {
-			currentFragment = currentFragment.createNextCondition("1=1");
+	public Example gt(String property, Object value, boolean ignone) {
+		if(ignone) {
+			currentFragment = currentFragment.removeCondition();
 			return this;
 		}
 		return gt(property, value);
@@ -139,9 +134,9 @@ public class ExampleImpl implements Example {
 		return this;
 	}
 	@Override
-	public Example gtEquals(String property, Object value, boolean nullIsTrue) {
-		if(nullIsTrue && value == null) {
-			currentFragment = currentFragment.createNextCondition("1=1");
+	public Example gtEquals(String property, Object value, boolean ignone) {
+		if(ignone) {
+			currentFragment = currentFragment.removeCondition();
 			return this;
 		}
 		return gtEquals(property, value);
@@ -153,9 +148,9 @@ public class ExampleImpl implements Example {
 		return this;
 	}
 	@Override
-	public Example lt(String property, Object value, boolean nullIsTrue) {
-		if(nullIsTrue && value == null) {
-			currentFragment = currentFragment.createNextCondition("1=1");
+	public Example lt(String property, Object value, boolean ignone) {
+		if(ignone) {
+			currentFragment = currentFragment.removeCondition();
 			return this;
 		}
 		return lt(property, value);
@@ -167,9 +162,9 @@ public class ExampleImpl implements Example {
 		return this;
 	}
 	@Override
-	public Example ltEquals(String property, Object value, boolean nullIsTrue) {
-		if(nullIsTrue && value == null) {
-			currentFragment = currentFragment.createNextCondition("1=1");
+	public Example ltEquals(String property, Object value, boolean ignone) {
+		if(ignone) {
+			currentFragment = currentFragment.removeCondition();
 			return this;
 		}
 		return ltEquals(property, value);
@@ -252,6 +247,9 @@ public class ExampleImpl implements Example {
 	}
 	
 	public String toOrderSql(BeanWrapper entityWrapper) {
+		if(this.orderFragment == null) {
+			return "";
+		}
 		StringBuilder sb = new StringBuilder();
 		sb.append(" order by ");
 		ConditionFragment orderString = this.orderFragment;
@@ -287,6 +285,7 @@ public class ExampleImpl implements Example {
 	@Override
 	public Example page() {
 		this.hasPage = true;
+		this.page = PageHolder.getPage();
 		return this;
 		
 	}

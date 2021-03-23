@@ -425,11 +425,13 @@ public class MysqlSqlHelp implements ISqlHelp{
 			sqlsb.append(SPLIT);
 			sqlsb.append("{where}");
 			sqlsb.append(SPLIT);
-			sqlsb.append(GROUP_BY);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableAliasName());
-			sqlsb.append(POINT);
-			sqlsb.append(poClazz.getMainWrapper().getIdColumn().getName());
+			if(poClazz.isPageSubSql()) {
+				sqlsb.append(GROUP_BY);
+				sqlsb.append(SPLIT);
+				sqlsb.append(poClazz.getTableAliasName());
+				sqlsb.append(POINT);
+				sqlsb.append(poClazz.getMainWrapper().getIdColumn().getName());
+			}
 			sqlsb.append(RIGHT_PARENTHESIS);
 			sqlsb.append(SPLIT);
 			sqlsb.append("buffer");

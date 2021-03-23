@@ -1,14 +1,10 @@
 package com.gugusong.sqlmapper.db;
 
-import java.sql.Array;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -19,7 +15,6 @@ import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.collection.ConverMapToList;
 import com.gugusong.sqlmapper.common.collection.ConverMapToSet;
-import com.gugusong.sqlmapper.common.exception.SqlException;
 import com.gugusong.sqlmapper.common.exception.StructureException;
 import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.common.util.UUIDUtil;
@@ -216,7 +211,17 @@ public class SessionImpl implements Session {
 		if(example.isPage()) {
 			Page page = example.getPage();
 			if(page == null) {
-				page = config.getPageHelp().getPage();
+				page = PageHolder.getPage();
+			}
+			if(page.getPropertyAsc() != null) {
+				for (String propertyAsc : page.getPropertyAsc()) {
+					example.orderByAsc(propertyAsc);
+				}
+			}
+			if(page.getPropertyDesc() != null) {
+				for (String propertyDesc : page.getPropertyAsc()) {
+					example.orderByDesc(propertyDesc);
+				}
 			}
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
 				sqlToSelect.append(example.toSql(entityWrapper));
@@ -291,6 +296,13 @@ public class SessionImpl implements Session {
 					}
 					entitys.add(entity);
 				}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+					if(entityWrapper.getMainWrapper().getIdColumn() == null) {
+						log.warn("vo类中指定{}未存在ID键，无法进行分组!", entityWrapper.getMainWrapper().getTableName());
+						E entity = E.newInstance();
+						setValues(rs, entity, entityWrapper);
+						entitys.add(entity);
+						continue;
+					}
 					String uniqueKey = rs.getString(entityWrapper.getTableAliasName() + "_" + entityWrapper.getMainWrapper().getIdColumn().getName());
 					E entity = (E) ((ConverMapToList)entitys).get(uniqueKey);
 					if(entity == null) {

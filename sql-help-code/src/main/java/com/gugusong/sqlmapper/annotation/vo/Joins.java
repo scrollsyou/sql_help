@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface LeftJoins {
-	LeftJoin[] value();
+public @interface Joins {
+	Join[] value();
 }

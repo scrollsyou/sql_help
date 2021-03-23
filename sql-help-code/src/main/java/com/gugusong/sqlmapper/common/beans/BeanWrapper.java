@@ -5,14 +5,15 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.base.CharMatcher;
@@ -22,8 +23,7 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
-import com.gugusong.sqlmapper.annotation.vo.InnerJoin;
-import com.gugusong.sqlmapper.annotation.vo.LeftJoin;
+import com.gugusong.sqlmapper.annotation.vo.Join;
 import com.gugusong.sqlmapper.annotation.vo.ManyToOne;
 import com.gugusong.sqlmapper.annotation.vo.OneToMany;
 import com.gugusong.sqlmapper.annotation.vo.PropertyMapping;
@@ -35,7 +35,6 @@ import com.gugusong.sqlmapper.config.GlogalConfig;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import lombok.SneakyThrows;
 
 /**
  * bean类包装器，用于解析类属性
@@ -79,7 +78,7 @@ public class BeanWrapper {
 	 * 关联Bean类映射
 	 */
 	@Getter
-	private Map<String, BeanJoin> joinBeans = new TreeMap<String, BeanJoin>();
+	private Map<String, BeanJoin> joinBeans = new LinkedHashMap<String, BeanJoin>();
 	@Getter
 	private BeanWrapper mainWrapper;
 	
@@ -132,6 +131,9 @@ public class BeanWrapper {
 		PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
 		for (Field physicalField : physicalFields) {
 			if(physicalField.isAnnotationPresent(Transient.class)) {
+				continue;
+			}
+			if(Modifier.isStatic(physicalField.getModifiers()) || Modifier.isFinal(physicalField.getModifiers())) {
 				continue;
 			}
 			// TODO 为方便后期扩展，需更改为其它模式
@@ -218,18 +220,13 @@ public class BeanWrapper {
 		mainWrapper = instrance(mainPoClazz, config);
 		this.tableName = mainWrapper.getTableName();
 		this.tableAliasName = voBean.entityAlias();
-		LeftJoin[] leftJoins = voClazz.getAnnotationsByType(LeftJoin.class);
-		if(leftJoins != null && leftJoins.length > 0) {
-			for (LeftJoin leftJoin : leftJoins) {
-				joinBeans.put(leftJoin.entityAlias(), new BeanJoin("left join", leftJoin.joinConditions(), BeanWrapper.instrance(leftJoin.po(), config), leftJoin.entityAlias()));
+		Join[] joins = voClazz.getAnnotationsByType(Join.class);
+		if(joins != null && joins.length > 0) {
+			for (Join join : joins) {
+				joinBeans.put(join.entityAlias(), new BeanJoin(join.joinType(), join.joinConditions(), BeanWrapper.instrance(join.po(), config), join.entityAlias()));
 			}
 		}
-		InnerJoin[] innerJoins = voClazz.getAnnotationsByType(InnerJoin.class);
-		if(innerJoins != null && innerJoins.length > 0) {
-			for (InnerJoin innerJoin : innerJoins) {
-				joinBeans.put(innerJoin.entityAlias(), new BeanJoin("inner join", innerJoin.joinConditions(), BeanWrapper.instrance(innerJoin.po(), config), innerJoin.entityAlias()));
-			}
-		}
+
 		Field[] physicalFields = voClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
 		BeanInfo beanInfo = null;

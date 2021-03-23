@@ -11,13 +11,11 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.gugusong.sqlmapper.PageHelp;
 import com.gugusong.sqlmapper.Session;
 import com.gugusong.sqlmapper.SessionFactory;
 import com.gugusong.sqlmapper.common.util.SnowFlake;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 import com.gugusong.sqlmapper.db.ColumnTypeMapping;
-import com.gugusong.sqlmapper.db.PageHelpImpl;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.strategy.ImplicitNamingStrategy;
 import com.gugusong.sqlmapper.strategy.impl.DefaultJDBCImplicitNamingStrategyImpl;
@@ -69,21 +67,12 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 		return new ColumnTypeMappingImpl();
 	}
 	
-	/**
-	 * 分页处理器
-	 * @return
-	 */
-	@ConditionalOnMissingBean(PageHelp.class)
-	@Bean
-	public PageHelp sqlHelpPageHelp() {
-		return new PageHelpImpl();
-	}
 	
 	@ConditionalOnMissingBean(GlogalConfig.class)
 	@Bean
 	public GlogalConfig sqlHelpGlogalConfig(DataSource dataSource, SnowFlake snowFlake, ImplicitNamingStrategy implicitNamingStrategy,
-			ColumnTypeMapping columnTypeMapping, PageHelp pageHelp) {
-		return new GlogalConfig(dataSource, snowFlake, implicitNamingStrategy, columnTypeMapping, pageHelp);
+			ColumnTypeMapping columnTypeMapping) {
+		return new GlogalConfig(dataSource, snowFlake, implicitNamingStrategy, columnTypeMapping);
 	}
 	
 	@ConditionalOnMissingBean(SessionFactory.class)

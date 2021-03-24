@@ -7,12 +7,14 @@ import java.util.List;
 
 import org.junit.Test;
 
+import com.google.common.base.Joiner;
 import com.gugusong.sqlmapper.Example;
 import com.gugusong.sqlmapper.Session;
 import com.gugusong.sqlmapper.SessionFactory;
 import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
+import com.gugusong.sqlmapper.annotation.vo.Joins;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 import com.gugusong.sqlmapper.db.ExampleImpl;
 import com.gugusong.sqlmapper.db.SessionFactoryImpl;
@@ -39,7 +41,16 @@ public class SessionTest {
 		SessionTestEntity testEntity = new SessionTestEntity();
 		testEntity.setName("aaaa");
 		openSession.save(testEntity);
+		SessionTestEntity testEntity2 = new SessionTestEntity();
+		testEntity2.setName("aaaa2");
+		SessionTestEntity testEntity3 = new SessionTestEntity();
+		testEntity3.setName("aaaa3");
+		List<SessionTestEntity> entitys = new ArrayList<SessionTest.SessionTestEntity>();
+		entitys.add(testEntity2);
+		entitys.add(testEntity3);
 		System.out.println(testEntity.getId() + ":" + testEntity.getName());
+		openSession.save(entitys, SessionTestEntity.class);
+		System.out.println("批量插入返回id:" + Joiner.on(",").join(entitys));
 	}
 
 	@Test

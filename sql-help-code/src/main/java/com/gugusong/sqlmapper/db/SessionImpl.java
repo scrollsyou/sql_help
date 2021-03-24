@@ -5,9 +5,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
 import com.gugusong.sqlmapper.Example;
 import com.gugusong.sqlmapper.Page;
 import com.gugusong.sqlmapper.Session;
@@ -109,6 +111,76 @@ public class SessionImpl implements Session {
 		}
 		return entity;
 	}
+	
+	/**
+	 * 批量插入数据
+	 * @param <T>
+	 * @param entitys
+	 * @param clazz
+	 * @return
+	 */
+	@SneakyThrows
+	public <T> List<T> save(@NonNull List<T> entitys, Class<T> clazz) {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(clazz, config);
+		String sqlToInsert = sqlHelp.getSqlToInsert(entityWrapper, false);
+		if(log.isDebugEnabled()) {
+			log.debug("Preparing: {}", sqlToInsert);
+			log.debug("parameters: list");
+		}
+		
+		@Cleanup PreparedStatement preSta = null;
+		try {
+			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
+			}else {
+				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert);
+			}
+			List<BeanColumn> columns = entityWrapper.getColumns();
+			for (T entity : entitys) {
+				if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
+					entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
+				} else if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
+					if (ColumnTypeMapping.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
+					} else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId() + "");
+					} else {
+						throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配long/string类型字段!");
+					}
+				}
+				int i = 1;
+				for (BeanColumn beanColumn : columns) {
+					if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
+						continue;
+					}
+					preSta.setObject(i, beanColumn.getVal(entity));
+					i++;
+				}
+				preSta.addBatch();
+			}
+			preSta.executeUpdate();
+			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
+				Iterator<T> entityIt = entitys.iterator();
+				while(resultSet.next()) {
+					T entity = entityIt.next();
+					if(ColumnTypeMappingImpl.INT_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, resultSet.getInt(1));
+					}else if(ColumnTypeMappingImpl.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, resultSet.getLong(1));
+					}else {
+						throw new StructureException("数据库自增长id类型不为int/long！");
+					}
+				}
+			}
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
+		}
+		return entitys;
+	}
 
 	/**
 	 * 按id更新实体对象
@@ -138,6 +210,116 @@ public class SessionImpl implements Session {
 				i++;
 			}
 			preSta.setObject(i, entityWrapper.getIdColumn().getVal(entity));
+			return preSta.executeUpdate();
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
+		}
+	}
+	/**
+	 * 按id进行更新，值为null的属性不进行更新
+	 * @param <T>
+	 * @param entity
+	 * @return
+	 */
+	@SneakyThrows
+	public <T> int updateSelective(T entity) {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		List<Object> values = new ArrayList<Object>();
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(ISqlHelp.UPDATE);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(entityWrapper.getTableName());
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.SET);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(Joiner.on(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.COMMA ).join(entityWrapper.getColumns().stream().filter(c -> {
+			try {
+				Object value = c.getVal(entity);
+				if(c.isIdFlag() || value == null) {
+					return false;
+				}
+				values.add(value);
+			} catch (Exception e) {
+				throw new StructureException(e);
+			}
+			
+			return true;
+		}).map(c -> c.getName()).toArray()));
+		sqlsb.append(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.WHERE);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(entityWrapper.getIdColumn().getName());
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.EQUEST);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.PARAM_TOKEN);
+		String sqlToUpdate = sqlsb.toString();
+		try {
+			values.add(entityWrapper.getIdColumn().getVal(entity));
+			if(log.isDebugEnabled()) {
+				log.debug("Preparing: {}", sqlToUpdate);
+				log.debug("parameters: {}", values);
+			}
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
+			int i = 1;
+			for (Object val : values) {
+				preSta.setObject(i, val);
+				i++;
+			}
+			return preSta.executeUpdate();
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
+		}
+	}
+	
+	/**
+	 * 按条件更新
+	 */
+	@SneakyThrows
+	public <T> int updateByExample(T entity, Example example) {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		List<Object> values = new ArrayList<Object>();
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(ISqlHelp.UPDATE);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(entityWrapper.getTableName());
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.SET);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(Joiner.on(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.COMMA ).join(entityWrapper.getColumns().stream().filter(c -> {
+			try {
+				Object value = c.getVal(entity);
+				if(c.isIdFlag() || value == null) {
+					return false;
+				}
+				values.add(value);
+			} catch (Exception e) {
+				throw new StructureException(e);
+			}
+			
+			return true;
+		}).map(c -> c.getName()).toArray()));
+		sqlsb.append(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.SPLIT);
+		sqlsb.append(example.toSql(entityWrapper, false));
+		String sqlToUpdate = sqlsb.toString();
+		try {
+			values.addAll(example.getValues());
+			if(log.isDebugEnabled()) {
+				log.debug("Preparing: {}", sqlToUpdate);
+				log.debug("parameters: {}", values);
+			}
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
+			int i = 1;
+			for (Object val : values) {
+				preSta.setObject(i, val);
+				i++;
+			}
 			return preSta.executeUpdate();
 		} catch (SQLException e) {
 			this.close();

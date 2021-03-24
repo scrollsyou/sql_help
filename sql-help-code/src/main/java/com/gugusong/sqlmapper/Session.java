@@ -3,6 +3,8 @@ package com.gugusong.sqlmapper;
 import java.sql.SQLException;
 import java.util.List;
 
+import lombok.NonNull;
+
 /**
  * 会话
  * 基础数据操作方法
@@ -28,6 +30,13 @@ public interface Session {
 	 * @throws Exception 
 	 */
 	public <T> int update(T entity);
+	/**
+	 * 按id更新实体对象，null值不更新
+	 * @param <T>
+	 * @param entity
+	 * @return
+	 */
+	public <T> int updateSelective(T entity);
 	/**
 	 * 按实体对象进行删除
 	 * @param <T>
@@ -100,4 +109,22 @@ public interface Session {
 	 * @throws SQLException
 	 */
 	public void rollback();
+	
+	/**
+	 * 批量插入
+	 * @param <T>
+	 * @param entitys
+	 * @param clazz
+	 * @return
+	 */
+	public <T> List<T> save(@NonNull List<T> entitys, Class<T> clazz);
+	
+	/**
+	 * 按条件更新，空值不更新
+	 * @param <T>
+	 * @param entity
+	 * @param example
+	 * @return
+	 */
+	public <T> int updateByExample(T entity, Example example);
 }

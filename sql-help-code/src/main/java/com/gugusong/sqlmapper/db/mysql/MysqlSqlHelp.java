@@ -1,11 +1,8 @@
 package com.gugusong.sqlmapper.db.mysql;
 
-import java.util.Arrays;
 import java.util.Map.Entry;
-import java.util.stream.Stream;
 
 import com.google.common.base.Joiner;
-import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanJoin;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.util.TextUtil;
@@ -23,28 +20,7 @@ import lombok.NonNull;
  */
 public class MysqlSqlHelp implements ISqlHelp{
 	
-	private static final String SELECT = "select";
-	private static final String UPDATE = "update";
-	private static final String DELETE = "delete";
-	private static final String INSERT_INTO = "insert into";
-	private static final String VALUES = "values";
-	private static final String SET = "set";
-	private static final String EQUEST = "=";
-	private static final String PARAM_TOKEN = "?";
-	private static final String FROM = "from";
-	private static final String AS = "as";
-	private static final String WHERE = "where";
-	private static final String GROUP_BY = "group by";
-	private static final String AND = "and";
-	private static final String OR = "or";
-	private static final String ON = "on";
-	private static final String POINT = ".";
-	private static final String COMMA = ",";
-	private static final String SPLIT = " ";
-	private static final String RETRACT = "    ";
-	private static final String ENTER = "\n";
-	private static final String LEFT_PARENTHESIS = "(";
-	private static final String RIGHT_PARENTHESIS = ")";
+	
 	
 	private static final String SQL_SELECT_METHOD = "getSqlToSelect";
 	private static final String SQL_SELECT_ID_METHOD = "getSqlToSelectId";
@@ -358,6 +334,7 @@ public class MysqlSqlHelp implements ISqlHelp{
 		poClazz.putSql(SQL_INSERT_METHOD, sqlsb.toString());
 		return sqlsb.toString();
 	}
+	
 
 	public String getSqlToDelete(BeanWrapper poClazz, boolean hasFormat) {
 		String sql = poClazz.getSql(SQL_DELETE_METHOD);

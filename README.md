@@ -42,7 +42,7 @@
 - [X] 处理异常，如字段错误，删除只能删除po等，增加自定义异常
 - [X] 支持字段名映射策略配置，默认驼峰转换
 - [X] 支持通过VO进行查询映射，默认采用PO映射，非同名时需采用@name指定PO中字段名,@Po映射对应PO
-- [ ] VO查询映射字段增加@count,@sum注解，类上增加@LeftJoin,@group,@RigthJoin,@Po,@Join注解支持
+- [X] VO查询映射字段增加@count,@sum注解，类上增加@LeftJoin,@group,@RigthJoin,@Po,@Join注解支持
 - [X] 查询条件采用example方式进行拼接
 - [X] 支持对常用sql进行缓存，无需频繁生成
 

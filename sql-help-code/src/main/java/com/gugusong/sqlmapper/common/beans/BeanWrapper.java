@@ -23,6 +23,8 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
+import com.gugusong.sqlmapper.annotation.vo.FunctionMapping;
+import com.gugusong.sqlmapper.annotation.vo.GroupBy;
 import com.gugusong.sqlmapper.annotation.vo.Join;
 import com.gugusong.sqlmapper.annotation.vo.ManyToOne;
 import com.gugusong.sqlmapper.annotation.vo.OneToMany;
@@ -30,6 +32,7 @@ import com.gugusong.sqlmapper.annotation.vo.PropertyMapping;
 import com.gugusong.sqlmapper.annotation.vo.VOBean;
 import com.gugusong.sqlmapper.common.constants.ErrorCodeConstant;
 import com.gugusong.sqlmapper.common.exception.StructureException;
+import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 
 import lombok.Getter;
@@ -81,19 +84,32 @@ public class BeanWrapper {
 	private Map<String, BeanJoin> joinBeans = new LinkedHashMap<String, BeanJoin>();
 	@Getter
 	private BeanWrapper mainWrapper;
+	/**
+	 * 分组字段（只作用于Vo）
+	 */
+	@Getter
+	private String[] groupBys;
+	@Getter
+	@Setter
+	private boolean pageSubSql = false;
+	@Getter
+	private BeanWrapper voWrapper;
+	@Getter
+	private List<BeanColumn> funcColumns;
 	
 	private Map<String, String> sqlCache = new TreeMap<String, String>();
 	
 	private GlogalConfig config;
 	
 	private BeanWrapper(Class<?> beanClazz, GlogalConfig config) {
-		this(beanClazz, config, null, null, null);
+		this(beanClazz, config, null, null, null, null);
 	}
-	private BeanWrapper(Class<?> beanClazz, GlogalConfig config, Map<String, BeanJoin> joinBeans, String tableAliasName, BeanWrapper mainWrapper) {
+	private BeanWrapper(Class<?> beanClazz, GlogalConfig config, Map<String, BeanJoin> joinBeans, String tableAliasName, BeanWrapper mainWrapper, BeanWrapper voWrapper) {
 		this.poClazz = beanClazz;
 		this.config = config;
 		this.tableAliasName = tableAliasName;
 		this.mainWrapper = mainWrapper;
+		this.voWrapper = voWrapper;
 		if(joinBeans != null) {
 			this.joinBeans = joinBeans;
 		}
@@ -147,7 +163,7 @@ public class BeanWrapper {
 				Class<?> oneClazz = manyToOne.tagerClass();
 				BeanColumn beanColumn = new BeanColumn(null, 
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
-						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper), null);
+						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper, this.voWrapper), null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
 			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
@@ -155,12 +171,15 @@ public class BeanWrapper {
 				@NonNull
 				Class<?> manyClazz = oneToMany.tagerClass();
 				// 一对多时，多的一方分组去重条件
-				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans, tableAliasName, mainWrapper);
+				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans, tableAliasName, mainWrapper, this.voWrapper);
 				Set<String> groupBy = new HashSet<String>(oneToManyWrapper.columns.size());
 				for (BeanColumn oneToManyColum : oneToManyWrapper.columns) {
 					BeanJoin joinBean = joinBeans.get(oneToManyColum.getTableAlias());
 					if(joinBean != null && joinBean.getJoinBeanWrapper().getIdColumn() != null) {
 						groupBy.add(new StringBuilder(oneToManyColum.getTableAlias()).append("_").append(joinBean.getJoinBeanWrapper().getIdColumn().getName()).toString());
+						if(this.voWrapper != null) {
+							this.voWrapper.setPageSubSql(true);
+						}
 					}
 				}
 				BeanColumn beanColumn = new BeanColumn(null, 
@@ -190,6 +209,24 @@ public class BeanWrapper {
 						nameSplit[0], nameSplit[0] + "_" + byPropertyName.getAliasName(), null, null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
+			}else if(physicalField.isAnnotationPresent(FunctionMapping.class)) {
+				FunctionMapping functionMapping = physicalField.getAnnotation(FunctionMapping.class);
+				@NonNull
+				String funcValue = functionMapping.function();
+				funcValue = TextUtil.replaceTemplateParams(funcValue, paramName -> {
+					@NonNull
+					String columnName = voWrapper.getColumnNameByPropertyName(paramName);
+					return columnName;
+				});
+				String columnName = config.getImplicitNamingStrategy().getColumntName(physicalField.getName());
+				BeanColumn beanColumn = new BeanColumn(columnName, 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						voWrapper.tableAliasName, voWrapper.tableAliasName + "_" + columnName, null, null);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				beanColumn.setFunc(true);
+				beanColumn.setFunction(funcValue);
+				columnList.add(beanColumn);
+				voWrapper.getFuncColumns().add(beanColumn);
 			}else {
 				throw new RuntimeException("基础bean类中属性必须指定表别名!");
 			}
@@ -212,6 +249,7 @@ public class BeanWrapper {
 	 */
 	private void voInstance(Class<?> voClazz, GlogalConfig config) {
 		VOBean voBean = voClazz.getAnnotation(VOBean.class);
+		this.funcColumns = new ArrayList<BeanColumn>();
 		@NonNull
 		Class<?> mainPoClazz = voBean.mainPo();
 		if(!isPo(mainPoClazz)) {
@@ -225,6 +263,10 @@ public class BeanWrapper {
 			for (Join join : joins) {
 				joinBeans.put(join.entityAlias(), new BeanJoin(join.joinType(), join.joinConditions(), BeanWrapper.instrance(join.po(), config), join.entityAlias()));
 			}
+		}
+		GroupBy groupBy = voClazz.getAnnotation(GroupBy.class);
+		if(groupBy != null) {
+			this.groupBys = groupBy.propertys();
 		}
 
 		Field[] physicalFields = voClazz.getDeclaredFields();
@@ -251,27 +293,28 @@ public class BeanWrapper {
 				Class<?> oneClazz = manyToOne.tagerClass();
 				BeanColumn beanColumn = new BeanColumn(null, 
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
-						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper), null);
+						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper, this), null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
 			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
 				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
 				@NonNull
 				Class<?> manyClazz = oneToMany.tagerClass();
-				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans, tableAliasName, mainWrapper);
-				Set<String> groupBy = new HashSet<String>(oneToManyWrapper.columns.size());
+				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans, tableAliasName, mainWrapper, this);
+				Set<String> groupByCount = new HashSet<String>(oneToManyWrapper.columns.size());
 				for (BeanColumn oneToManyColum : oneToManyWrapper.columns) {
 					if(oneToManyColum.getTableAlias() == null) {
 						continue;
 					}
 					BeanJoin joinBean = joinBeans.get(oneToManyColum.getTableAlias());
 					if(joinBean != null && joinBean.getJoinBeanWrapper().getIdColumn() != null) {
-						groupBy.add(new StringBuilder(oneToManyColum.getTableAlias()).append("_").append(joinBean.getJoinBeanWrapper().getIdColumn().getName()).toString());
+						groupByCount.add(new StringBuilder(oneToManyColum.getTableAlias()).append("_").append(joinBean.getJoinBeanWrapper().getIdColumn().getName()).toString());
+						this.setPageSubSql(true);
 					}
 				}
 				BeanColumn beanColumn = new BeanColumn(null, 
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
-						null, null, oneToManyWrapper, groupBy.toArray(new String[] {}));
+						null, null, oneToManyWrapper, groupByCount.toArray(new String[] {}));
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				// TODO 判断 oneToMany 注解必须在List/Set上
 				columnList.add(beanColumn);
@@ -295,6 +338,24 @@ public class BeanWrapper {
 				}
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
+			}else if(physicalField.isAnnotationPresent(FunctionMapping.class)) {
+				FunctionMapping functionMapping = physicalField.getAnnotation(FunctionMapping.class);
+				@NonNull
+				String funcValue = functionMapping.function();
+				funcValue = TextUtil.replaceTemplateParams(funcValue, paramName -> {
+					@NonNull
+					String columnName = this.getColumnNameByPropertyName(paramName);
+					return columnName;
+				});
+				String columnName = config.getImplicitNamingStrategy().getColumntName(physicalField.getName());
+				BeanColumn beanColumn = new BeanColumn(columnName, 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						this.tableAliasName, this.tableAliasName + "_" + columnName, null, null);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				beanColumn.setFunc(true);
+				beanColumn.setFunction(funcValue);
+				columnList.add(beanColumn);
+				funcColumns.add(beanColumn);
 			}else {
 				BeanColumn byPropertyName = mainWrapper.getByPropertyName(physicalField.getName());
 				BeanColumn beanColumn = new BeanColumn(byPropertyName.getName(), 
@@ -400,10 +461,10 @@ public class BeanWrapper {
 		return instrance;
 	}
 	
-	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config, Map<String, BeanJoin> parentJoinBeans, String tableAliasName, BeanWrapper mainWrapper) {
+	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config, Map<String, BeanJoin> parentJoinBeans, String tableAliasName, BeanWrapper mainWrapper, BeanWrapper voWrapper) {
 		BeanWrapper instrance = cacheMap.get(poClazz);
 		if(instrance == null) {
-			instrance = new BeanWrapper(poClazz, config, parentJoinBeans, tableAliasName, mainWrapper);
+			instrance = new BeanWrapper(poClazz, config, parentJoinBeans, tableAliasName, mainWrapper, voWrapper);
 			cacheMap.put(poClazz, instrance);
 		}
 		return instrance;

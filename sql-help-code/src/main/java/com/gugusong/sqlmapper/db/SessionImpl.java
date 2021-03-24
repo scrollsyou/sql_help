@@ -58,7 +58,8 @@ public class SessionImpl implements Session {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToInsert = sqlHelp.getSqlToInsert(entityWrapper, false);
 		if(log.isDebugEnabled()) {
-			log.debug("执行sql: {}", sqlToInsert);
+			log.debug("Preparing: {}", sqlToInsert);
+			log.debug("parameters: {}", entity);
 		}
 		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
 			entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
@@ -122,7 +123,8 @@ public class SessionImpl implements Session {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToUpdate = sqlHelp.getSqlToUpdate(entityWrapper, false);
 		if(log.isDebugEnabled()) {
-			log.debug("执行sql: {}", sqlToUpdate);
+			log.debug("Preparing: {}", sqlToUpdate);
+			log.debug("parameters: {}", entity);
 		}
 		try {
 			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
@@ -158,7 +160,8 @@ public class SessionImpl implements Session {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		String sqlToDeleteById = sqlHelp.getSqlToDeleteById(entityWrapper, false);
 		if(log.isDebugEnabled()) {
-			log.debug("执行sql: {}", sqlToDeleteById);
+			log.debug("Preparing: {}", sqlToDeleteById);
+			log.debug("parameters: {}", entity);
 		}
 		try {
 			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDeleteById);
@@ -177,12 +180,13 @@ public class SessionImpl implements Session {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
 		String sqlToDelete = sqlHelp.getSqlToDelete(entityWrapper, false);
 		sqlToDelete += example.toSql(entityWrapper);
+		List<Object> values = example.getValues();
 		if(log.isDebugEnabled()) {
-			log.debug("执行sql: {}", sqlToDelete);
+			log.debug("Preparing: {}", sqlToDelete);
+			log.debug("parameters: {}", values);
 		}
 		try {
 			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDelete);
-			List<Object> values = example.getValues();
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
@@ -223,8 +227,25 @@ public class SessionImpl implements Session {
 					example.orderByDesc(propertyDesc);
 				}
 			}
-			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-				sqlToSelect.append(example.toSql(entityWrapper));
+			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO || !entityWrapper.isPageSubSql()) {
+				sqlToSelect.append(example.toSql(entityWrapper, false));
+				// TODO 可抽出
+				if(entityWrapper.getGroupBys() != null && entityWrapper.getGroupBys().length > 0) {
+					sqlToSelect.append(" ");
+					sqlToSelect.append("group by");
+					sqlToSelect.append(" ");
+					boolean first = true;
+					for (String propertyName : entityWrapper.getGroupBys()) {
+						if(!first) {
+							sqlToSelect.append(",");
+						}
+						sqlToSelect.append(entityWrapper.getColumnNameByPropertyName(propertyName));
+						first = false;
+					}
+					sqlToSelect.append(" ");
+					
+				}
+				sqlToSelect.append(example.toOrderSql(entityWrapper));
 				sqlToSelect.append(" limit ?,?");
 				values.add((page.getPageIndex() - 1) * page.getPageSize());
 				values.add(page.getPageSize());
@@ -242,6 +263,8 @@ public class SessionImpl implements Session {
 					.append(entityWrapper.getTableAliasName())
 					.append(".")
 					.append(entityWrapper.getMainWrapper().getIdColumn().getName())
+					.append(" ")
+					.append(example.toOrderSql(entityWrapper))
 					.append(" limit ?,?");
 				List<Object> bufferValues = new ArrayList<Object>(values.size() + 2);
 				for (Object object : values) {
@@ -249,6 +272,10 @@ public class SessionImpl implements Session {
 				}
 				bufferValues.add((page.getPageIndex() - 1) * page.getPageSize());
 				bufferValues.add(page.getPageSize());
+				if(log.isDebugEnabled()) {
+					log.debug("Preparing: {}", selectIdSql);
+					log.debug("parameters: {}", bufferValues);
+				}
 				try {
 					@Cleanup PreparedStatement bufferPreSta = this.connHolper.getTagerConnection().prepareStatement(selectIdSql.toString());
 					for (int i = 0; i < bufferValues.size(); i++) {
@@ -271,14 +298,44 @@ public class SessionImpl implements Session {
 					this.close();
 				}
 				sqlToSelect.append(")")
-				.append(" ")
-				.append(example.toOrderSql(entityWrapper));
+				.append(" ");
+				if(entityWrapper.getGroupBys() != null && entityWrapper.getGroupBys().length > 0) {
+					sqlToSelect.append("group by");
+					sqlToSelect.append(" ");
+					boolean first = true;
+					for (String propertyName : entityWrapper.getGroupBys()) {
+						if(!first) {
+							sqlToSelect.append(",");
+						}
+						sqlToSelect.append(entityWrapper.getColumnNameByPropertyName(propertyName));
+						first = false;
+					}
+					sqlToSelect.append(" ");
+					
+				}
+				sqlToSelect.append(example.toOrderSql(entityWrapper));
 			}
 		}else {
 			sqlToSelect.append(example.toSql(entityWrapper));
+			if(entityWrapper.getGroupBys() != null && entityWrapper.getGroupBys().length > 0) {
+				sqlToSelect.append(" ");
+				sqlToSelect.append("group by");
+				sqlToSelect.append(" ");
+				boolean first = true;
+				for (String propertyName : entityWrapper.getGroupBys()) {
+					if(!first) {
+						sqlToSelect.append(",");
+					}
+					sqlToSelect.append(entityWrapper.getColumnNameByPropertyName(propertyName));
+					first = false;
+				}
+				sqlToSelect.append(" ");
+				
+			}
 		}
 		if(log.isDebugEnabled()) {
-			log.debug("findAll执行sql: {}", sqlToSelect);
+			log.debug("Preparing: {}", sqlToSelect);
+			log.debug("parameters: {}", values);
 		}
 		try {
 			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect.toString());
@@ -296,8 +353,8 @@ public class SessionImpl implements Session {
 					}
 					entitys.add(entity);
 				}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-					if(entityWrapper.getMainWrapper().getIdColumn() == null) {
-						log.warn("vo类中指定{}未存在ID键，无法进行分组!", entityWrapper.getMainWrapper().getTableName());
+					if(entityWrapper.getMainWrapper().getIdColumn() == null || !entityWrapper.isPageSubSql()) {
+//						log.warn("vo类中指定{}未存在ID键，无法进行分组!", entityWrapper.getMainWrapper().getTableName());
 						E entity = E.newInstance();
 						setValues(rs, entity, entityWrapper);
 						entitys.add(entity);
@@ -336,12 +393,13 @@ public class SessionImpl implements Session {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
 		String sqlToSelect = sqlHelp.getSqlToSelect(entityWrapper, false);
 		sqlToSelect += example.toSql(entityWrapper);
+		List<Object> values = example.getValues();
 		if(log.isDebugEnabled()) {
-			log.debug("执行sql: {}", sqlToSelect);
+			log.debug("Preparing: {}", sqlToSelect);
+			log.debug("parameters: {}", values);
 		}
 		try {
 			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
-			List<Object> values = example.getValues();
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
@@ -468,7 +526,8 @@ public class SessionImpl implements Session {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
 		String sqlToSelectById = sqlHelp.getSqlToSelectById(entityWrapper, false);
 		if(log.isDebugEnabled()) {
-			log.debug("执行sql: {}", sqlToSelectById);
+			log.debug("Preparing: {}", sqlToSelectById);
+			log.debug("parameters: {}", id);
 		}
 		try {
 			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelectById);
@@ -515,12 +574,13 @@ public class SessionImpl implements Session {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
 		String sqlToSelect = sqlHelp.getSqlToSelectCount(entityWrapper, false);
 		sqlToSelect = TextUtil.replaceTemplateParams(sqlToSelect, param -> example.toSql(entityWrapper));
+		List<Object> values = example.getValues();
 		if(log.isDebugEnabled()) {
-			log.debug("执行sql: {}", sqlToSelect);
+			log.debug("Preparing: {}", sqlToSelect);
+			log.debug("parameters: {}", values);
 		}
 		try {
 			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
-			List<Object> values = example.getValues();
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}

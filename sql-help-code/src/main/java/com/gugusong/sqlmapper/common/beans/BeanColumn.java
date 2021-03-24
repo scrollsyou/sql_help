@@ -132,6 +132,14 @@ public class BeanColumn {
 	 * 分组字段，针对 oneToMany注解
 	 */
 	private String[] groupBy;
+	/**
+	 * 是否为函数
+	 */
+	private boolean func = false;
+	/**
+	 * 执行函数
+	 */
+	private String function;
 	
 	
 	public Object getVal(Object entity) throws Exception {

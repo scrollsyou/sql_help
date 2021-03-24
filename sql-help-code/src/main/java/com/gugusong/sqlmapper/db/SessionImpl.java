@@ -229,6 +229,21 @@ public class SessionImpl implements Session {
 			}
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO || !entityWrapper.isPageSubSql()) {
 				sqlToSelect.append(example.toSql(entityWrapper));
+				// TODO 可抽出
+				if(entityWrapper.getGroupBys() != null && entityWrapper.getGroupBys().length > 0) {
+					sqlToSelect.append("group by");
+					sqlToSelect.append(" ");
+					boolean first = true;
+					for (String propertyName : entityWrapper.getGroupBys()) {
+						if(!first) {
+							sqlToSelect.append(",");
+						}
+						sqlToSelect.append(entityWrapper.getColumnNameByPropertyName(propertyName));
+						first = false;
+					}
+					sqlToSelect.append(" ");
+					
+				}
 				sqlToSelect.append(" limit ?,?");
 				values.add((page.getPageIndex() - 1) * page.getPageSize());
 				values.add(page.getPageSize());
@@ -281,11 +296,39 @@ public class SessionImpl implements Session {
 					this.close();
 				}
 				sqlToSelect.append(")")
-				.append(" ")
-				.append(example.toOrderSql(entityWrapper));
+				.append(" ");
+				if(entityWrapper.getGroupBys() != null && entityWrapper.getGroupBys().length > 0) {
+					sqlToSelect.append("group by");
+					sqlToSelect.append(" ");
+					boolean first = true;
+					for (String propertyName : entityWrapper.getGroupBys()) {
+						if(!first) {
+							sqlToSelect.append(",");
+						}
+						sqlToSelect.append(entityWrapper.getColumnNameByPropertyName(propertyName));
+						first = false;
+					}
+					sqlToSelect.append(" ");
+					
+				}
+				sqlToSelect.append(example.toOrderSql(entityWrapper));
 			}
 		}else {
 			sqlToSelect.append(example.toSql(entityWrapper));
+			if(entityWrapper.getGroupBys() != null && entityWrapper.getGroupBys().length > 0) {
+				sqlToSelect.append("group by");
+				sqlToSelect.append(" ");
+				boolean first = true;
+				for (String propertyName : entityWrapper.getGroupBys()) {
+					if(!first) {
+						sqlToSelect.append(",");
+					}
+					sqlToSelect.append(entityWrapper.getColumnNameByPropertyName(propertyName));
+					first = false;
+				}
+				sqlToSelect.append(" ");
+				
+			}
 		}
 		if(log.isDebugEnabled()) {
 			log.debug("Preparing: {}", sqlToSelect);

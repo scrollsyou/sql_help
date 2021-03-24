@@ -23,6 +23,7 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
+import com.gugusong.sqlmapper.annotation.vo.GroupBy;
 import com.gugusong.sqlmapper.annotation.vo.Join;
 import com.gugusong.sqlmapper.annotation.vo.ManyToOne;
 import com.gugusong.sqlmapper.annotation.vo.OneToMany;
@@ -240,6 +241,10 @@ public class BeanWrapper {
 				joinBeans.put(join.entityAlias(), new BeanJoin(join.joinType(), join.joinConditions(), BeanWrapper.instrance(join.po(), config), join.entityAlias()));
 			}
 		}
+		GroupBy groupBy = voClazz.getAnnotation(GroupBy.class);
+		if(groupBy != null) {
+			this.groupBys = groupBy.propertys();
+		}
 
 		Field[] physicalFields = voClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
@@ -273,20 +278,20 @@ public class BeanWrapper {
 				@NonNull
 				Class<?> manyClazz = oneToMany.tagerClass();
 				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans, tableAliasName, mainWrapper, this);
-				Set<String> groupBy = new HashSet<String>(oneToManyWrapper.columns.size());
+				Set<String> groupByCount = new HashSet<String>(oneToManyWrapper.columns.size());
 				for (BeanColumn oneToManyColum : oneToManyWrapper.columns) {
 					if(oneToManyColum.getTableAlias() == null) {
 						continue;
 					}
 					BeanJoin joinBean = joinBeans.get(oneToManyColum.getTableAlias());
 					if(joinBean != null && joinBean.getJoinBeanWrapper().getIdColumn() != null) {
-						groupBy.add(new StringBuilder(oneToManyColum.getTableAlias()).append("_").append(joinBean.getJoinBeanWrapper().getIdColumn().getName()).toString());
+						groupByCount.add(new StringBuilder(oneToManyColum.getTableAlias()).append("_").append(joinBean.getJoinBeanWrapper().getIdColumn().getName()).toString());
 						this.setPageSubSql(true);
 					}
 				}
 				BeanColumn beanColumn = new BeanColumn(null, 
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
-						null, null, oneToManyWrapper, groupBy.toArray(new String[] {}));
+						null, null, oneToManyWrapper, groupByCount.toArray(new String[] {}));
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				// TODO 判断 oneToMany 注解必须在List/Set上
 				columnList.add(beanColumn);

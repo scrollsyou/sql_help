@@ -3,6 +3,7 @@ package sql_help.entity.vo;
 import java.util.List;
 import java.util.Set;
 
+import com.gugusong.sqlmapper.annotation.vo.GroupBy;
 import com.gugusong.sqlmapper.annotation.vo.Join;
 import com.gugusong.sqlmapper.annotation.vo.ManyToOne;
 import com.gugusong.sqlmapper.annotation.vo.OneToMany;
@@ -18,6 +19,7 @@ import sql_help.entity.Student;
 @VOBean(mainPo = School.class, entityAlias = "school")
 @Join(entityAlias = "student", po = Student.class, joinConditions = "{student.schoolId} = {id}")
 @Join(entityAlias = "clbum", po = Clbum.class, joinConditions = "{id} = {clbum.schoolId}")
+@GroupBy(propertys = {"id", "school.name"})
 public class SchoolVo {
 
 	private Integer id;

@@ -1,6 +1,8 @@
 package com.gugusong.sqlmapper.db.mysql;
 
+import java.util.Arrays;
 import java.util.Map.Entry;
+import java.util.stream.Stream;
 
 import com.google.common.base.Joiner;
 import com.gugusong.sqlmapper.common.beans.BeanColumn;
@@ -272,6 +274,21 @@ public class MysqlSqlHelp implements ISqlHelp{
 			sqlsb.append(EQUEST);
 			sqlsb.append(SPLIT);
 			sqlsb.append(PARAM_TOKEN);
+			sqlsb.append(SPLIT);
+			if(poClazz.getGroupBys() != null && poClazz.getGroupBys().length > 0) {
+				sqlsb.append(GROUP_BY);
+				sqlsb.append(SPLIT);
+				boolean first = true;
+				for (String propertyName : poClazz.getGroupBys()) {
+					if(!first) {
+						sqlsb.append(COMMA);
+					}
+					sqlsb.append(poClazz.getColumnNameByPropertyName(propertyName));
+					first = false;
+				}
+				sqlsb.append(SPLIT);
+				
+			}
 		}else {
 			throw new RuntimeException("该Bean类不支持查询，查询操作只支持VO/PO类!");
 		}
@@ -431,6 +448,20 @@ public class MysqlSqlHelp implements ISqlHelp{
 				sqlsb.append(poClazz.getTableAliasName());
 				sqlsb.append(POINT);
 				sqlsb.append(poClazz.getMainWrapper().getIdColumn().getName());
+			}else if(poClazz.getGroupBys() != null && poClazz.getGroupBys().length > 0) {
+				// TODO 公共部分可以抽出
+				sqlsb.append(GROUP_BY);
+				sqlsb.append(SPLIT);
+				boolean first = true;
+				for (String propertyName : poClazz.getGroupBys()) {
+					if(!first) {
+						sqlsb.append(COMMA);
+					}
+					sqlsb.append(poClazz.getColumnNameByPropertyName(propertyName));
+					first = false;
+				}
+				sqlsb.append(SPLIT);
+				
 			}
 			sqlsb.append(RIGHT_PARENTHESIS);
 			sqlsb.append(SPLIT);

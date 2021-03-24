@@ -69,7 +69,7 @@ public class SessionImpl implements Session {
 			}else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
 				entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId()+"");
 			}else {
-				throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配int/string类型字段!");
+				throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配long/string类型字段!");
 			}
 		}
 		@Cleanup PreparedStatement preSta = null;

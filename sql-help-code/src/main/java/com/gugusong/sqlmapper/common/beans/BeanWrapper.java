@@ -23,6 +23,7 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
+import com.gugusong.sqlmapper.annotation.vo.FunctionMapping;
 import com.gugusong.sqlmapper.annotation.vo.GroupBy;
 import com.gugusong.sqlmapper.annotation.vo.Join;
 import com.gugusong.sqlmapper.annotation.vo.ManyToOne;
@@ -31,6 +32,7 @@ import com.gugusong.sqlmapper.annotation.vo.PropertyMapping;
 import com.gugusong.sqlmapper.annotation.vo.VOBean;
 import com.gugusong.sqlmapper.common.constants.ErrorCodeConstant;
 import com.gugusong.sqlmapper.common.exception.StructureException;
+import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 
 import lombok.Getter;
@@ -92,6 +94,8 @@ public class BeanWrapper {
 	private boolean pageSubSql = false;
 	@Getter
 	private BeanWrapper voWrapper;
+	@Getter
+	private List<BeanColumn> funcColumns;
 	
 	private Map<String, String> sqlCache = new TreeMap<String, String>();
 	
@@ -205,6 +209,24 @@ public class BeanWrapper {
 						nameSplit[0], nameSplit[0] + "_" + byPropertyName.getAliasName(), null, null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
+			}else if(physicalField.isAnnotationPresent(FunctionMapping.class)) {
+				FunctionMapping functionMapping = physicalField.getAnnotation(FunctionMapping.class);
+				@NonNull
+				String funcValue = functionMapping.function();
+				funcValue = TextUtil.replaceTemplateParams(funcValue, paramName -> {
+					@NonNull
+					String columnName = voWrapper.getColumnNameByPropertyName(paramName);
+					return columnName;
+				});
+				String columnName = config.getImplicitNamingStrategy().getColumntName(physicalField.getName());
+				BeanColumn beanColumn = new BeanColumn(columnName, 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						voWrapper.tableAliasName, voWrapper.tableAliasName + "_" + columnName, null, null);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				beanColumn.setFunc(true);
+				beanColumn.setFunction(funcValue);
+				columnList.add(beanColumn);
+				voWrapper.getFuncColumns().add(beanColumn);
 			}else {
 				throw new RuntimeException("基础bean类中属性必须指定表别名!");
 			}
@@ -227,6 +249,7 @@ public class BeanWrapper {
 	 */
 	private void voInstance(Class<?> voClazz, GlogalConfig config) {
 		VOBean voBean = voClazz.getAnnotation(VOBean.class);
+		this.funcColumns = new ArrayList<BeanColumn>();
 		@NonNull
 		Class<?> mainPoClazz = voBean.mainPo();
 		if(!isPo(mainPoClazz)) {
@@ -315,6 +338,24 @@ public class BeanWrapper {
 				}
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnList.add(beanColumn);
+			}else if(physicalField.isAnnotationPresent(FunctionMapping.class)) {
+				FunctionMapping functionMapping = physicalField.getAnnotation(FunctionMapping.class);
+				@NonNull
+				String funcValue = functionMapping.function();
+				funcValue = TextUtil.replaceTemplateParams(funcValue, paramName -> {
+					@NonNull
+					String columnName = this.getColumnNameByPropertyName(paramName);
+					return columnName;
+				});
+				String columnName = config.getImplicitNamingStrategy().getColumntName(physicalField.getName());
+				BeanColumn beanColumn = new BeanColumn(columnName, 
+						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
+						this.tableAliasName, this.tableAliasName + "_" + columnName, null, null);
+				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				beanColumn.setFunc(true);
+				beanColumn.setFunction(funcValue);
+				columnList.add(beanColumn);
+				funcColumns.add(beanColumn);
 			}else {
 				BeanColumn byPropertyName = mainWrapper.getByPropertyName(physicalField.getName());
 				BeanColumn beanColumn = new BeanColumn(byPropertyName.getName(), 

@@ -228,9 +228,10 @@ public class SessionImpl implements Session {
 				}
 			}
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO || !entityWrapper.isPageSubSql()) {
-				sqlToSelect.append(example.toSql(entityWrapper));
+				sqlToSelect.append(example.toSql(entityWrapper, false));
 				// TODO 可抽出
 				if(entityWrapper.getGroupBys() != null && entityWrapper.getGroupBys().length > 0) {
+					sqlToSelect.append(" ");
 					sqlToSelect.append("group by");
 					sqlToSelect.append(" ");
 					boolean first = true;
@@ -244,6 +245,7 @@ public class SessionImpl implements Session {
 					sqlToSelect.append(" ");
 					
 				}
+				sqlToSelect.append(example.toOrderSql(entityWrapper));
 				sqlToSelect.append(" limit ?,?");
 				values.add((page.getPageIndex() - 1) * page.getPageSize());
 				values.add(page.getPageSize());
@@ -316,6 +318,7 @@ public class SessionImpl implements Session {
 		}else {
 			sqlToSelect.append(example.toSql(entityWrapper));
 			if(entityWrapper.getGroupBys() != null && entityWrapper.getGroupBys().length > 0) {
+				sqlToSelect.append(" ");
 				sqlToSelect.append("group by");
 				sqlToSelect.append(" ");
 				boolean first = true;

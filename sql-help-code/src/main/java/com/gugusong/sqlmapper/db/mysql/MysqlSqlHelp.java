@@ -98,6 +98,14 @@ public class MysqlSqlHelp implements ISqlHelp{
 					return  selectSb.toString();
 				}).toArray()));
 			}
+			if(poClazz.getFuncColumns() != null && poClazz.getFuncColumns().size() > 0) {
+				sqlsb.append(COMMA);
+				sqlsb.append(Joiner.on(COMMA).join(poClazz.getFuncColumns().stream().map(c -> {
+					StringBuilder selectSb = new StringBuilder();
+					selectSb.append(c.getFunction()).append(SPLIT).append(c.getAliasName());
+					return  selectSb.toString();
+				}).toArray()));
+			}
 			sqlsb.append(SPLIT);
 			sqlsb.append(FROM);
 			sqlsb.append(SPLIT);
@@ -234,6 +242,14 @@ public class MysqlSqlHelp implements ISqlHelp{
 				sqlsb.append(Joiner.on(COMMA + joinTableAlias + POINT).join(joinBeanWrapper.getColumns().stream().map(c -> {
 					StringBuilder selectSb = new StringBuilder();
 					selectSb.append(c.getName()).append(SPLIT).append(joinTableAlias).append("_").append(c.getName());
+					return  selectSb.toString();
+				}).toArray()));
+			}
+			if(poClazz.getFuncColumns() != null && poClazz.getFuncColumns().size() > 0) {
+				sqlsb.append(COMMA);
+				sqlsb.append(Joiner.on(COMMA).join(poClazz.getFuncColumns().stream().map(c -> {
+					StringBuilder selectSb = new StringBuilder();
+					selectSb.append(c.getFunction()).append(SPLIT).append(c.getAliasName());
 					return  selectSb.toString();
 				}).toArray()));
 			}

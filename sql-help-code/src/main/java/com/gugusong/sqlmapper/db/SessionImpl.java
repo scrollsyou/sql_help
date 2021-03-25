@@ -5,9 +5,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
 import com.gugusong.sqlmapper.Example;
 import com.gugusong.sqlmapper.Page;
 import com.gugusong.sqlmapper.Session;
@@ -15,12 +17,14 @@ import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.collection.ConverMapToList;
 import com.gugusong.sqlmapper.common.collection.ConverMapToSet;
+import com.gugusong.sqlmapper.common.exception.SqlException;
 import com.gugusong.sqlmapper.common.exception.StructureException;
 import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.common.util.UUIDUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.strategy.GenerationType;
+import com.gugusong.sqlmapper.strategy.VersionGenerationType;
 
 import lombok.Cleanup;
 import lombok.NonNull;
@@ -69,7 +73,7 @@ public class SessionImpl implements Session {
 			}else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
 				entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId()+"");
 			}else {
-				throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配int/string类型字段!");
+				throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配long/string类型字段!");
 			}
 		}
 		@Cleanup PreparedStatement preSta = null;
@@ -85,7 +89,35 @@ public class SessionImpl implements Session {
 				if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
 					continue;
 				}
-				preSta.setObject(i, beanColumn.getVal(entity));
+				if(beanColumn.isVersion()) {
+					if(beanColumn.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+						if(ColumnTypeMapping.INT_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, 0);
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, 0L);
+						}else {
+							throw new SqlException("默认乐观锁字段必须为int/long类型!");
+						}
+					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, config.getSnowFlake().nextId() + "");
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, config.getSnowFlake().nextId());
+						}else {
+							throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
+						}
+					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.UUID) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, UUIDUtil.getUUID());
+						}else {
+							throw new SqlException("UUID乐观锁字段必须为string类型!");
+						}
+					}else {
+						throw new SqlException("乐观锁类型不支持!");
+					}
+				}else {
+					preSta.setObject(i, beanColumn.getVal(entity));
+				}
 				i++;
 			}
 			preSta.executeUpdate();
@@ -108,6 +140,104 @@ public class SessionImpl implements Session {
 			this.close();
 		}
 		return entity;
+	}
+	
+	/**
+	 * 批量插入数据
+	 * @param <T>
+	 * @param entitys
+	 * @param clazz
+	 * @return
+	 */
+	@SneakyThrows
+	public <T> List<T> save(@NonNull List<T> entitys, Class<T> clazz) {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(clazz, config);
+		String sqlToInsert = sqlHelp.getSqlToInsert(entityWrapper, false);
+		if(log.isDebugEnabled()) {
+			log.debug("Preparing: {}", sqlToInsert);
+			log.debug("parameters: list");
+		}
+		
+		@Cleanup PreparedStatement preSta = null;
+		try {
+			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
+			}else {
+				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert);
+			}
+			List<BeanColumn> columns = entityWrapper.getColumns();
+			for (T entity : entitys) {
+				if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
+					entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
+				} else if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
+					if (ColumnTypeMapping.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
+					} else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId() + "");
+					} else {
+						throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配long/string类型字段!");
+					}
+				}
+				int i = 1;
+				for (BeanColumn beanColumn : columns) {
+					if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
+						continue;
+					}
+					if(beanColumn.isVersion()) {
+						if(beanColumn.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+							if(ColumnTypeMapping.INT_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, 0);
+							}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, 0L);
+							}else {
+								throw new SqlException("默认乐观锁字段必须为int/long类型!");
+							}
+						}else if(beanColumn.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+							if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, config.getSnowFlake().nextId() + "");
+							}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, config.getSnowFlake().nextId());
+							}else {
+								throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
+							}
+						}else if(beanColumn.getVersionStragegy() == VersionGenerationType.UUID) {
+							if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, UUIDUtil.getUUID());
+							}else {
+								throw new SqlException("UUID乐观锁字段必须为string类型!");
+							}
+						}else {
+							throw new SqlException("乐观锁类型不支持!");
+						}
+					}else {
+						preSta.setObject(i, beanColumn.getVal(entity));
+					}
+					i++;
+				}
+				preSta.addBatch();
+			}
+			preSta.executeUpdate();
+			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
+				Iterator<T> entityIt = entitys.iterator();
+				while(resultSet.next()) {
+					T entity = entityIt.next();
+					if(ColumnTypeMappingImpl.INT_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, resultSet.getInt(1));
+					}else if(ColumnTypeMappingImpl.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+						entityWrapper.getIdColumn().setVal(entity, resultSet.getLong(1));
+					}else {
+						throw new StructureException("数据库自增长id类型不为int/long！");
+					}
+				}
+			}
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
+		}
+		return entitys;
 	}
 
 	/**
@@ -134,10 +264,197 @@ public class SessionImpl implements Session {
 				if(beanColumn.isIdFlag()) {
 					continue;
 				}
+				if(beanColumn.isVersion()) {
+					if(beanColumn.getVal(entity) == null) {
+						throw new SqlException("乐观锁PO类更新时version字段必传!");
+					}
+					if(beanColumn.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+						if(ColumnTypeMapping.INT_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, (Integer)beanColumn.getVal(entity) + 1);
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, (Long)beanColumn.getVal(entity) + 1L);
+						}else {
+							throw new SqlException("默认乐观锁字段必须为int/long类型!");
+						}
+					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, config.getSnowFlake().nextId() + "");
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, config.getSnowFlake().nextId());
+						}else {
+							throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
+						}
+					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.UUID) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, UUIDUtil.getUUID());
+						}else {
+							throw new SqlException("UUID乐观锁字段必须为string类型!");
+						}
+					}else {
+						throw new SqlException("乐观锁类型不支持!");
+					}
+				}else {
+					preSta.setObject(i, beanColumn.getVal(entity));
+				}
 				preSta.setObject(i, beanColumn.getVal(entity));
 				i++;
 			}
 			preSta.setObject(i, entityWrapper.getIdColumn().getVal(entity));
+			if(entityWrapper.isVersion()) {
+				preSta.setObject(i+1, entityWrapper.getVersionColumn().getVal(entity));
+			}
+			return preSta.executeUpdate();
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
+		}
+	}
+	/**
+	 * 按id进行更新，值为null的属性不进行更新
+	 * @param <T>
+	 * @param entity
+	 * @return
+	 */
+	@SneakyThrows
+	public <T> int updateSelective(T entity) {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		List<Object> values = new ArrayList<Object>();
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(ISqlHelp.UPDATE);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(entityWrapper.getTableName());
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.SET);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(Joiner.on(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.COMMA ).join(entityWrapper.getColumns().stream().filter(c -> {
+			try {
+				Object value = null;
+				if(c.isVersion()) {
+					if(c.getVal(entity) == null) {
+						throw new SqlException("乐观锁PO类更新时version字段必传!");
+					}
+					if(c.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+						if(ColumnTypeMapping.INT_TYPE.equals(c.getDateType())) {
+							value = (Integer)c.getVal(entity) + 1;
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(c.getDateType())) {
+							value = (Long)c.getVal(entity) + 1L;
+						}else {
+							throw new SqlException("默认乐观锁字段必须为int/long类型!");
+						}
+					}else if(c.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(c.getDateType())) {
+							value = config.getSnowFlake().nextId() + "";
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(c.getDateType())) {
+							value = config.getSnowFlake().nextId();
+						}else {
+							throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
+						}
+					}else if(c.getVersionStragegy() == VersionGenerationType.UUID) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(c.getDateType())) {
+							value = UUIDUtil.getUUID();
+						}else {
+							throw new SqlException("UUID乐观锁字段必须为string类型!");
+						}
+					}else {
+						throw new SqlException("乐观锁类型不支持!");
+					}
+				}else {
+					value = c.getVal(entity);
+				}
+				if(c.isIdFlag() || value == null) {
+					return false;
+				}
+				values.add(value);
+			} catch (Exception e) {
+				throw new StructureException(e);
+			}
+			
+			return true;
+		}).map(c -> c.getName()).toArray()));
+		sqlsb.append(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.WHERE);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(entityWrapper.getIdColumn().getName());
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.EQUEST);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.PARAM_TOKEN);
+		if(entityWrapper.isVersion()) {
+			sqlsb.append(ISqlHelp.AND);
+			sqlsb.append(ISqlHelp.SPLIT);
+			sqlsb.append(entityWrapper.getVersionColumn().getName());
+			sqlsb.append(ISqlHelp.SPLIT);
+			sqlsb.append(ISqlHelp.EQUEST);
+			sqlsb.append(ISqlHelp.SPLIT);
+			sqlsb.append(ISqlHelp.PARAM_TOKEN);
+			values.add(entityWrapper.getVersionColumn().getVal(entity));
+		}
+		String sqlToUpdate = sqlsb.toString();
+		try {
+			values.add(entityWrapper.getIdColumn().getVal(entity));
+			if(log.isDebugEnabled()) {
+				log.debug("Preparing: {}", sqlToUpdate);
+				log.debug("parameters: {}", values);
+			}
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
+			int i = 1;
+			for (Object val : values) {
+				preSta.setObject(i, val);
+				i++;
+			}
+			return preSta.executeUpdate();
+		} catch (SQLException e) {
+			this.close();
+			throw e;
+		}finally {
+			this.close();
+		}
+	}
+	
+	/**
+	 * 按条件更新
+	 */
+	@SneakyThrows
+	public <T> int updateByExample(T entity, Example example) {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		List<Object> values = new ArrayList<Object>();
+		StringBuilder sqlsb = new StringBuilder();
+		sqlsb.append(ISqlHelp.UPDATE);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(entityWrapper.getTableName());
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(ISqlHelp.SET);
+		sqlsb.append(ISqlHelp.SPLIT);
+		sqlsb.append(Joiner.on(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.COMMA ).join(entityWrapper.getColumns().stream().filter(c -> {
+			try {
+				Object value = c.getVal(entity);
+				if(c.isIdFlag() || value == null) {
+					return false;
+				}
+				values.add(value);
+			} catch (Exception e) {
+				throw new StructureException(e);
+			}
+			
+			return true;
+		}).map(c -> c.getName()).toArray()));
+		sqlsb.append(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.SPLIT);
+		sqlsb.append(example.toSql(entityWrapper, false));
+		String sqlToUpdate = sqlsb.toString();
+		try {
+			values.addAll(example.getValues());
+			if(log.isDebugEnabled()) {
+				log.debug("Preparing: {}", sqlToUpdate);
+				log.debug("parameters: {}", values);
+			}
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
+			int i = 1;
+			for (Object val : values) {
+				preSta.setObject(i, val);
+				i++;
+			}
 			return preSta.executeUpdate();
 		} catch (SQLException e) {
 			this.close();
@@ -291,6 +608,10 @@ public class SessionImpl implements Session {
 						values.add(idRs.getObject(1));
 						sqlToSelect.append("?");
 					}
+					if(first) {
+						// 不存在数据
+						return new ArrayList<E>();
+					}
 				} catch (SQLException e) {
 					this.close();
 					throw e;
@@ -331,6 +652,9 @@ public class SessionImpl implements Session {
 				}
 				sqlToSelect.append(" ");
 				
+			}
+			if(example.isForUpdate()) {
+				sqlToSelect.append(" for update ");
 			}
 		}
 		if(log.isDebugEnabled()) {
@@ -391,15 +715,18 @@ public class SessionImpl implements Session {
 	@SneakyThrows
 	public <E> E findOne(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
-		String sqlToSelect = sqlHelp.getSqlToSelect(entityWrapper, false);
-		sqlToSelect += example.toSql(entityWrapper);
+		StringBuilder sqlToSelect = new StringBuilder(sqlHelp.getSqlToSelect(entityWrapper, false));
+		sqlToSelect.append(example.toSql(entityWrapper));
+		if(example.isForUpdate()) {
+			sqlToSelect.append(" for update ");
+		}
 		List<Object> values = example.getValues();
 		if(log.isDebugEnabled()) {
 			log.debug("Preparing: {}", sqlToSelect);
 			log.debug("parameters: {}", values);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect.toString());
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
@@ -560,6 +887,46 @@ public class SessionImpl implements Session {
 		}
 		return null;
 	}
+	
+	@SneakyThrows
+	public <E> E findOneByIdForUpdate(Class<E> e, Object id) {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
+		String sqlToSelectById = sqlHelp.getSqlToSelectById(entityWrapper, false) + " for update";
+		if(log.isDebugEnabled()) {
+			log.debug("Preparing: {}", sqlToSelectById);
+			log.debug("parameters: {}", id);
+		}
+		try {
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelectById);
+			preSta.setObject(1, id);
+			@Cleanup ResultSet rs = preSta.executeQuery();
+			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+				if (rs.next()) {
+					E entity = e.newInstance();
+					for (BeanColumn column : entityWrapper.getColumns()) {
+						column.setVal(entity, rs.getObject(column.getName()));
+					}
+					return entity;
+				}
+			}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+				E entity = e.newInstance();
+				E result = null;
+				while (rs.next()) {
+					result = entity;
+					setValues(rs, entity, entityWrapper);
+				}
+				return result;
+			}else {
+				throw new RuntimeException("查询对象非PO/VO对象!");
+			}
+		} catch (SQLException sqlE) {
+			this.close();
+			throw sqlE;
+		}finally {
+			this.close();
+		}
+		return null;
+	}
 
 	/**
 	 * 统计总行数
@@ -573,7 +940,7 @@ public class SessionImpl implements Session {
 	public <E> int findCount(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
 		String sqlToSelect = sqlHelp.getSqlToSelectCount(entityWrapper, false);
-		sqlToSelect = TextUtil.replaceTemplateParams(sqlToSelect, param -> example.toSql(entityWrapper));
+		sqlToSelect = TextUtil.replaceTemplateParams(sqlToSelect, param -> example.toSql(entityWrapper, false));
 		List<Object> values = example.getValues();
 		if(log.isDebugEnabled()) {
 			log.debug("Preparing: {}", sqlToSelect);

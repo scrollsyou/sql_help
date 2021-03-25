@@ -132,5 +132,11 @@ public interface Example {
 	Example gtEquals(String property, Object value, boolean nullIsTrue);
 	Example lt(String property, Object value, boolean nullIsTrue);
 	Example ltEquals(String property, Object value, boolean nullIsTrue);
+	/**
+	 * 不可跟page共同使用
+	 * @return
+	 */
+	Example forUpdate();
+	boolean isForUpdate();
 	
 }

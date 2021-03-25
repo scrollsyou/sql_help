@@ -32,6 +32,11 @@ public @interface Column {
 	 */
 	String dateType() default "";
 	/**
+	 * 属性说明
+	 * @return
+	 */
+	String comments() default "";
+	/**
 	 * 数据库类型长度
 	 * @return
 	 */

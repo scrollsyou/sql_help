@@ -8,6 +8,29 @@ import com.gugusong.sqlmapper.common.beans.BeanWrapper;
  *
  */
 public interface ISqlHelp {
+	
+	public static final String SELECT = "select";
+	public static final String UPDATE = "update";
+	public static final String DELETE = "delete";
+	public static final String INSERT_INTO = "insert into";
+	public static final String VALUES = "values";
+	public static final String SET = "set";
+	public static final String EQUEST = "=";
+	public static final String PARAM_TOKEN = "?";
+	public static final String FROM = "from";
+	public static final String AS = "as";
+	public static final String WHERE = "where";
+	public static final String GROUP_BY = "group by";
+	public static final String AND = "and";
+	public static final String OR = "or";
+	public static final String ON = "on";
+	public static final String POINT = ".";
+	public static final String COMMA = ",";
+	public static final String SPLIT = " ";
+	public static final String RETRACT = "    ";
+	public static final String ENTER = "\n";
+	public static final String LEFT_PARENTHESIS = "(";
+	public static final String RIGHT_PARENTHESIS = ")";
 
 	/**
 	 * 生成单表查询sql

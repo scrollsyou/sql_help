@@ -514,6 +514,9 @@ public class SessionImpl implements Session {
 				sqlToSelect.append(" ");
 				
 			}
+			if(example.isForUpdate()) {
+				sqlToSelect.append(" for update ");
+			}
 		}
 		if(log.isDebugEnabled()) {
 			log.debug("Preparing: {}", sqlToSelect);
@@ -573,15 +576,18 @@ public class SessionImpl implements Session {
 	@SneakyThrows
 	public <E> E findOne(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
-		String sqlToSelect = sqlHelp.getSqlToSelect(entityWrapper, false);
-		sqlToSelect += example.toSql(entityWrapper);
+		StringBuilder sqlToSelect = new StringBuilder(sqlHelp.getSqlToSelect(entityWrapper, false));
+		sqlToSelect.append(example.toSql(entityWrapper));
+		if(example.isForUpdate()) {
+			sqlToSelect.append(" for update ");
+		}
 		List<Object> values = example.getValues();
 		if(log.isDebugEnabled()) {
 			log.debug("Preparing: {}", sqlToSelect);
 			log.debug("parameters: {}", values);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect.toString());
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
@@ -707,6 +713,46 @@ public class SessionImpl implements Session {
 	public <E> E findOneById(Class<E> e, Object id) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
 		String sqlToSelectById = sqlHelp.getSqlToSelectById(entityWrapper, false);
+		if(log.isDebugEnabled()) {
+			log.debug("Preparing: {}", sqlToSelectById);
+			log.debug("parameters: {}", id);
+		}
+		try {
+			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelectById);
+			preSta.setObject(1, id);
+			@Cleanup ResultSet rs = preSta.executeQuery();
+			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+				if (rs.next()) {
+					E entity = e.newInstance();
+					for (BeanColumn column : entityWrapper.getColumns()) {
+						column.setVal(entity, rs.getObject(column.getName()));
+					}
+					return entity;
+				}
+			}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+				E entity = e.newInstance();
+				E result = null;
+				while (rs.next()) {
+					result = entity;
+					setValues(rs, entity, entityWrapper);
+				}
+				return result;
+			}else {
+				throw new RuntimeException("查询对象非PO/VO对象!");
+			}
+		} catch (SQLException sqlE) {
+			this.close();
+			throw sqlE;
+		}finally {
+			this.close();
+		}
+		return null;
+	}
+	
+	@SneakyThrows
+	public <E> E findOneByIdForUpdate(Class<E> e, Object id) {
+		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
+		String sqlToSelectById = sqlHelp.getSqlToSelectById(entityWrapper, false) + " for update";
 		if(log.isDebugEnabled()) {
 			log.debug("Preparing: {}", sqlToSelectById);
 			log.debug("parameters: {}", id);

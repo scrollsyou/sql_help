@@ -23,6 +23,7 @@ public class ExampleImpl implements Example {
 	private ConditionFragment currentFragment;
 	private final Example parent;
 	private boolean hasPage = false;
+	private boolean forUpdate = false;
 	private Page page;
 	
 	private ExampleImpl() {
@@ -302,6 +303,15 @@ public class ExampleImpl implements Example {
 	@Override
 	public Page getPage() {
 		return this.page;
+	}
+	@Override
+	public Example forUpdate() {
+		this.forUpdate = true;
+		return this;
+	}
+	@Override
+	public boolean isForUpdate() {
+		return this.forUpdate;
 	}
 
 

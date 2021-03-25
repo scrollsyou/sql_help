@@ -127,4 +127,13 @@ public interface Session {
 	 * @return
 	 */
 	public <T> int updateByExample(T entity, Example example);
+	
+	/**
+	 * 查询for update
+	 * @param <E>
+	 * @param e
+	 * @param id
+	 * @return
+	 */
+	public <E> E findOneByIdForUpdate(Class<E> e, Object id);
 }

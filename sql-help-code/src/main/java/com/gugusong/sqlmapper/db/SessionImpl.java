@@ -608,6 +608,10 @@ public class SessionImpl implements Session {
 						values.add(idRs.getObject(1));
 						sqlToSelect.append("?");
 					}
+					if(first) {
+						// 不存在数据
+						return new ArrayList<E>();
+					}
 				} catch (SQLException e) {
 					this.close();
 					throw e;

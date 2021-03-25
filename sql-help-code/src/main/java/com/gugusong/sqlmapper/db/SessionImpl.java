@@ -936,7 +936,7 @@ public class SessionImpl implements Session {
 	public <E> int findCount(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
 		String sqlToSelect = sqlHelp.getSqlToSelectCount(entityWrapper, false);
-		sqlToSelect = TextUtil.replaceTemplateParams(sqlToSelect, param -> example.toSql(entityWrapper));
+		sqlToSelect = TextUtil.replaceTemplateParams(sqlToSelect, param -> example.toSql(entityWrapper, false));
 		List<Object> values = example.getValues();
 		if(log.isDebugEnabled()) {
 			log.debug("Preparing: {}", sqlToSelect);

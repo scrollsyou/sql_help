@@ -78,12 +78,13 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 	@ConditionalOnMissingBean(SessionFactory.class)
 	@Bean
 	public SessionFactory sqlHelpSessionFactory(GlogalConfig config) {
+		log.info("sql-help init ... ");
 		return new SessionFactoryImpl(config);
 	}
 	
 	@Bean
-	public Session sqlHelpSession(SessionFactory factory) throws SQLException {
-		return factory.openSession();
+	public SqlHelpBaseDao sqlHelpSession(SessionFactory factory) throws SQLException {
+		return new SqlHelpBaseDao(factory.openSession());
 	}
 	
 	@Override

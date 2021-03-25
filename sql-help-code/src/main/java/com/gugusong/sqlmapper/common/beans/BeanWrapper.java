@@ -23,6 +23,7 @@ import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
+import com.gugusong.sqlmapper.annotation.Version;
 import com.gugusong.sqlmapper.annotation.vo.FunctionMapping;
 import com.gugusong.sqlmapper.annotation.vo.GroupBy;
 import com.gugusong.sqlmapper.annotation.vo.Join;
@@ -31,6 +32,7 @@ import com.gugusong.sqlmapper.annotation.vo.OneToMany;
 import com.gugusong.sqlmapper.annotation.vo.PropertyMapping;
 import com.gugusong.sqlmapper.annotation.vo.VOBean;
 import com.gugusong.sqlmapper.common.constants.ErrorCodeConstant;
+import com.gugusong.sqlmapper.common.exception.SqlException;
 import com.gugusong.sqlmapper.common.exception.StructureException;
 import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
@@ -96,6 +98,14 @@ public class BeanWrapper {
 	private BeanWrapper voWrapper;
 	@Getter
 	private List<BeanColumn> funcColumns;
+	
+	/**
+	 * 乐观锁
+	 */
+	@Getter
+	private boolean version = false;
+	@Getter
+	private BeanColumn versionColumn = null;
 	
 	private Map<String, String> sqlCache = new TreeMap<String, String>();
 	
@@ -414,11 +424,31 @@ public class BeanWrapper {
 								column.length()==0?null:column.length(),
 								false, null, physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), column.sort());
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				if(physicalField.isAnnotationPresent(Version.class)) {
+					Version versionAnno = physicalField.getAnnotation(Version.class);
+					beanColumn.setVersion(true);
+					beanColumn.setVersionStragegy(versionAnno.stragegy());
+					if(version) {
+						throw new SqlException("当个PO类中乐观锁字段不支持多个!");
+					}
+					this.version = true;
+					this.versionColumn = beanColumn;
+				}
 				columnList.add(beanColumn);
 			}else {
 				BeanColumn beanColumn = new BeanColumn(config.getImplicitNamingStrategy().getColumntName(physicalField.getName()), 
 						null, null, false, null, physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), Integer.MAX_VALUE);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				if(physicalField.isAnnotationPresent(Version.class)) {
+					Version versionAnno = physicalField.getAnnotation(Version.class);
+					beanColumn.setVersion(true);
+					beanColumn.setVersionStragegy(versionAnno.stragegy());
+					if(version) {
+						throw new SqlException("当个PO类中乐观锁字段不支持多个!");
+					}
+					this.version = true;
+					this.versionColumn = beanColumn;
+				}
 				columnList.add(beanColumn);
 			}
 		}

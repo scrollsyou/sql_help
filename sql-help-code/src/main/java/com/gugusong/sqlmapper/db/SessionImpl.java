@@ -17,12 +17,14 @@ import com.gugusong.sqlmapper.common.beans.BeanColumn;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
 import com.gugusong.sqlmapper.common.collection.ConverMapToList;
 import com.gugusong.sqlmapper.common.collection.ConverMapToSet;
+import com.gugusong.sqlmapper.common.exception.SqlException;
 import com.gugusong.sqlmapper.common.exception.StructureException;
 import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.common.util.UUIDUtil;
 import com.gugusong.sqlmapper.config.GlogalConfig;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.strategy.GenerationType;
+import com.gugusong.sqlmapper.strategy.VersionGenerationType;
 
 import lombok.Cleanup;
 import lombok.NonNull;
@@ -87,7 +89,35 @@ public class SessionImpl implements Session {
 				if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
 					continue;
 				}
-				preSta.setObject(i, beanColumn.getVal(entity));
+				if(beanColumn.isVersion()) {
+					if(beanColumn.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+						if(ColumnTypeMapping.INT_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, 0);
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, 0L);
+						}else {
+							throw new SqlException("默认乐观锁字段必须为int/long类型!");
+						}
+					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, config.getSnowFlake().nextId() + "");
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, config.getSnowFlake().nextId());
+						}else {
+							throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
+						}
+					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.UUID) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, UUIDUtil.getUUID());
+						}else {
+							throw new SqlException("UUID乐观锁字段必须为string类型!");
+						}
+					}else {
+						throw new SqlException("乐观锁类型不支持!");
+					}
+				}else {
+					preSta.setObject(i, beanColumn.getVal(entity));
+				}
 				i++;
 			}
 			preSta.executeUpdate();
@@ -153,7 +183,35 @@ public class SessionImpl implements Session {
 					if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
 						continue;
 					}
-					preSta.setObject(i, beanColumn.getVal(entity));
+					if(beanColumn.isVersion()) {
+						if(beanColumn.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+							if(ColumnTypeMapping.INT_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, 0);
+							}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, 0L);
+							}else {
+								throw new SqlException("默认乐观锁字段必须为int/long类型!");
+							}
+						}else if(beanColumn.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+							if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, config.getSnowFlake().nextId() + "");
+							}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, config.getSnowFlake().nextId());
+							}else {
+								throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
+							}
+						}else if(beanColumn.getVersionStragegy() == VersionGenerationType.UUID) {
+							if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+								preSta.setObject(i, UUIDUtil.getUUID());
+							}else {
+								throw new SqlException("UUID乐观锁字段必须为string类型!");
+							}
+						}else {
+							throw new SqlException("乐观锁类型不支持!");
+						}
+					}else {
+						preSta.setObject(i, beanColumn.getVal(entity));
+					}
 					i++;
 				}
 				preSta.addBatch();
@@ -206,10 +264,45 @@ public class SessionImpl implements Session {
 				if(beanColumn.isIdFlag()) {
 					continue;
 				}
+				if(beanColumn.isVersion()) {
+					if(beanColumn.getVal(entity) == null) {
+						throw new SqlException("乐观锁PO类更新时version字段必传!");
+					}
+					if(beanColumn.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+						if(ColumnTypeMapping.INT_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, (Integer)beanColumn.getVal(entity) + 1);
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, (Long)beanColumn.getVal(entity) + 1L);
+						}else {
+							throw new SqlException("默认乐观锁字段必须为int/long类型!");
+						}
+					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, config.getSnowFlake().nextId() + "");
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, config.getSnowFlake().nextId());
+						}else {
+							throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
+						}
+					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.UUID) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
+							preSta.setObject(i, UUIDUtil.getUUID());
+						}else {
+							throw new SqlException("UUID乐观锁字段必须为string类型!");
+						}
+					}else {
+						throw new SqlException("乐观锁类型不支持!");
+					}
+				}else {
+					preSta.setObject(i, beanColumn.getVal(entity));
+				}
 				preSta.setObject(i, beanColumn.getVal(entity));
 				i++;
 			}
 			preSta.setObject(i, entityWrapper.getIdColumn().getVal(entity));
+			if(entityWrapper.isVersion()) {
+				preSta.setObject(i+1, entityWrapper.getVersionColumn().getVal(entity));
+			}
 			return preSta.executeUpdate();
 		} catch (SQLException e) {
 			this.close();
@@ -237,7 +330,39 @@ public class SessionImpl implements Session {
 		sqlsb.append(ISqlHelp.SPLIT);
 		sqlsb.append(Joiner.on(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.COMMA ).join(entityWrapper.getColumns().stream().filter(c -> {
 			try {
-				Object value = c.getVal(entity);
+				Object value = null;
+				if(c.isVersion()) {
+					if(c.getVal(entity) == null) {
+						throw new SqlException("乐观锁PO类更新时version字段必传!");
+					}
+					if(c.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+						if(ColumnTypeMapping.INT_TYPE.equals(c.getDateType())) {
+							value = (Integer)c.getVal(entity) + 1;
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(c.getDateType())) {
+							value = (Long)c.getVal(entity) + 1L;
+						}else {
+							throw new SqlException("默认乐观锁字段必须为int/long类型!");
+						}
+					}else if(c.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(c.getDateType())) {
+							value = config.getSnowFlake().nextId() + "";
+						}else if(ColumnTypeMapping.LONG_TYPE.equals(c.getDateType())) {
+							value = config.getSnowFlake().nextId();
+						}else {
+							throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
+						}
+					}else if(c.getVersionStragegy() == VersionGenerationType.UUID) {
+						if(ColumnTypeMapping.STRING_TYPE.equals(c.getDateType())) {
+							value = UUIDUtil.getUUID();
+						}else {
+							throw new SqlException("UUID乐观锁字段必须为string类型!");
+						}
+					}else {
+						throw new SqlException("乐观锁类型不支持!");
+					}
+				}else {
+					value = c.getVal(entity);
+				}
 				if(c.isIdFlag() || value == null) {
 					return false;
 				}
@@ -256,6 +381,16 @@ public class SessionImpl implements Session {
 		sqlsb.append(ISqlHelp.EQUEST);
 		sqlsb.append(ISqlHelp.SPLIT);
 		sqlsb.append(ISqlHelp.PARAM_TOKEN);
+		if(entityWrapper.isVersion()) {
+			sqlsb.append(ISqlHelp.AND);
+			sqlsb.append(ISqlHelp.SPLIT);
+			sqlsb.append(entityWrapper.getVersionColumn().getName());
+			sqlsb.append(ISqlHelp.SPLIT);
+			sqlsb.append(ISqlHelp.EQUEST);
+			sqlsb.append(ISqlHelp.SPLIT);
+			sqlsb.append(ISqlHelp.PARAM_TOKEN);
+			values.add(entityWrapper.getVersionColumn().getVal(entity));
+		}
 		String sqlToUpdate = sqlsb.toString();
 		try {
 			values.add(entityWrapper.getIdColumn().getVal(entity));

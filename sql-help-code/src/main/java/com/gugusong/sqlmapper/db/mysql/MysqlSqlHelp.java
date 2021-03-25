@@ -310,6 +310,16 @@ public class MysqlSqlHelp implements ISqlHelp{
 		sqlsb.append(EQUEST);
 		sqlsb.append(SPLIT);
 		sqlsb.append(PARAM_TOKEN);
+		sqlsb.append(SPLIT);
+		if(poClazz.isVersion()) {
+			sqlsb.append(AND);
+			sqlsb.append(SPLIT);
+			sqlsb.append(poClazz.getVersionColumn().getName());
+			sqlsb.append(SPLIT);
+			sqlsb.append(EQUEST);
+			sqlsb.append(SPLIT);
+			sqlsb.append(PARAM_TOKEN);
+		}
 		poClazz.putSql(SQL_UPDATE_METHOD, sqlsb.toString());
 		return sqlsb.toString();
 	}

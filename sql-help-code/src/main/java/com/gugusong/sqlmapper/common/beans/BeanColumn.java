@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import com.gugusong.sqlmapper.strategy.GenerationType;
+import com.gugusong.sqlmapper.strategy.VersionGenerationType;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -140,6 +141,11 @@ public class BeanColumn {
 	 * 执行函数
 	 */
 	private String function;
+	/**
+	 * 是否乐观锁字段及策略
+	 */
+	private boolean version = false;
+	private VersionGenerationType versionStragegy;
 	
 	
 	public Object getVal(Object entity) throws Exception {

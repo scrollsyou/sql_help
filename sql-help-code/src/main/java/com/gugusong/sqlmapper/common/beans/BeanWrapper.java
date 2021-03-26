@@ -68,6 +68,8 @@ public class BeanWrapper {
 	@Getter
 	private List<BeanColumn> columns;
 	@Getter
+	private Map<String, BeanColumn> columnsTree = new TreeMap<String, BeanColumn>();
+	@Getter
 	private String tableName;
 	/**
 	 * 表别名
@@ -175,6 +177,7 @@ public class BeanWrapper {
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper, this.voWrapper), null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
 				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
@@ -197,6 +200,7 @@ public class BeanWrapper {
 						null, null, oneToManyWrapper, groupBy.toArray(new String[] {}));
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				// TODO 判断 oneToMany 注解必须在List/Set上
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			}else if(physicalField.isAnnotationPresent(PropertyMapping.class)) {
 				PropertyMapping propertyMapping = physicalField.getAnnotation(PropertyMapping.class);
@@ -218,6 +222,7 @@ public class BeanWrapper {
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						nameSplit[0], nameSplit[0] + "_" + byPropertyName.getAliasName(), null, null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			}else if(physicalField.isAnnotationPresent(FunctionMapping.class)) {
 				FunctionMapping functionMapping = physicalField.getAnnotation(FunctionMapping.class);
@@ -235,6 +240,7 @@ public class BeanWrapper {
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				beanColumn.setFunc(true);
 				beanColumn.setFunction(funcValue);
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 				voWrapper.getFuncColumns().add(beanColumn);
 			}else {
@@ -292,6 +298,9 @@ public class BeanWrapper {
 			if(physicalField.isAnnotationPresent(Transient.class)) {
 				continue;
 			}
+			if(Modifier.isStatic(physicalField.getModifiers()) || Modifier.isFinal(physicalField.getModifiers())) {
+				continue;
+			}
 			// TODO 为方便后期扩展，需更改为其它模式
 			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
 			if(propertyDesc == null) {
@@ -305,6 +314,7 @@ public class BeanWrapper {
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper, this), null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
 				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
@@ -327,6 +337,7 @@ public class BeanWrapper {
 						null, null, oneToManyWrapper, groupByCount.toArray(new String[] {}));
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				// TODO 判断 oneToMany 注解必须在List/Set上
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			}else if(physicalField.isAnnotationPresent(PropertyMapping.class)) {
 				PropertyMapping propertyMapping = physicalField.getAnnotation(PropertyMapping.class);
@@ -347,6 +358,7 @@ public class BeanWrapper {
 							nameSplit[0], nameSplit[0] + "_" + byPropertyName.getAliasName(), null, null);
 				}
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			}else if(physicalField.isAnnotationPresent(FunctionMapping.class)) {
 				FunctionMapping functionMapping = physicalField.getAnnotation(FunctionMapping.class);
@@ -364,6 +376,7 @@ public class BeanWrapper {
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				beanColumn.setFunc(true);
 				beanColumn.setFunction(funcValue);
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 				funcColumns.add(beanColumn);
 			}else {
@@ -372,6 +385,7 @@ public class BeanWrapper {
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						this.tableAliasName, this.tableAliasName + "_" + byPropertyName.getAliasName(), null, null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			}
 			
@@ -405,6 +419,9 @@ public class BeanWrapper {
 			if(physicalField.isAnnotationPresent(Transient.class)) {
 				continue;
 			}
+			if(Modifier.isStatic(physicalField.getModifiers()) || Modifier.isFinal(physicalField.getModifiers())) {
+				continue;
+			}
 			// TODO 为方便后期扩展，需更改为其它模式
 			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
 			if(propertyDesc == null) {
@@ -415,6 +432,7 @@ public class BeanWrapper {
 				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(id.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):id.name(), 
 						null, 11, true, id.stragegy(), physicalField.getName(), physicalField,propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), 0);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 				idColumn = beanColumn;
 			}else if(physicalField.isAnnotationPresent(Column.class)) {
@@ -434,6 +452,7 @@ public class BeanWrapper {
 					this.version = true;
 					this.versionColumn = beanColumn;
 				}
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			}else {
 				BeanColumn beanColumn = new BeanColumn(config.getImplicitNamingStrategy().getColumntName(physicalField.getName()), 
@@ -449,6 +468,7 @@ public class BeanWrapper {
 					this.version = true;
 					this.versionColumn = beanColumn;
 				}
+				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			}
 		}
@@ -520,22 +540,17 @@ public class BeanWrapper {
 	public BeanColumn getByPropertyName(@NonNull String propertyName) {
 		// TODO 该功能需做map映射，方便按属性名获取数据库定义
 		String[] proSplit = propertyName.split("\\.");
-		List<BeanColumn> bufferColumns = null;
+		Map<String, BeanColumn> bufferColumns = null;
 		String simplePropertyName = null;
 		if(proSplit.length == 1 || proSplit[0].equals(tableAliasName)) {
-			bufferColumns = columns;
+			bufferColumns = columnsTree;
 			simplePropertyName = propertyName;
 		}else {
 			@NonNull
 			BeanJoin beanJoin = joinBeans.get(proSplit[0]);
-			bufferColumns = beanJoin.getJoinBeanWrapper().getColumns();
+			bufferColumns = beanJoin.getJoinBeanWrapper().getColumnsTree();
 		}
-		for (BeanColumn beanColumn : bufferColumns) {
-			if(beanColumn.getFieldName().equals(simplePropertyName)) {
-				return beanColumn;
-			}
-		}
-		return null;
+		return bufferColumns.get(simplePropertyName);
 	}
 	
 	/**
@@ -548,25 +563,25 @@ public class BeanWrapper {
 		String[] proSplit = propertyName.split("\\.");
 		List<BeanColumn> bufferColumns = null;
 		String simplePropertyName = null;
-		String resultName = "";
+		StringBuilder resultName = new StringBuilder();
 		if(proSplit.length == 1 || proSplit[0].equals(tableAliasName)) {
 			if(mainWrapper == null) {
 				bufferColumns = columns;
 			}else {
 				bufferColumns = mainWrapper.columns;
-				resultName = tableAliasName + ".";
+				resultName.append(tableAliasName).append(".");
 			}
 			simplePropertyName = proSplit[proSplit.length - 1];
 		}else {
 			@NonNull
 			BeanJoin beanJoin = joinBeans.get(proSplit[0]);
 			bufferColumns = beanJoin.getJoinBeanWrapper().getColumns();
-			resultName = proSplit[0] + ".";
+			resultName.append(proSplit[0]).append(".");
 			simplePropertyName = proSplit[1];
 		}
 		for (BeanColumn beanColumn : bufferColumns) {
 			if(beanColumn.getFieldName().equals(simplePropertyName)) {
-				return resultName + beanColumn.getName();
+				return resultName.append(beanColumn.getName()).toString();
 			}
 		}
 		return null;

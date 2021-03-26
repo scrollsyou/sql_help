@@ -65,20 +65,22 @@ public class SessionImpl implements Session {
 			log.debug("Preparing: {}", sqlToInsert);
 			log.debug("parameters: {}", entity);
 		}
-		if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
-			entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
-		}else if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
-			if(ColumnTypeMapping.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
-				entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
-			}else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
-				entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId()+"");
-			}else {
-				throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配long/string类型字段!");
+		if(entityWrapper.getIdColumn() != null) {
+			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
+				entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
+			}else if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
+				if(ColumnTypeMapping.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+					entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
+				}else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+					entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId()+"");
+				}else {
+					throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配long/string类型字段!");
+				}
 			}
 		}
 		@Cleanup PreparedStatement preSta = null;
 		try {
-			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
 				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
 			}else {
 				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert);
@@ -121,7 +123,7 @@ public class SessionImpl implements Session {
 				i++;
 			}
 			preSta.executeUpdate();
-			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
 				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
 				if(resultSet.next()) {
 					if(ColumnTypeMappingImpl.INT_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
@@ -160,22 +162,24 @@ public class SessionImpl implements Session {
 		
 		@Cleanup PreparedStatement preSta = null;
 		try {
-			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
 				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
 			}else {
 				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert);
 			}
 			List<BeanColumn> columns = entityWrapper.getColumns();
 			for (T entity : entitys) {
-				if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
-					entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
-				} else if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
-					if (ColumnTypeMapping.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
-						entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
-					} else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
-						entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId() + "");
-					} else {
-						throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配long/string类型字段!");
+				if(entityWrapper.getIdColumn() != null) {
+					if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
+						entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
+					} else if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
+						if (ColumnTypeMapping.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+							entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
+						} else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
+							entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId() + "");
+						} else {
+							throw new StructureException("实体类id属性不匹配，雪花随机数只能匹配long/string类型字段!");
+						}
 					}
 				}
 				int i = 1;
@@ -217,7 +221,7 @@ public class SessionImpl implements Session {
 				preSta.addBatch();
 			}
 			preSta.executeUpdate();
-			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
 				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
 				Iterator<T> entityIt = entitys.iterator();
 				while(resultSet.next()) {

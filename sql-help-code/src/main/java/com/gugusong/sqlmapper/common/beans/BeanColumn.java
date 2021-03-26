@@ -156,7 +156,7 @@ public class BeanColumn {
 		try {
 			getWriteMethod().invoke(entity, value);
 		} catch (Exception e) {
-			log.error("数据库查询数据类型不匹配，{} 类型不可配{}字段类型，数据库字段类型需为：{}", value.getClass().getName(), field.getType().getName(), dateType);
+			log.error("字段{}数据库查询数据类型不匹配，{} 类型不可配{}字段类型，数据库字段类型需为：{}", fieldName, value.getClass().getName(), field.getType().getName(), dateType);
 			throw e;
 		}
 	}

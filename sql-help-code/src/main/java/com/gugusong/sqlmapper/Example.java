@@ -97,10 +97,10 @@ public interface Example {
 	 * 判断相等
 	 * @param property
 	 * @param value
-	 * @param nullIsTrue 为true时，空值条件不生效
+	 * @param ignone 条件是忽略
 	 * @return
 	 */
-	Example equals(String property, Object value, boolean nullIsTrue);
+	Example equals(String property, Object value, boolean ignone);
 	/**
 	 * 判断字段值为空，等价于equals中值传null
 	 * @param property

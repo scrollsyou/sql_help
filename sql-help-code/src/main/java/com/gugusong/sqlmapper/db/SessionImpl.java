@@ -220,7 +220,7 @@ public class SessionImpl implements Session {
 				}
 				preSta.addBatch();
 			}
-			preSta.executeUpdate();
+			preSta.executeBatch();
 			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
 				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
 				Iterator<T> entityIt = entitys.iterator();

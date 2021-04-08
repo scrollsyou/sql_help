@@ -13,8 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ColumnTypeMappingImpl implements ColumnTypeMapping {
 
-	
-	public static final int VAR_DEFAULT_LENGHT = 255;
+
+	public static final int VAR_DEFAULT_LENGTH = 255;
 	/**
 	 * 获取数据库字段类型
 	 * @return
@@ -24,14 +24,14 @@ public class ColumnTypeMappingImpl implements ColumnTypeMapping {
 			field.setDateType(mapping(field.getField().getType(), field.getName()));
 		}
 		if(field.getLength() == null) {
-			field.setLength(VAR_DEFAULT_LENGHT);
+			field.setLength(VAR_DEFAULT_LENGTH);
 		}
 	}
-	
+
 	/**
 	 * 返回数据库中字段类型
 	 * @param fieldClazz
-	 * @param fieldName 
+	 * @param fieldName
 	 * @return
 	 */
 	private String mapping(Class fieldClazz, String fieldName) {

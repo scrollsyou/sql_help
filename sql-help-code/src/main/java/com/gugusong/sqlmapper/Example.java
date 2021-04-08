@@ -13,7 +13,7 @@ import com.gugusong.sqlmapper.common.beans.BeanWrapper;
  */
 public interface Example {
 
-	
+
 	public Example or();
 	public Example and();
 	/**
@@ -37,12 +37,12 @@ public interface Example {
 	public Example ltEquals(String property, Object value);
 	/**
 	 * 特殊条件
-	 * @param expression 条件表达式 legnth({propertyName}) > ?
+	 * @param expression 条件表达式 length({propertyName}) > ?
 	 * @param value 条件值
 	 * @return
 	 */
 	public Example condition(String expression, Object... value);
-	
+
 	/**
 	 * 获取条件sql
 	 * @param entityWrapper
@@ -138,5 +138,5 @@ public interface Example {
 	 */
 	Example forUpdate();
 	boolean isForUpdate();
-	
+
 }

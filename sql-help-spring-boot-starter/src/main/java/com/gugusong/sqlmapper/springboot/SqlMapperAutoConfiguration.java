@@ -11,10 +11,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.gugusong.sqlmapper.Session;
 import com.gugusong.sqlmapper.SessionFactory;
 import com.gugusong.sqlmapper.common.util.SnowFlake;
-import com.gugusong.sqlmapper.config.GlogalConfig;
+import com.gugusong.sqlmapper.config.GlobalConfig;
 import com.gugusong.sqlmapper.db.ColumnTypeMapping;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.strategy.ImplicitNamingStrategy;
@@ -35,7 +34,7 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 
 	@Resource
 	private SqlMapperProperties properties;
-	
+
 	/**
 	 * 雪花随机数生成器
 	 * 可自定义编写
@@ -46,7 +45,7 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 	public SnowFlake sqlHelpSnowFlake() {
 		return new SnowFlake(properties.getDatacenterId(), properties.getMachineId());
 	}
-	
+
 	/**
 	 * 命名转换策略
 	 * @return
@@ -56,7 +55,7 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 	public ImplicitNamingStrategy sqlHelpImplicitNamingStrategy() {
 		return new DefaultJDBCImplicitNamingStrategyImpl();
 	}
-	
+
 	/**
 	 * java类中属性类型与数据库字段类型映射
 	 * @return
@@ -66,27 +65,27 @@ public class SqlMapperAutoConfiguration implements DisposableBean {
 	public ColumnTypeMapping sqlHelpColumnTypeMapping() {
 		return new ColumnTypeMappingImpl();
 	}
-	
-	
-	@ConditionalOnMissingBean(GlogalConfig.class)
+
+
+	@ConditionalOnMissingBean(GlobalConfig.class)
 	@Bean
-	public GlogalConfig sqlHelpGlogalConfig(DataSource dataSource, SnowFlake snowFlake, ImplicitNamingStrategy implicitNamingStrategy,
-			ColumnTypeMapping columnTypeMapping) {
-		return new GlogalConfig(dataSource, snowFlake, implicitNamingStrategy, columnTypeMapping);
+	public GlobalConfig sqlHelpGlogalConfig(DataSource dataSource, SnowFlake snowFlake, ImplicitNamingStrategy implicitNamingStrategy,
+                                            ColumnTypeMapping columnTypeMapping) {
+		return new GlobalConfig(dataSource, snowFlake, implicitNamingStrategy, columnTypeMapping);
 	}
-	
+
 	@ConditionalOnMissingBean(SessionFactory.class)
 	@Bean
-	public SessionFactory sqlHelpSessionFactory(GlogalConfig config) {
+	public SessionFactory sqlHelpSessionFactory(GlobalConfig config) {
 		log.info("sql-help init ... ");
 		return new SessionFactoryImpl(config);
 	}
-	
+
 	@Bean
 	public SqlHelpBaseDao sqlHelpSession(SessionFactory factory) throws SQLException {
 		return new SqlHelpBaseDao(factory.openSession());
 	}
-	
+
 	@Override
 	public void destroy() throws Exception {
 		log.info("sql-help destroy...");

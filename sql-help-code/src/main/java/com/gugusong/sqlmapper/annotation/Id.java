@@ -22,7 +22,7 @@ public @interface Id {
 	 * 默认用户自己维护不自增
 	 * @return
 	 */
-	GenerationType stragegy() default GenerationType.DEFAULT;
+	GenerationType strategy() default GenerationType.DEFAULT;
 	/**
 	 * 指定映射名称
 	 * @return

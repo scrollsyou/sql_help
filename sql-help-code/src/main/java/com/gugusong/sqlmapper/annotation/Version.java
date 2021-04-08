@@ -25,5 +25,5 @@ public @interface Version {
 	 * 默认自增长
 	 * @return
 	 */
-	VersionGenerationType stragegy() default VersionGenerationType.DEFAULT;
+	VersionGenerationType strategy() default VersionGenerationType.DEFAULT;
 }

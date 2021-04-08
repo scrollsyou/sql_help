@@ -34,7 +34,7 @@ public class ConditionFragment {
 	 * 排序片断
 	 */
 	public static final int CONDITION_FRAGMENT_ORDER = 3;
-	
+
 	public ConditionFragment(String token) {
 		this(CONDITION_FRAGMENT_TOKEN, token, null, null);
 	}
@@ -61,11 +61,11 @@ public class ConditionFragment {
 	private String property;
 	private Object value;
 	private boolean logicShip = false;
-	
+
 	private ConditionFragment nextFragment;
-	
+
 	private ConditionFragment beforeFragment;
-	
+
 	/**创建逻辑关系
 	 * @param token
 	 * @return
@@ -97,7 +97,6 @@ public class ConditionFragment {
 	/**
 	 * 创建自定义条件
 	 * @param expression
-	 * @param property
 	 * @param value
 	 * @return
 	 */
@@ -134,7 +133,7 @@ public class ConditionFragment {
 		this.nextFragment.nextFragment = currentNext;
 		return this.nextFragment;
 	}
-	
+
 	public String toSql(BeanWrapper entityWrapper) {
 		StringBuilder sb = new StringBuilder();
 		if(CONDITION_FRAGMENT_TOKEN == this.type) {

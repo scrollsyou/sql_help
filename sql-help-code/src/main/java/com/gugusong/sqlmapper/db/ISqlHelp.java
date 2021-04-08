@@ -8,14 +8,14 @@ import com.gugusong.sqlmapper.common.beans.BeanWrapper;
  *
  */
 public interface ISqlHelp {
-	
+
 	public static final String SELECT = "select";
 	public static final String UPDATE = "update";
 	public static final String DELETE = "delete";
 	public static final String INSERT_INTO = "insert into";
 	public static final String VALUES = "values";
 	public static final String SET = "set";
-	public static final String EQUEST = "=";
+	public static final String EQUALS = "=";
 	public static final String PARAM_TOKEN = "?";
 	public static final String FROM = "from";
 	public static final String AS = "as";
@@ -34,18 +34,16 @@ public interface ISqlHelp {
 
 	/**
 	 * 生成单表查询sql
-	 * @param poClazz
 	 * @param hasFormat
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	String getSqlToSelect(BeanWrapper wrapper, boolean hasFormat) throws Exception;
 	/**
 	 * 生成单表查询总数
-	 * @param poClazz
 	 * @param hasFormat
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	String getSqlToSelectCount(BeanWrapper wrapper, boolean hasFormat) throws Exception;
 	/**
@@ -59,7 +57,6 @@ public interface ISqlHelp {
 	/**
 	 * 生成更新sql
 	 * 如 update test set id=?,name=?
-	 * @param poClazz
 	 * @param hasFormat
 	 * @return
 	 */
@@ -67,7 +64,6 @@ public interface ISqlHelp {
 	/**
 	 * 生成插入sql
 	 * 如 insert into test(id,name) values(?,?)
-	 * @param poClazz
 	 * @param hasFormat
 	 * @return
 	 */
@@ -75,7 +71,6 @@ public interface ISqlHelp {
 	/**
 	 * 生成删除sql
 	 * 如 delete from test
-	 * @param poClazz
 	 * @param hasFormat
 	 * @return
 	 */
@@ -83,7 +78,6 @@ public interface ISqlHelp {
 	/**
 	 * 生成删除sql
 	 * 如 delete from test where id=?
-	 * @param poClazz
 	 * @param hasFormat
 	 * @return
 	 */
@@ -96,6 +90,6 @@ public interface ISqlHelp {
 	 * @throws Exception
 	 */
 	String getSqlToSelectId(BeanWrapper poClazz, boolean hasFormat) throws Exception;
-	
+
 
 }

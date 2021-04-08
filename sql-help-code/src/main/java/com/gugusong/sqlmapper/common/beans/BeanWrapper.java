@@ -35,7 +35,7 @@ import com.gugusong.sqlmapper.common.constants.ErrorCodeConstant;
 import com.gugusong.sqlmapper.common.exception.SqlException;
 import com.gugusong.sqlmapper.common.exception.StructureException;
 import com.gugusong.sqlmapper.common.util.TextUtil;
-import com.gugusong.sqlmapper.config.GlogalConfig;
+import com.gugusong.sqlmapper.config.GlobalConfig;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -100,7 +100,7 @@ public class BeanWrapper {
 	private BeanWrapper voWrapper;
 	@Getter
 	private List<BeanColumn> funcColumns;
-	
+
 	/**
 	 * 乐观锁
 	 */
@@ -108,15 +108,15 @@ public class BeanWrapper {
 	private boolean version = false;
 	@Getter
 	private BeanColumn versionColumn = null;
-	
+
 	private Map<String, String> sqlCache = new TreeMap<String, String>();
-	
-	private GlogalConfig config;
-	
-	private BeanWrapper(Class<?> beanClazz, GlogalConfig config) {
+
+	private GlobalConfig config;
+
+	private BeanWrapper(Class<?> beanClazz, GlobalConfig config) {
 		this(beanClazz, config, null, null, null, null);
 	}
-	private BeanWrapper(Class<?> beanClazz, GlogalConfig config, Map<String, BeanJoin> joinBeans, String tableAliasName, BeanWrapper mainWrapper, BeanWrapper voWrapper) {
+	private BeanWrapper(Class<?> beanClazz, GlobalConfig config, Map<String, BeanJoin> joinBeans, String tableAliasName, BeanWrapper mainWrapper, BeanWrapper voWrapper) {
 		this.poClazz = beanClazz;
 		this.config = config;
 		this.tableAliasName = tableAliasName;
@@ -125,28 +125,28 @@ public class BeanWrapper {
 		if(joinBeans != null) {
 			this.joinBeans = joinBeans;
 		}
-		Entity antity = beanClazz.getAnnotation(Entity.class);
+		Entity entity = beanClazz.getAnnotation(Entity.class);
 		VOBean voBean = beanClazz.getAnnotation(VOBean.class);
-		if(antity != null) {
+		if(entity != null) {
 			this.beanType = BEAN_TYPE_PO;
-			poInstance(beanClazz, config);
+			poInstancee(beanClazz, config);
 		}else if(voBean != null) {
 			this.beanType = BEAN_TYPE_VO;
 			this.tableAliasName = voBean.entityAlias();
-			voInstance(beanClazz, config);
+			voInstancee(beanClazz, config);
 		}else {
 			// TODO 普通bean类，用于附值
 			this.beanType = BEAN_TYPE_SIMPLE;
-			simpleBeanInstanc(beanClazz, config);
+			simpleBeanInstance(beanClazz, config);
 		}
-		
+
 	}
 	/**
 	 * 普通bean包装
 	 * @param voClazz
 	 * @param config
 	 */
-	private void simpleBeanInstanc(Class<?> voClazz, GlogalConfig config) {
+	private void simpleBeanInstance(Class<?> voClazz, GlobalConfig config) {
 
 		Field[] physicalFields = voClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
@@ -167,13 +167,13 @@ public class BeanWrapper {
 			// TODO 为方便后期扩展，需更改为其它模式
 			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
 			if(propertyDesc == null) {
-				throw new StructureException(ErrorCodeConstant.NOTBEAN);
+				throw new StructureException(ErrorCodeConstant.NOT_BEAN);
 			}
 			if(physicalField.isAnnotationPresent(ManyToOne.class)) {
 				ManyToOne manyToOne = physicalField.getAnnotation(ManyToOne.class);
 				@NonNull
-				Class<?> oneClazz = manyToOne.tagerClass();
-				BeanColumn beanColumn = new BeanColumn(null, 
+				Class<?> oneClazz = manyToOne.targetClass();
+				BeanColumn beanColumn = new BeanColumn(null,
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper, this.voWrapper), null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
@@ -182,7 +182,7 @@ public class BeanWrapper {
 			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
 				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
 				@NonNull
-				Class<?> manyClazz = oneToMany.tagerClass();
+				Class<?> manyClazz = oneToMany.targetClass();
 				// 一对多时，多的一方分组去重条件
 				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans, tableAliasName, mainWrapper, this.voWrapper);
 				Set<String> groupBy = new HashSet<String>(oneToManyWrapper.columns.size());
@@ -195,7 +195,7 @@ public class BeanWrapper {
 						}
 					}
 				}
-				BeanColumn beanColumn = new BeanColumn(null, 
+				BeanColumn beanColumn = new BeanColumn(null,
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						null, null, oneToManyWrapper, groupBy.toArray(new String[] {}));
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
@@ -218,7 +218,7 @@ public class BeanWrapper {
 					BeanJoin beanJoin = joinBeans.get(nameSplit[0]);
 					byPropertyName = beanJoin.getJoinBeanWrapper().getByPropertyName(nameSplit[1]);
 				}
-				beanColumn = new BeanColumn(byPropertyName.getName(), 
+				beanColumn = new BeanColumn(byPropertyName.getName(),
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						nameSplit[0], nameSplit[0] + "_" + byPropertyName.getAliasName(), null, null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
@@ -233,8 +233,8 @@ public class BeanWrapper {
 					String columnName = voWrapper.getColumnNameByPropertyName(paramName);
 					return columnName;
 				});
-				String columnName = config.getImplicitNamingStrategy().getColumntName(physicalField.getName());
-				BeanColumn beanColumn = new BeanColumn(columnName, 
+				String columnName = config.getImplicitNamingStrategy().getColumnName(physicalField.getName());
+				BeanColumn beanColumn = new BeanColumn(columnName,
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						voWrapper.tableAliasName, voWrapper.tableAliasName + "_" + columnName, null, null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
@@ -246,7 +246,7 @@ public class BeanWrapper {
 			}else {
 				throw new RuntimeException("基础bean类中属性必须指定表别名!");
 			}
-			
+
 		}
 		columnList.sort(new Comparator<BeanColumn>() {
 			public int compare(BeanColumn o1, BeanColumn o2) {
@@ -255,7 +255,7 @@ public class BeanWrapper {
 		});
 		columns = new ArrayList<BeanColumn>(columnList.size());
 		columns.addAll(columnList);
-		
+
 	}
 	/**
 	 * vo 类进行包装
@@ -263,7 +263,7 @@ public class BeanWrapper {
 	 * @param config
 	 * @throws Exception
 	 */
-	private void voInstance(Class<?> voClazz, GlogalConfig config) {
+	private void voInstancee(Class<?> voClazz, GlobalConfig config) {
 		VOBean voBean = voClazz.getAnnotation(VOBean.class);
 		this.funcColumns = new ArrayList<BeanColumn>();
 		@NonNull
@@ -282,7 +282,7 @@ public class BeanWrapper {
 		}
 		GroupBy groupBy = voClazz.getAnnotation(GroupBy.class);
 		if(groupBy != null) {
-			this.groupBys = groupBy.propertys();
+			this.groupBys = groupBy.properties();
 		}
 
 		Field[] physicalFields = voClazz.getDeclaredFields();
@@ -304,13 +304,13 @@ public class BeanWrapper {
 			// TODO 为方便后期扩展，需更改为其它模式
 			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
 			if(propertyDesc == null) {
-				throw new StructureException(ErrorCodeConstant.NOTBEAN);
+				throw new StructureException(ErrorCodeConstant.NOT_BEAN);
 			}
 			if(physicalField.isAnnotationPresent(ManyToOne.class)) {
 				ManyToOne manyToOne = physicalField.getAnnotation(ManyToOne.class);
 				@NonNull
-				Class<?> oneClazz = manyToOne.tagerClass();
-				BeanColumn beanColumn = new BeanColumn(null, 
+				Class<?> oneClazz = manyToOne.targetClass();
+				BeanColumn beanColumn = new BeanColumn(null,
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						null, null, BeanWrapper.instrance(oneClazz, config, joinBeans, tableAliasName, mainWrapper, this), null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
@@ -319,7 +319,7 @@ public class BeanWrapper {
 			} else if(physicalField.isAnnotationPresent(OneToMany.class)) {
 				OneToMany oneToMany = physicalField.getAnnotation(OneToMany.class);
 				@NonNull
-				Class<?> manyClazz = oneToMany.tagerClass();
+				Class<?> manyClazz = oneToMany.targetClass();
 				BeanWrapper oneToManyWrapper = BeanWrapper.instrance(manyClazz, config, joinBeans, tableAliasName, mainWrapper, this);
 				Set<String> groupByCount = new HashSet<String>(oneToManyWrapper.columns.size());
 				for (BeanColumn oneToManyColum : oneToManyWrapper.columns) {
@@ -332,7 +332,7 @@ public class BeanWrapper {
 						this.setPageSubSql(true);
 					}
 				}
-				BeanColumn beanColumn = new BeanColumn(null, 
+				BeanColumn beanColumn = new BeanColumn(null,
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						null, null, oneToManyWrapper, groupByCount.toArray(new String[] {}));
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
@@ -347,13 +347,13 @@ public class BeanWrapper {
 				BeanColumn beanColumn = null;
 				if(nameSplit.length == 1 || nameSplit[0].equals(this.tableAliasName)) {
 					BeanColumn byPropertyName = mainWrapper.getByPropertyName(nameSplit[0]);
-					beanColumn = new BeanColumn(byPropertyName.getName(), 
+					beanColumn = new BeanColumn(byPropertyName.getName(),
 							physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 							this.tableAliasName, this.tableAliasName + "_" + byPropertyName.getAliasName(), null, null);
 				}else {
 					BeanJoin beanJoin = joinBeans.get(nameSplit[0]);
 					BeanColumn byPropertyName = beanJoin.getJoinBeanWrapper().getByPropertyName(nameSplit[1]);
-					beanColumn = new BeanColumn(byPropertyName.getName(), 
+					beanColumn = new BeanColumn(byPropertyName.getName(),
 							physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 							nameSplit[0], nameSplit[0] + "_" + byPropertyName.getAliasName(), null, null);
 				}
@@ -369,8 +369,8 @@ public class BeanWrapper {
 					String columnName = this.getColumnNameByPropertyName(paramName);
 					return columnName;
 				});
-				String columnName = config.getImplicitNamingStrategy().getColumntName(physicalField.getName());
-				BeanColumn beanColumn = new BeanColumn(columnName, 
+				String columnName = config.getImplicitNamingStrategy().getColumnName(physicalField.getName());
+				BeanColumn beanColumn = new BeanColumn(columnName,
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						this.tableAliasName, this.tableAliasName + "_" + columnName, null, null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
@@ -381,14 +381,14 @@ public class BeanWrapper {
 				funcColumns.add(beanColumn);
 			}else {
 				BeanColumn byPropertyName = mainWrapper.getByPropertyName(physicalField.getName());
-				BeanColumn beanColumn = new BeanColumn(byPropertyName.getName(), 
+				BeanColumn beanColumn = new BeanColumn(byPropertyName.getName(),
 						physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 						this.tableAliasName, this.tableAliasName + "_" + byPropertyName.getAliasName(), null, null);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			}
-			
+
 		}
 		columnList.sort(new Comparator<BeanColumn>() {
 			public int compare(BeanColumn o1, BeanColumn o2) {
@@ -397,7 +397,7 @@ public class BeanWrapper {
 		});
 		columns = new ArrayList<BeanColumn>(columnList.size());
 		columns.addAll(columnList);
-		
+
 	}
 	/**
 	 * po 类进行包装
@@ -405,7 +405,7 @@ public class BeanWrapper {
 	 * @param config
 	 * @throws Exception
 	 */
-	private void poInstance(Class<?> poClazz, GlogalConfig config) {
+	private void poInstancee(Class<?> poClazz, GlobalConfig config) {
 		Field[] physicalFields = poClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);
 		BeanInfo beanInfo = null;
@@ -425,27 +425,27 @@ public class BeanWrapper {
 			// TODO 为方便后期扩展，需更改为其它模式
 			PropertyDescriptor propertyDesc = getDescriptorByName(propertyDescriptors, physicalField.getName());
 			if(propertyDesc == null) {
-				throw new StructureException(ErrorCodeConstant.NOTBEAN);
+				throw new StructureException(ErrorCodeConstant.NOT_BEAN);
 			}
 			if(physicalField.isAnnotationPresent(Id.class)) {
 				Id id = physicalField.getAnnotation(Id.class);
-				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(id.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):id.name(), 
-						null, 11, true, id.stragegy(), physicalField.getName(), physicalField,propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), 0);
+				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(id.name())?config.getImplicitNamingStrategy().getColumnName(physicalField.getName()):id.name(),
+						null, 11, true, id.strategy(), physicalField.getName(), physicalField,propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), 0);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 				idColumn = beanColumn;
 			}else if(physicalField.isAnnotationPresent(Column.class)) {
 				Column column = physicalField.getAnnotation(Column.class);
-				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(column.name())?config.getImplicitNamingStrategy().getColumntName(physicalField.getName()):column.name(), 
-								Strings.isNullOrEmpty(column.dateType())?null:column.dateType(), 
+				BeanColumn beanColumn = new BeanColumn(Strings.isNullOrEmpty(column.name())?config.getImplicitNamingStrategy().getColumnName(physicalField.getName()):column.name(),
+								Strings.isNullOrEmpty(column.dateType())?null:column.dateType(),
 								column.length()==0?null:column.length(),
 								false, null, physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), column.sort());
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				if(physicalField.isAnnotationPresent(Version.class)) {
 					Version versionAnno = physicalField.getAnnotation(Version.class);
 					beanColumn.setVersion(true);
-					beanColumn.setVersionStragegy(versionAnno.stragegy());
+					beanColumn.setVersionStrategy(versionAnno.strategy());
 					if(version) {
 						throw new SqlException("当个PO类中乐观锁字段不支持多个!");
 					}
@@ -455,13 +455,13 @@ public class BeanWrapper {
 				columnsTree.put(beanColumn.getFieldName(), beanColumn);
 				columnList.add(beanColumn);
 			}else {
-				BeanColumn beanColumn = new BeanColumn(config.getImplicitNamingStrategy().getColumntName(physicalField.getName()), 
+				BeanColumn beanColumn = new BeanColumn(config.getImplicitNamingStrategy().getColumnName(physicalField.getName()),
 						null, null, false, null, physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(), Integer.MAX_VALUE);
 				config.getColumnTypeMapping().convertDbTypeByField(beanColumn);
 				if(physicalField.isAnnotationPresent(Version.class)) {
 					Version versionAnno = physicalField.getAnnotation(Version.class);
 					beanColumn.setVersion(true);
-					beanColumn.setVersionStragegy(versionAnno.stragegy());
+					beanColumn.setVersionStrategy(versionAnno.strategy());
 					if(version) {
 						throw new SqlException("当个PO类中乐观锁字段不支持多个!");
 					}
@@ -501,8 +501,8 @@ public class BeanWrapper {
 		}
 		return null;
 	}
-	
-	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config) {
+
+	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlobalConfig config) {
 		BeanWrapper instrance = cacheMap.get(poClazz);
 		if(instrance == null) {
 			instrance = new BeanWrapper(poClazz, config);
@@ -510,8 +510,8 @@ public class BeanWrapper {
 		}
 		return instrance;
 	}
-	
-	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlogalConfig config, Map<String, BeanJoin> parentJoinBeans, String tableAliasName, BeanWrapper mainWrapper, BeanWrapper voWrapper) {
+
+	public static synchronized BeanWrapper instrance(@NonNull Class<?> poClazz, @NonNull GlobalConfig config, Map<String, BeanJoin> parentJoinBeans, String tableAliasName, BeanWrapper mainWrapper, BeanWrapper voWrapper) {
 		BeanWrapper instrance = cacheMap.get(poClazz);
 		if(instrance == null) {
 			instrance = new BeanWrapper(poClazz, config, parentJoinBeans, tableAliasName, mainWrapper, voWrapper);
@@ -531,7 +531,7 @@ public class BeanWrapper {
 	public void putSql(String key, String sql) {
 		sqlCache.put(key, sql);
 	}
-	
+
 	/**
 	 * 返回字段数据库相关信息
 	 * @param propertyName
@@ -552,7 +552,7 @@ public class BeanWrapper {
 		}
 		return bufferColumns.get(simplePropertyName);
 	}
-	
+
 	/**
 	 * 返回字段数据库相关信息
 	 * @param propertyName
@@ -592,7 +592,7 @@ public class BeanWrapper {
 	 * @return
 	 */
 	public static boolean isPo(@NonNull Class<?> clazz) {
-		Entity antity = clazz.getAnnotation(Entity.class);
-		return antity != null;
+		Entity entity = clazz.getAnnotation(Entity.class);
+		return entity != null;
 	}
 }

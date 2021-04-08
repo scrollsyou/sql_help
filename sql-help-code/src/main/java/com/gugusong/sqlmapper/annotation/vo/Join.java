@@ -26,17 +26,17 @@ public @interface Join {
 	 * @return
 	 */
 	Class<?> po();
-	
+
 	/**
 	 * 对应关联entity别名
 	 * vo类上所有关联别名不可重复
 	 * @return
 	 */
 	String entityAlias();
-	
+
 	/**
 	 * 对应关联条件
-	 * 如：别名为user的用户类中属性schoolId跟别名为shcool的学校
+	 * 如：别名为user的用户类中属性schoolId跟别名为school的学校
 	 * 类通过id进行关联
 	 * {user.schoolId} = {school.id}
 	 * @return

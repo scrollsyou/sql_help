@@ -13,8 +13,8 @@ public interface ConnectionHolper {
 	 * 获取连接
 	 * @return
 	 */
-	public Connection getTagerConnection();
-	
+	public Connection getTargetConnection();
+
 	/**
 	 * 释放连接
 	 */

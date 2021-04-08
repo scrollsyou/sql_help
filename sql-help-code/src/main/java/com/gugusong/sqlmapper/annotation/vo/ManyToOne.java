@@ -22,7 +22,7 @@ public @interface ManyToOne {
 	 * 关联Vo类
 	 * @return
 	 */
-	Class<?> tagerClass();
+	Class<?> targetClass();
 	// TODO 关联数据不定为单独bean类，可能为多个
 
 }

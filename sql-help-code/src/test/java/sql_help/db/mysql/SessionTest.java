@@ -14,8 +14,7 @@ import com.gugusong.sqlmapper.SessionFactory;
 import com.gugusong.sqlmapper.annotation.Column;
 import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
-import com.gugusong.sqlmapper.annotation.vo.Joins;
-import com.gugusong.sqlmapper.config.GlogalConfig;
+import com.gugusong.sqlmapper.config.GlobalConfig;
 import com.gugusong.sqlmapper.db.ExampleImpl;
 import com.gugusong.sqlmapper.db.SessionFactoryImpl;
 import com.gugusong.sqlmapper.strategy.GenerationType;
@@ -24,12 +23,11 @@ import lombok.Data;
 import lombok.ToString;
 import sql_help.db.mysql.datasource.DataSourceFactory;
 import sql_help.entity.vo.SchoolVo;
-import sql_help.entity.vo.StudentVo;
 
 public class SessionTest {
 
 	private Session getSession() throws SQLException {
-		GlogalConfig glogalConfig = new GlogalConfig();
+		GlobalConfig glogalConfig = new GlobalConfig();
 		glogalConfig.setDataSource(DataSourceFactory.getDataSource());
 		SessionFactory factory = new SessionFactoryImpl(glogalConfig);
 		Session openSession = factory.openSession();
@@ -79,7 +77,7 @@ public class SessionTest {
 		openSession.rollback();
 		openSession.setAutoCommit(true);
 	}
-	
+
 	@Test
 	public void deleteByExample() throws Exception {
 		Session openSession = getSession();
@@ -108,7 +106,7 @@ public class SessionTest {
 		SessionTestEntity findOneById = openSession.findOneById(SessionTestEntity.class, 5);
 		System.out.println(findOneById);
 	}
-	
+
 	@Test
 	public void findOneVo() throws Exception {
 		Session openSession = getSession();
@@ -116,7 +114,7 @@ public class SessionTest {
 		SchoolVo findOneById = openSession.findOne(example, SchoolVo.class);
 		System.out.println(findOneById);
 	}
-	
+
 	@Test
 	public void findOneById() throws Exception {
 		Session openSession = getSession();
@@ -136,25 +134,25 @@ public class SessionTest {
 
 	public void commit() throws SQLException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	public void close() throws SQLException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Data
 	@ToString
 	@Entity(tableName = "test2")
 	public static class SessionTestEntity{
-		@Id(stragegy = GenerationType.SNOWFLAKE)
+		@Id(strategy = GenerationType.SNOWFLAKE)
 		private String id;
-		
+
 		private String name;
 		@Column(sort = 12)
 		private Date aa;
-		
+
 		private String dd;
 	}
 }

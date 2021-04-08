@@ -11,7 +11,7 @@ public class DefaultJDBCImplicitNamingStrategyImpl implements ImplicitNamingStra
 		return TextUtil.humpToJdbcHump(entityName);
 	}
 
-	public String getColumntName(@NonNull String attributeName) {
+	public String getColumnName(@NonNull String attributeName) {
 		return TextUtil.humpToJdbcHump(attributeName);
 	}
 

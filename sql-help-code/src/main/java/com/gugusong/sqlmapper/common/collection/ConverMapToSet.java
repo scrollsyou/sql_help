@@ -12,13 +12,13 @@ import java.util.HashSet;
  */
 public class ConverMapToSet<E> extends HashSet<E> {
 
-	private transient HashMap<String, E> mapConver;
-	
+	private transient HashMap<String, E> mapConvert;
+
 	public ConverMapToSet(){
 		super();
-		mapConver = new HashMap<String, E>();
+		mapConvert = new HashMap<String, E>();
 	}
-	
+
 	/**
 	 * 增加数据
 	 * @param uniqueKey
@@ -26,7 +26,7 @@ public class ConverMapToSet<E> extends HashSet<E> {
 	 * @return
 	 */
 	public boolean add(String uniqueKey, E val) {
-		if(mapConver.put(uniqueKey, val) == null) {
+		if(mapConvert.put(uniqueKey, val) == null) {
 			add(val);
 			return true;
 		}

@@ -25,12 +25,12 @@ public class Test {
 		System.out.println(CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, "aaaBbb"));
 		System.out.println(CharMatcher.javaIsoControl().removeFrom("Test Control.~"));
 		System.out.println(Joiner.on(",").skipNulls().join(new String[] {"12","","32",null}));
-		
+
 		EventBus bus = new EventBus();
 		bus.register(new AA());
 		System.out.println("当前线程：" + Thread.currentThread().getName());
 		bus.post(new TestEvent());
-		
+
 		List<String> names = Lists.newArrayList();
 		TypeToken<List<String>> nameTokens = new TypeToken<List<String>>() {
 		};
@@ -38,7 +38,7 @@ public class Test {
 		System.out.println(names.getClass());
 		System.out.println(nameTokens.getType());
 		System.out.println(TestEvent.class.getTypeParameters().length);
-		
+
 		Invokable<List<String>, ?> invokable = new TypeToken<List<String>>() {}.method(List.class.getMethods()[0]);
 		System.out.println(invokable.getReturnType()); // String.class
 		Annotation[] annotations = TestEvent.class.getAnnotations();
@@ -46,7 +46,7 @@ public class Test {
 			System.out.println(annotation instanceof Id);
 		}
 		System.out.println("调试完成");
-		
+
 		List<Long> aaa = new ArrayList<Long>();
 		aaa.add(123L);
 		aaa.add(34L);
@@ -62,7 +62,7 @@ public class Test {
 
 	@Entity
 	public static class TestEvent<E, T, A>{
-		
+
 	}
 	public static class AA{
 		@Subscribe
@@ -70,7 +70,7 @@ public class Test {
 			System.out.println("事件已触发!");
 			System.out.println("当前线程：" + Thread.currentThread().getName());
 		}
-	} 
-	
-	
+	}
+
+
 }

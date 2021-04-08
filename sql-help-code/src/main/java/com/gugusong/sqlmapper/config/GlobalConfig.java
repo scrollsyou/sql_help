@@ -17,19 +17,19 @@ import lombok.Setter;
  * @author yousongshu
  *
  */
-public class GlogalConfig {
+public class GlobalConfig {
 
-	public GlogalConfig() {
-		this(null, new SnowFlake(1, 1), new DefaultJDBCImplicitNamingStrategyImpl(), 
+	public GlobalConfig() {
+		this(null, new SnowFlake(1, 1), new DefaultJDBCImplicitNamingStrategyImpl(),
 				new ColumnTypeMappingImpl());
 	}
-	public GlogalConfig(DataSource dataSource) {
-		this(dataSource, new SnowFlake(1, 1), new DefaultJDBCImplicitNamingStrategyImpl(), 
+	public GlobalConfig(DataSource dataSource) {
+		this(dataSource, new SnowFlake(1, 1), new DefaultJDBCImplicitNamingStrategyImpl(),
 				new ColumnTypeMappingImpl());
 	}
-	
-	public GlogalConfig(DataSource dataSource, SnowFlake snowFlake, ImplicitNamingStrategy implicitNamingStrategy,
-			ColumnTypeMapping columnTypeMapping) {
+
+	public GlobalConfig(DataSource dataSource, SnowFlake snowFlake, ImplicitNamingStrategy implicitNamingStrategy,
+						ColumnTypeMapping columnTypeMapping) {
 		super();
 		this.dataSource = dataSource;
 		this.snowFlake = snowFlake;
@@ -52,19 +52,19 @@ public class GlogalConfig {
 	@Getter
 	@Setter
 	private SnowFlake snowFlake = new SnowFlake(1, 1);
-	
+
 	/**
 	 * bean映射到数据库中字段命名规则
 	 */
 	@Getter
 	@Setter
 	private ImplicitNamingStrategy implicitNamingStrategy = new DefaultJDBCImplicitNamingStrategyImpl();
-	
+
 	/**
 	 * 字段类型映射
 	 */
 	@Getter
 	@Setter
 	private ColumnTypeMapping columnTypeMapping = new ColumnTypeMappingImpl();
-	
+
 }

@@ -19,9 +19,9 @@ import lombok.NonNull;
  *
  */
 public class MysqlSqlHelp implements ISqlHelp{
-	
-	
-	
+
+
+
 	private static final String SQL_SELECT_METHOD = "getSqlToSelect";
 	private static final String SQL_SELECT_ID_METHOD = "getSqlToSelectId";
 	private static final String SQL_SELECT_COUNT_METHOD = "getSqlToSelectCount";
@@ -37,28 +37,28 @@ public class MysqlSqlHelp implements ISqlHelp{
 	 * @param poClazz
 	 * @param hasFormat
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public String getSqlToSelect(BeanWrapper poClazz, boolean hasFormat) throws Exception {
 		String sql = poClazz.getSql(SQL_SELECT_METHOD);
 		if(sql != null) {
 			return sql;
 		}
-		StringBuilder sqlsb = new StringBuilder();
+		StringBuilder sqlSb = new StringBuilder();
 		if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-			sqlsb.append(SELECT);
-			sqlsb.append(SPLIT);
-			sqlsb.append(Joiner.on(COMMA + SPLIT).join(poClazz.getColumns().stream().map(c -> c.getName()).toArray()));
-			sqlsb.append(SPLIT);
-			sqlsb.append(FROM);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableName());
+			sqlSb.append(SELECT);
+			sqlSb.append(SPLIT);
+			sqlSb.append(Joiner.on(COMMA + SPLIT).join(poClazz.getColumns().stream().map(c -> c.getName()).toArray()));
+			sqlSb.append(SPLIT);
+			sqlSb.append(FROM);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableName());
 		}else if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-			sqlsb.append(SELECT);
-			sqlsb.append(SPLIT);
+			sqlSb.append(SELECT);
+			sqlSb.append(SPLIT);
 			// TODO 后期更改为VO中指定字段进行查询
-			sqlsb.append(poClazz.getTableAliasName() + POINT);
-			sqlsb.append(Joiner.on(COMMA + poClazz.getTableAliasName() + POINT).join(poClazz.getMainWrapper().getColumns().stream().map(c -> {
+			sqlSb.append(poClazz.getTableAliasName() + POINT);
+			sqlSb.append(Joiner.on(COMMA + poClazz.getTableAliasName() + POINT).join(poClazz.getMainWrapper().getColumns().stream().map(c -> {
 				StringBuilder selectSb = new StringBuilder();
 				selectSb.append(c.getName()).append(SPLIT).append(poClazz.getTableAliasName()).append("_").append(c.getName());
 				return  selectSb.toString();
@@ -67,53 +67,53 @@ public class MysqlSqlHelp implements ISqlHelp{
 				String joinTableAlias = entry.getKey();
 				BeanJoin beanJoin = entry.getValue();
 				BeanWrapper joinBeanWrapper = beanJoin.getJoinBeanWrapper();
-				sqlsb.append(COMMA + joinTableAlias + POINT);
-				sqlsb.append(Joiner.on(COMMA + joinTableAlias + POINT).join(joinBeanWrapper.getColumns().stream().map(c -> {
+				sqlSb.append(COMMA + joinTableAlias + POINT);
+				sqlSb.append(Joiner.on(COMMA + joinTableAlias + POINT).join(joinBeanWrapper.getColumns().stream().map(c -> {
 					StringBuilder selectSb = new StringBuilder();
 					selectSb.append(c.getName()).append(SPLIT).append(joinTableAlias).append("_").append(c.getName());
 					return  selectSb.toString();
 				}).toArray()));
 			}
 			if(poClazz.getFuncColumns() != null && poClazz.getFuncColumns().size() > 0) {
-				sqlsb.append(COMMA);
-				sqlsb.append(Joiner.on(COMMA).join(poClazz.getFuncColumns().stream().map(c -> {
+				sqlSb.append(COMMA);
+				sqlSb.append(Joiner.on(COMMA).join(poClazz.getFuncColumns().stream().map(c -> {
 					StringBuilder selectSb = new StringBuilder();
 					selectSb.append(c.getFunction()).append(SPLIT).append(c.getAliasName());
 					return  selectSb.toString();
 				}).toArray()));
 			}
-			sqlsb.append(SPLIT);
-			sqlsb.append(FROM);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableAliasName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(FROM);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableAliasName());
 			for (Entry<String, BeanJoin> entry : poClazz.getJoinBeans().entrySet()) {
-				sqlsb.append(SPLIT);
+				sqlSb.append(SPLIT);
 				String joinTableAlias = entry.getKey();
 				BeanJoin beanJoin = entry.getValue();
 				BeanWrapper joinBeanWrapper = beanJoin.getJoinBeanWrapper();
-				sqlsb.append(beanJoin.getToken());
-				sqlsb.append(SPLIT);
-				sqlsb.append(joinBeanWrapper.getTableName());
-				sqlsb.append(SPLIT);
-				sqlsb.append(joinTableAlias);
-				sqlsb.append(SPLIT);
-				sqlsb.append(ON + LEFT_PARENTHESIS);
-				sqlsb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
+				sqlSb.append(beanJoin.getToken());
+				sqlSb.append(SPLIT);
+				sqlSb.append(joinBeanWrapper.getTableName());
+				sqlSb.append(SPLIT);
+				sqlSb.append(joinTableAlias);
+				sqlSb.append(SPLIT);
+				sqlSb.append(ON + LEFT_PARENTHESIS);
+				sqlSb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
 					@NonNull
 					String columnName = poClazz.getColumnNameByPropertyName(paramName);
 					return columnName;
 				}));
-				sqlsb.append(RIGHT_PARENTHESIS);
-				sqlsb.append(SPLIT);
-				
+				sqlSb.append(RIGHT_PARENTHESIS);
+				sqlSb.append(SPLIT);
+
 			}
 		}else {
 			throw new RuntimeException("该Bean类不支持查询，查询操作只支持VO/PO类!");
 		}
-		poClazz.putSql(SQL_SELECT_METHOD, sqlsb.toString());
-		return sqlsb.toString();
+		poClazz.putSql(SQL_SELECT_METHOD, sqlSb.toString());
+		return sqlSb.toString();
 	}
 	/**
 	 * 查询id
@@ -128,84 +128,84 @@ public class MysqlSqlHelp implements ISqlHelp{
 		if(sql != null) {
 			return sql;
 		}
-		StringBuilder sqlsb = new StringBuilder();
+		StringBuilder sqlSb = new StringBuilder();
 		if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-			sqlsb.append(SELECT);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getIdColumn().getName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(FROM);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableName());
+			sqlSb.append(SELECT);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getIdColumn().getName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(FROM);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableName());
 		}else if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-			sqlsb.append(SELECT);
-			sqlsb.append(SPLIT);
+			sqlSb.append(SELECT);
+			sqlSb.append(SPLIT);
 			// TODO 后期更改为VO中指定字段进行查询
-			sqlsb.append(poClazz.getTableAliasName());
-			sqlsb.append(POINT);
-			sqlsb.append(poClazz.getMainWrapper().getIdColumn().getName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(FROM);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableAliasName());
+			sqlSb.append(poClazz.getTableAliasName());
+			sqlSb.append(POINT);
+			sqlSb.append(poClazz.getMainWrapper().getIdColumn().getName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(FROM);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableAliasName());
 			for (Entry<String, BeanJoin> entry : poClazz.getJoinBeans().entrySet()) {
-				sqlsb.append(SPLIT);
+				sqlSb.append(SPLIT);
 				String joinTableAlias = entry.getKey();
 				BeanJoin beanJoin = entry.getValue();
 				BeanWrapper joinBeanWrapper = beanJoin.getJoinBeanWrapper();
-				sqlsb.append(beanJoin.getToken());
-				sqlsb.append(SPLIT);
-				sqlsb.append(joinBeanWrapper.getTableName());
-				sqlsb.append(SPLIT);
-				sqlsb.append(joinTableAlias);
-				sqlsb.append(SPLIT);
-				sqlsb.append(ON + LEFT_PARENTHESIS);
-				sqlsb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
+				sqlSb.append(beanJoin.getToken());
+				sqlSb.append(SPLIT);
+				sqlSb.append(joinBeanWrapper.getTableName());
+				sqlSb.append(SPLIT);
+				sqlSb.append(joinTableAlias);
+				sqlSb.append(SPLIT);
+				sqlSb.append(ON + LEFT_PARENTHESIS);
+				sqlSb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
 					@NonNull
 					String columnName = poClazz.getColumnNameByPropertyName(paramName);
 					return columnName;
 				}));
-				sqlsb.append(RIGHT_PARENTHESIS);
-				sqlsb.append(SPLIT);
-				
+				sqlSb.append(RIGHT_PARENTHESIS);
+				sqlSb.append(SPLIT);
+
 			}
 		}else {
 			throw new RuntimeException("该Bean类不支持查询，查询操作只支持VO/PO类!");
 		}
-		poClazz.putSql(SQL_SELECT_ID_METHOD, sqlsb.toString());
-		return sqlsb.toString();
+		poClazz.putSql(SQL_SELECT_ID_METHOD, sqlSb.toString());
+		return sqlSb.toString();
 	}
-	
+
 	public String getSqlToSelectById(BeanWrapper poClazz, boolean hasFormat) throws Exception {
 		String sql = poClazz.getSql(SQL_SELECT_BY_ID_METHOD);
 		if(sql != null) {
 			return sql;
 		}
-		StringBuilder sqlsb = new StringBuilder();
+		StringBuilder sqlSb = new StringBuilder();
 		if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-			sqlsb.append(SELECT);
-			sqlsb.append(SPLIT);
-			sqlsb.append(Joiner.on(COMMA + SPLIT).join(poClazz.getColumns().stream().map(c -> c.getName()).toArray()));
-			sqlsb.append(SPLIT);
-			sqlsb.append(FROM);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(WHERE);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getIdColumn().getName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(EQUEST);
-			sqlsb.append(SPLIT);
-			sqlsb.append(PARAM_TOKEN);
+			sqlSb.append(SELECT);
+			sqlSb.append(SPLIT);
+			sqlSb.append(Joiner.on(COMMA + SPLIT).join(poClazz.getColumns().stream().map(c -> c.getName()).toArray()));
+			sqlSb.append(SPLIT);
+			sqlSb.append(FROM);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(WHERE);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getIdColumn().getName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(EQUALS);
+			sqlSb.append(SPLIT);
+			sqlSb.append(PARAM_TOKEN);
 		}else if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-			sqlsb.append(SELECT);
-			sqlsb.append(SPLIT);
+			sqlSb.append(SELECT);
+			sqlSb.append(SPLIT);
 			// TODO 后期更改为VO中指定字段进行查询
-			sqlsb.append(poClazz.getTableAliasName() + POINT);
-			sqlsb.append(Joiner.on(COMMA + poClazz.getTableAliasName() + POINT).join(poClazz.getMainWrapper().getColumns().stream().map(c -> {
+			sqlSb.append(poClazz.getTableAliasName() + POINT);
+			sqlSb.append(Joiner.on(COMMA + poClazz.getTableAliasName() + POINT).join(poClazz.getMainWrapper().getColumns().stream().map(c -> {
 				StringBuilder selectSb = new StringBuilder();
 				selectSb.append(c.getName()).append(SPLIT).append(poClazz.getTableAliasName()).append("_").append(c.getName());
 				return  selectSb.toString();
@@ -214,79 +214,79 @@ public class MysqlSqlHelp implements ISqlHelp{
 				String joinTableAlias = entry.getKey();
 				BeanJoin beanJoin = entry.getValue();
 				BeanWrapper joinBeanWrapper = beanJoin.getJoinBeanWrapper();
-				sqlsb.append(COMMA + joinTableAlias + POINT);
-				sqlsb.append(Joiner.on(COMMA + joinTableAlias + POINT).join(joinBeanWrapper.getColumns().stream().map(c -> {
+				sqlSb.append(COMMA + joinTableAlias + POINT);
+				sqlSb.append(Joiner.on(COMMA + joinTableAlias + POINT).join(joinBeanWrapper.getColumns().stream().map(c -> {
 					StringBuilder selectSb = new StringBuilder();
 					selectSb.append(c.getName()).append(SPLIT).append(joinTableAlias).append("_").append(c.getName());
 					return  selectSb.toString();
 				}).toArray()));
 			}
 			if(poClazz.getFuncColumns() != null && poClazz.getFuncColumns().size() > 0) {
-				sqlsb.append(COMMA);
-				sqlsb.append(Joiner.on(COMMA).join(poClazz.getFuncColumns().stream().map(c -> {
+				sqlSb.append(COMMA);
+				sqlSb.append(Joiner.on(COMMA).join(poClazz.getFuncColumns().stream().map(c -> {
 					StringBuilder selectSb = new StringBuilder();
 					selectSb.append(c.getFunction()).append(SPLIT).append(c.getAliasName());
 					return  selectSb.toString();
 				}).toArray()));
 			}
-			sqlsb.append(SPLIT);
-			sqlsb.append(FROM);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableAliasName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(FROM);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableAliasName());
 			for (Entry<String, BeanJoin> entry : poClazz.getJoinBeans().entrySet()) {
-				sqlsb.append(SPLIT);
+				sqlSb.append(SPLIT);
 				String joinTableAlias = entry.getKey();
 				BeanJoin beanJoin = entry.getValue();
 				BeanWrapper joinBeanWrapper = beanJoin.getJoinBeanWrapper();
-				sqlsb.append(beanJoin.getToken());
-				sqlsb.append(SPLIT);
-				sqlsb.append(joinBeanWrapper.getTableName());
-				sqlsb.append(SPLIT);
-				sqlsb.append(joinTableAlias);
-				sqlsb.append(SPLIT);
-				sqlsb.append(ON + LEFT_PARENTHESIS);
-				sqlsb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
+				sqlSb.append(beanJoin.getToken());
+				sqlSb.append(SPLIT);
+				sqlSb.append(joinBeanWrapper.getTableName());
+				sqlSb.append(SPLIT);
+				sqlSb.append(joinTableAlias);
+				sqlSb.append(SPLIT);
+				sqlSb.append(ON + LEFT_PARENTHESIS);
+				sqlSb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
 					@NonNull
 					String columnName = poClazz.getColumnNameByPropertyName(paramName);
 					return columnName;
 				}));
-				sqlsb.append(RIGHT_PARENTHESIS);
-				sqlsb.append(SPLIT);
-				
+				sqlSb.append(RIGHT_PARENTHESIS);
+				sqlSb.append(SPLIT);
+
 			}
-			sqlsb.append(SPLIT);
-			sqlsb.append(WHERE);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableAliasName());
-			sqlsb.append(POINT);
-			sqlsb.append(poClazz.getMainWrapper().getIdColumn().getName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(EQUEST);
-			sqlsb.append(SPLIT);
-			sqlsb.append(PARAM_TOKEN);
-			sqlsb.append(SPLIT);
+			sqlSb.append(SPLIT);
+			sqlSb.append(WHERE);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableAliasName());
+			sqlSb.append(POINT);
+			sqlSb.append(poClazz.getMainWrapper().getIdColumn().getName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(EQUALS);
+			sqlSb.append(SPLIT);
+			sqlSb.append(PARAM_TOKEN);
+			sqlSb.append(SPLIT);
 			if(poClazz.getGroupBys() != null && poClazz.getGroupBys().length > 0) {
-				sqlsb.append(GROUP_BY);
-				sqlsb.append(SPLIT);
+				sqlSb.append(GROUP_BY);
+				sqlSb.append(SPLIT);
 				boolean first = true;
 				for (String propertyName : poClazz.getGroupBys()) {
 					if(!first) {
-						sqlsb.append(COMMA);
+						sqlSb.append(COMMA);
 					}
-					sqlsb.append(poClazz.getColumnNameByPropertyName(propertyName));
+					sqlSb.append(poClazz.getColumnNameByPropertyName(propertyName));
 					first = false;
 				}
-				sqlsb.append(SPLIT);
-				
+				sqlSb.append(SPLIT);
+
 			}
 		}else {
 			throw new RuntimeException("该Bean类不支持查询，查询操作只支持VO/PO类!");
 		}
-		
-		poClazz.putSql(SQL_SELECT_BY_ID_METHOD, sqlsb.toString());
-		return sqlsb.toString();
+
+		poClazz.putSql(SQL_SELECT_BY_ID_METHOD, sqlSb.toString());
+		return sqlSb.toString();
 	}
 
 	public String getSqlToUpdate(BeanWrapper poClazz, boolean hasFormat) {
@@ -294,34 +294,34 @@ public class MysqlSqlHelp implements ISqlHelp{
 		if(sql != null) {
 			return sql;
 		}
-		StringBuilder sqlsb = new StringBuilder();
-		sqlsb.append(UPDATE);
-		sqlsb.append(SPLIT);
-		sqlsb.append(poClazz.getTableName());
-		sqlsb.append(SPLIT);
-		sqlsb.append(SET);
-		sqlsb.append(SPLIT);
-		sqlsb.append(Joiner.on(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + COMMA ).join(poClazz.getColumns().stream().filter(c -> !c.isIdFlag()).map(c -> c.getName()).toArray()));
-		sqlsb.append(SPLIT + EQUEST + SPLIT + PARAM_TOKEN + SPLIT);
-		sqlsb.append(WHERE);
-		sqlsb.append(SPLIT);
-		sqlsb.append(poClazz.getIdColumn().getName());
-		sqlsb.append(SPLIT);
-		sqlsb.append(EQUEST);
-		sqlsb.append(SPLIT);
-		sqlsb.append(PARAM_TOKEN);
-		sqlsb.append(SPLIT);
+		StringBuilder sqlSb = new StringBuilder();
+		sqlSb.append(UPDATE);
+		sqlSb.append(SPLIT);
+		sqlSb.append(poClazz.getTableName());
+		sqlSb.append(SPLIT);
+		sqlSb.append(SET);
+		sqlSb.append(SPLIT);
+		sqlSb.append(Joiner.on(SPLIT + EQUALS + SPLIT + PARAM_TOKEN + COMMA ).join(poClazz.getColumns().stream().filter(c -> !c.isIdFlag()).map(c -> c.getName()).toArray()));
+		sqlSb.append(SPLIT + EQUALS + SPLIT + PARAM_TOKEN + SPLIT);
+		sqlSb.append(WHERE);
+		sqlSb.append(SPLIT);
+		sqlSb.append(poClazz.getIdColumn().getName());
+		sqlSb.append(SPLIT);
+		sqlSb.append(EQUALS);
+		sqlSb.append(SPLIT);
+		sqlSb.append(PARAM_TOKEN);
+		sqlSb.append(SPLIT);
 		if(poClazz.isVersion()) {
-			sqlsb.append(AND);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getVersionColumn().getName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(EQUEST);
-			sqlsb.append(SPLIT);
-			sqlsb.append(PARAM_TOKEN);
+			sqlSb.append(AND);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getVersionColumn().getName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(EQUALS);
+			sqlSb.append(SPLIT);
+			sqlSb.append(PARAM_TOKEN);
 		}
-		poClazz.putSql(SQL_UPDATE_METHOD, sqlsb.toString());
-		return sqlsb.toString();
+		poClazz.putSql(SQL_UPDATE_METHOD, sqlSb.toString());
+		return sqlSb.toString();
 	}
 
 	public String getSqlToInsert(BeanWrapper poClazz, boolean hasFormat) {
@@ -329,60 +329,60 @@ public class MysqlSqlHelp implements ISqlHelp{
 		if(sql != null) {
 			return sql;
 		}
-		StringBuilder sqlsb = new StringBuilder();
-		sqlsb.append(INSERT_INTO);
-		sqlsb.append(SPLIT);
-		sqlsb.append(poClazz.getTableName());
-		sqlsb.append(LEFT_PARENTHESIS);
-		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !(c.isIdFlag() && c.getIdStragegy()==GenerationType.IDENTITY )).map(c -> c.getName()).toArray()));
-		sqlsb.append(RIGHT_PARENTHESIS);
-		sqlsb.append(SPLIT);
-		sqlsb.append(VALUES);
-		sqlsb.append(LEFT_PARENTHESIS);
-		sqlsb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !(c.isIdFlag() && c.getIdStragegy()==GenerationType.IDENTITY )).map(c -> PARAM_TOKEN).toArray()));
-		sqlsb.append(RIGHT_PARENTHESIS);
-		poClazz.putSql(SQL_INSERT_METHOD, sqlsb.toString());
-		return sqlsb.toString();
+		StringBuilder sqlSb = new StringBuilder();
+		sqlSb.append(INSERT_INTO);
+		sqlSb.append(SPLIT);
+		sqlSb.append(poClazz.getTableName());
+		sqlSb.append(LEFT_PARENTHESIS);
+		sqlSb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !(c.isIdFlag() && c.getIdstrategy()==GenerationType.IDENTITY )).map(c -> c.getName()).toArray()));
+		sqlSb.append(RIGHT_PARENTHESIS);
+		sqlSb.append(SPLIT);
+		sqlSb.append(VALUES);
+		sqlSb.append(LEFT_PARENTHESIS);
+		sqlSb.append(Joiner.on(COMMA).join(poClazz.getColumns().stream().filter(c -> !(c.isIdFlag() && c.getIdstrategy()==GenerationType.IDENTITY )).map(c -> PARAM_TOKEN).toArray()));
+		sqlSb.append(RIGHT_PARENTHESIS);
+		poClazz.putSql(SQL_INSERT_METHOD, sqlSb.toString());
+		return sqlSb.toString();
 	}
-	
+
 
 	public String getSqlToDelete(BeanWrapper poClazz, boolean hasFormat) {
 		String sql = poClazz.getSql(SQL_DELETE_METHOD);
 		if(sql != null) {
 			return sql;
 		}
-		StringBuilder sqlsb = new StringBuilder();
-		sqlsb.append(DELETE);
-		sqlsb.append(SPLIT);
-		sqlsb.append(FROM);
-		sqlsb.append(SPLIT);
-		sqlsb.append(poClazz.getTableName());
-		sqlsb.append(SPLIT);
-		poClazz.putSql(SQL_DELETE_METHOD, sqlsb.toString());
-		return sqlsb.toString();
+		StringBuilder sqlSb = new StringBuilder();
+		sqlSb.append(DELETE);
+		sqlSb.append(SPLIT);
+		sqlSb.append(FROM);
+		sqlSb.append(SPLIT);
+		sqlSb.append(poClazz.getTableName());
+		sqlSb.append(SPLIT);
+		poClazz.putSql(SQL_DELETE_METHOD, sqlSb.toString());
+		return sqlSb.toString();
 	}
-	
+
 	public String getSqlToDeleteById(BeanWrapper poClazz, boolean hasFormat) {
 		String sql = poClazz.getSql(SQL_DELETE_BY_ID_METHOD);
 		if(sql != null) {
 			return sql;
 		}
-		StringBuilder sqlsb = new StringBuilder();
-		sqlsb.append(DELETE);
-		sqlsb.append(SPLIT);
-		sqlsb.append(FROM);
-		sqlsb.append(SPLIT);
-		sqlsb.append(poClazz.getTableName());
-		sqlsb.append(SPLIT);
-		sqlsb.append(WHERE);
-		sqlsb.append(SPLIT);
-		sqlsb.append(poClazz.getIdColumn().getName());
-		sqlsb.append(SPLIT);
-		sqlsb.append(EQUEST);
-		sqlsb.append(SPLIT);
-		sqlsb.append(PARAM_TOKEN);
-		poClazz.putSql(SQL_DELETE_BY_ID_METHOD, sqlsb.toString());
-		return sqlsb.toString();
+		StringBuilder sqlSb = new StringBuilder();
+		sqlSb.append(DELETE);
+		sqlSb.append(SPLIT);
+		sqlSb.append(FROM);
+		sqlSb.append(SPLIT);
+		sqlSb.append(poClazz.getTableName());
+		sqlSb.append(SPLIT);
+		sqlSb.append(WHERE);
+		sqlSb.append(SPLIT);
+		sqlSb.append(poClazz.getIdColumn().getName());
+		sqlSb.append(SPLIT);
+		sqlSb.append(EQUALS);
+		sqlSb.append(SPLIT);
+		sqlSb.append(PARAM_TOKEN);
+		poClazz.putSql(SQL_DELETE_BY_ID_METHOD, sqlSb.toString());
+		return sqlSb.toString();
 	}
 
 	@Override
@@ -391,89 +391,89 @@ public class MysqlSqlHelp implements ISqlHelp{
 		if(sql != null) {
 			return sql;
 		}
-		StringBuilder sqlsb = new StringBuilder();
+		StringBuilder sqlSb = new StringBuilder();
 		if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-			sqlsb.append(SELECT);
-			sqlsb.append(SPLIT);
-			sqlsb.append("count(*)");
-			sqlsb.append(SPLIT);
-			sqlsb.append(FROM);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableName());
-			sqlsb.append(SPLIT);
-			sqlsb.append("{where}");
+			sqlSb.append(SELECT);
+			sqlSb.append(SPLIT);
+			sqlSb.append("count(*)");
+			sqlSb.append(SPLIT);
+			sqlSb.append(FROM);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableName());
+			sqlSb.append(SPLIT);
+			sqlSb.append("{where}");
 		}else if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-			sqlsb.append(SELECT);
-			sqlsb.append(SPLIT);
-			sqlsb.append("count(*)");
-			sqlsb.append(SPLIT);
-			sqlsb.append(FROM);
-			sqlsb.append(SPLIT);
-			sqlsb.append(LEFT_PARENTHESIS);
-			sqlsb.append(SELECT);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableAliasName());
-			sqlsb.append(POINT);
+			sqlSb.append(SELECT);
+			sqlSb.append(SPLIT);
+			sqlSb.append("count(*)");
+			sqlSb.append(SPLIT);
+			sqlSb.append(FROM);
+			sqlSb.append(SPLIT);
+			sqlSb.append(LEFT_PARENTHESIS);
+			sqlSb.append(SELECT);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableAliasName());
+			sqlSb.append(POINT);
 			// TODO 后期需兼容无主键表查询
-			sqlsb.append(poClazz.getMainWrapper().getIdColumn().getName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(FROM);
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableName());
-			sqlsb.append(SPLIT);
-			sqlsb.append(poClazz.getTableAliasName());
+			sqlSb.append(poClazz.getMainWrapper().getIdColumn().getName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(FROM);
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableName());
+			sqlSb.append(SPLIT);
+			sqlSb.append(poClazz.getTableAliasName());
 			for (Entry<String, BeanJoin> entry : poClazz.getJoinBeans().entrySet()) {
-				sqlsb.append(SPLIT);
+				sqlSb.append(SPLIT);
 				String joinTableAlias = entry.getKey();
 				BeanJoin beanJoin = entry.getValue();
 				BeanWrapper joinBeanWrapper = beanJoin.getJoinBeanWrapper();
-				sqlsb.append(beanJoin.getToken());
-				sqlsb.append(SPLIT);
-				sqlsb.append(joinBeanWrapper.getTableName());
-				sqlsb.append(SPLIT);
-				sqlsb.append(joinTableAlias);
-				sqlsb.append(SPLIT);
-				sqlsb.append(ON + LEFT_PARENTHESIS);
-				sqlsb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
+				sqlSb.append(beanJoin.getToken());
+				sqlSb.append(SPLIT);
+				sqlSb.append(joinBeanWrapper.getTableName());
+				sqlSb.append(SPLIT);
+				sqlSb.append(joinTableAlias);
+				sqlSb.append(SPLIT);
+				sqlSb.append(ON + LEFT_PARENTHESIS);
+				sqlSb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
 					@NonNull
 					String columnName = poClazz.getColumnNameByPropertyName(paramName);
 					return columnName;
 				}));
-				sqlsb.append(RIGHT_PARENTHESIS);
-				sqlsb.append(SPLIT);
+				sqlSb.append(RIGHT_PARENTHESIS);
+				sqlSb.append(SPLIT);
 			}
-			sqlsb.append(SPLIT);
-			sqlsb.append("{where}");
-			sqlsb.append(SPLIT);
+			sqlSb.append(SPLIT);
+			sqlSb.append("{where}");
+			sqlSb.append(SPLIT);
 			if(poClazz.isPageSubSql()) {
-				sqlsb.append(GROUP_BY);
-				sqlsb.append(SPLIT);
-				sqlsb.append(poClazz.getTableAliasName());
-				sqlsb.append(POINT);
-				sqlsb.append(poClazz.getMainWrapper().getIdColumn().getName());
+				sqlSb.append(GROUP_BY);
+				sqlSb.append(SPLIT);
+				sqlSb.append(poClazz.getTableAliasName());
+				sqlSb.append(POINT);
+				sqlSb.append(poClazz.getMainWrapper().getIdColumn().getName());
 			}else if(poClazz.getGroupBys() != null && poClazz.getGroupBys().length > 0) {
 				// TODO 公共部分可以抽出
-				sqlsb.append(GROUP_BY);
-				sqlsb.append(SPLIT);
+				sqlSb.append(GROUP_BY);
+				sqlSb.append(SPLIT);
 				boolean first = true;
 				for (String propertyName : poClazz.getGroupBys()) {
 					if(!first) {
-						sqlsb.append(COMMA);
+						sqlSb.append(COMMA);
 					}
-					sqlsb.append(poClazz.getColumnNameByPropertyName(propertyName));
+					sqlSb.append(poClazz.getColumnNameByPropertyName(propertyName));
 					first = false;
 				}
-				sqlsb.append(SPLIT);
-				
+				sqlSb.append(SPLIT);
+
 			}
-			sqlsb.append(RIGHT_PARENTHESIS);
-			sqlsb.append(SPLIT);
-			sqlsb.append("buffer");
+			sqlSb.append(RIGHT_PARENTHESIS);
+			sqlSb.append(SPLIT);
+			sqlSb.append("buffer");
 		}else {
 			throw new RuntimeException("该Bean类不支持查询，查询操作只支持VO/PO类!");
 		}
-		poClazz.putSql(SQL_SELECT_COUNT_METHOD, sqlsb.toString());
-		return sqlsb.toString();
+		poClazz.putSql(SQL_SELECT_COUNT_METHOD, sqlSb.toString());
+		return sqlSb.toString();
 	}
-	
+
 }

@@ -10,13 +10,13 @@ import lombok.NonNull;
  *
  */
 public class TextUtil {
-	
+
 	private static final byte Z_CODE = 90;
 	private static final byte A_CODE = 64;
 	private static final byte CODE_DIFF = 32;
 	private static final char __CODE = '_';
 	private static final char TEMP_LEFT_KEY = '{';
-	private static final char TEMP_RIGTH_KEY = '}';
+	private static final char TEMP_RIGHT_KEY = '}';
 
 	/**
 	 * 驼峰命名转数据库驼峰命名
@@ -38,7 +38,7 @@ public class TextUtil {
 		}
 		return newName.toString();
 	}
-	
+
 	/**
 	 * 数据库驼峰转java中驼峰
 	 * @param name
@@ -80,7 +80,7 @@ public class TextUtil {
 			if(TEMP_LEFT_KEY == tempChars[i]) {
 				i++;
 				for (; i < tempChars.length; i++) {
-					if(TEMP_RIGTH_KEY == tempChars[i]) {
+					if(TEMP_RIGHT_KEY == tempChars[i]) {
 						newTemplate.append(conver.apply(paramName.toString()));
 						paramName = new StringBuilder();
 						break;
@@ -93,5 +93,5 @@ public class TextUtil {
 		}
 		return newTemplate.toString();
 	}
-	
+
 }

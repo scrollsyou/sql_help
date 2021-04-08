@@ -8,27 +8,26 @@ import com.gugusong.sqlmapper.annotation.Entity;
 import com.gugusong.sqlmapper.annotation.Id;
 import com.gugusong.sqlmapper.annotation.Transient;
 import com.gugusong.sqlmapper.common.beans.BeanWrapper;
-import com.gugusong.sqlmapper.config.GlogalConfig;
+import com.gugusong.sqlmapper.config.GlobalConfig;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import sql_help.entity.vo.SchoolVo;
-import sql_help.entity.vo.StudentVo;
 
 @Slf4j
 public class BeanWrapperTest {
 
 	/**
 	 * 测试bean类包装
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void instrance() throws Exception {
-		BeanWrapper studentVo = BeanWrapper.instrance(SchoolVo.class, new GlogalConfig());
+		BeanWrapper studentVo = BeanWrapper.instrance(SchoolVo.class, new GlobalConfig());
 		log.debug("切割数级:{}", studentVo);
-		
+
 	}
-	
+
 	@Entity
 	@Data
 	static class TestName1{
@@ -43,7 +42,7 @@ public class BeanWrapperTest {
 		@Transient
 		private String remake;
 	}
-	
+
 	static class SubTestName1 extends TestName1{
 		private String aaa;
 	}

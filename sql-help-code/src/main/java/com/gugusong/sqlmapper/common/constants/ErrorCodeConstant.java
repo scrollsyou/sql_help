@@ -12,14 +12,14 @@ public enum ErrorCodeConstant {
 	 */
 	E10001("E10001", "不能使用没有@Entity的类"),
 	/**
-	 * NOTBEAN - 不能使用不存在get/set方法的bean类
+	 * NOT_BEAN - 不能使用不存在get/set方法的bean类
 	 */
-	NOTBEAN("NOTBEAN", "该类不是标准javabean类，可能缺少get/set方法");
+	NOT_BEAN("NOT_BEAN", "该类不是标准javabean类，可能缺少get/set方法");
 
 	private String errorCode;
 
 	private String errorMsg;
-	
+
 	ErrorCodeConstant(String errorCode, String errorMsg){
 		this.errorCode = errorCode;
 		this.errorMsg = errorMsg;
@@ -37,6 +37,6 @@ public enum ErrorCodeConstant {
 	public String toString() {
 		return this.errorCode + ":" + this.errorMsg;
 	}
-	
-	
+
+
 }

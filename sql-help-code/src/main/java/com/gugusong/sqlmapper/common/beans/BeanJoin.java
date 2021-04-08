@@ -13,7 +13,7 @@ import lombok.Data;
 public class BeanJoin {
 
 	/**
-	 * 存放join编码，如left join,rigth join等
+	 * 存放join编码，如left join,right join等
 	 */
 	private String token;
 	/**

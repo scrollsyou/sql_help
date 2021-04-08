@@ -25,7 +25,7 @@ public class ExampleImpl implements Example {
 	private boolean hasPage = false;
 	private boolean forUpdate = false;
 	private Page page;
-	
+
 	private ExampleImpl() {
 		this(new ConditionFragment("where"), null);
 	}
@@ -34,15 +34,15 @@ public class ExampleImpl implements Example {
 		this.currentFragment = sqlFragment;
 		this.parent = parent;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public static Example newInstance() {
 		return new ExampleImpl();
 	}
-	
+
 	@Override
 	public Example or() {
 		currentFragment = currentFragment.createNextToken("or");
@@ -54,12 +54,12 @@ public class ExampleImpl implements Example {
 		currentFragment = currentFragment.createNextToken("and");
 		return this;
 	}
-	
+
 	@Override
 	public Example equals(String property, Object value) {
 		return equals(property, value, false);
 	}
-	
+
 	/**
 	 * 判断相等
 	 * @param property
@@ -81,7 +81,7 @@ public class ExampleImpl implements Example {
 			}
 		}
 	}
-	
+
 	@Override
 	public Example isNull(String property) {
 		currentFragment = currentFragment.createNextCondition("{" + property + "} is null");
@@ -184,7 +184,7 @@ public class ExampleImpl implements Example {
 		this.currentFragment = this.currentFragment.createNextToken(")");
 		return new ExampleImpl(beginFragment, this);
 	}
-	
+
 	@Override
 	public Example upCondition() {
 		if(this.parent == null) {
@@ -192,7 +192,7 @@ public class ExampleImpl implements Example {
 		}
 		return this.parent;
 	}
-	
+
 	@Override
 	public Example orderByAsc(String property) {
 		if(orderFragment == null) {
@@ -203,7 +203,7 @@ public class ExampleImpl implements Example {
 		}
 		return this;
 	}
-	
+
 	@Override
 	public Example orderByDesc(String property) {
 		if(orderFragment == null) {
@@ -242,11 +242,11 @@ public class ExampleImpl implements Example {
 		}
 		return sb.toString();
 	}
-	
+
 	public String toSql(BeanWrapper entityWrapper) {
 		return toSql(entityWrapper, true);
 	}
-	
+
 	public String toOrderSql(BeanWrapper entityWrapper) {
 		if(this.orderFragment == null) {
 			return "";
@@ -288,7 +288,7 @@ public class ExampleImpl implements Example {
 		this.hasPage = true;
 		this.page = PageHolder.getPage();
 		return this;
-		
+
 	}
 	@Override
 	public Example page(Page page) {

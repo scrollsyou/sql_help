@@ -21,14 +21,14 @@ public class BeanColumn {
 	 * @param dateType 表字段类型
 	 * @param length 字段长度
 	 * @param idFlag 是否为id
-	 * @param idStragegy id自增策略
+	 * @param idstrategy id自增策略
 	 * @param fieldName 属性名
 	 * @param field 属性字段
 	 * @param readMethod 读方法
 	 * @param writeMethod 写方法
 	 * @param sort 排序字段
 	 */
-	public BeanColumn(String name, String dateType, Integer length, boolean idFlag, GenerationType idStragegy,
+	public BeanColumn(String name, String dateType, Integer length, boolean idFlag, GenerationType idstrategy,
 			String fieldName, Field field, Method readMethod, Method writeMethod, Integer sort) {
 		super();
 		this.name = name;
@@ -36,14 +36,14 @@ public class BeanColumn {
 		this.dateType = dateType;
 		this.length = length;
 		this.idFlag = idFlag;
-		this.idStragegy = idStragegy;
+		this.idstrategy = idstrategy;
 		this.fieldName = fieldName;
 		this.field = field;
 		this.readMethod = readMethod;
 		this.writeMethod = writeMethod;
 		this.sort = sort;
 	}
-	
+
 	/**
 	 * 创建vo类中字段定义
 	 * @param name 关联表字段名
@@ -75,26 +75,26 @@ public class BeanColumn {
 	 * 表列字段名称
 	 */
 	private String name;
-	
+
 	/**
 	 * 列字段的数据类型
 	 */
 	private String dateType;
-	
+
 	/**
 	 * 字段长度限制
 	 */
 	private Integer length;
-	
+
 	/**
 	 * 是否id字段标识
 	 */
 	private boolean idFlag;
-	
+
 	/**
 	 * id的策略
 	 */
-	private GenerationType idStragegy;
+	private GenerationType idstrategy;
 	/**
 	 * 字段名
 	 */
@@ -115,7 +115,7 @@ public class BeanColumn {
 	 * 排序字段
 	 */
 	private Integer sort;
-	
+
 	// vo类中特有属性
 	/**
 	 * 表名别名
@@ -145,13 +145,13 @@ public class BeanColumn {
 	 * 是否乐观锁字段及策略
 	 */
 	private boolean version = false;
-	private VersionGenerationType versionStragegy;
-	
-	
+	private VersionGenerationType versionStrategy;
+
+
 	public Object getVal(Object entity) throws Exception {
 		return getReadMethod().invoke(entity);
 	}
-	
+
 	public void setVal(Object entity, Object value) throws Exception {
 		try {
 			getWriteMethod().invoke(entity, value);
@@ -161,5 +161,5 @@ public class BeanColumn {
 		}
 	}
 
-	
+
 }

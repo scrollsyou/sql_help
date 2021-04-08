@@ -19,5 +19,5 @@ public @interface GroupBy {
 	 * 配置分组字段
 	 * @return
 	 */
-	String[] propertys() default {};
+	String[] properties() default {};
 }

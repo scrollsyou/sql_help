@@ -19,5 +19,5 @@ public interface ImplicitNamingStrategy {
 	 * @param attributeName
 	 * @return
 	 */
-	public String getColumntName(String attributeName);
+	public String getColumnName(String attributeName);
 }

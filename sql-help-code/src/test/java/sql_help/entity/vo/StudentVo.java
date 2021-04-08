@@ -20,19 +20,19 @@ public class StudentVo {
 
 	private Integer id;
 	private String name;
-	
+
 	@PropertyMapping(originalName = "school.name")
 	private String schoolName;
-	
-	@ManyToOne(tagerClass = SchoolVo.class)
+
+	@ManyToOne(targetClass = SchoolVo.class)
 	private SchoolVo school;
-	
-	@OneToMany(tagerClass = SchoolVo.class)
+
+	@OneToMany(targetClass = SchoolVo.class)
 	private List<SchoolVo> schools;
-	
-	@OneToMany(tagerClass = SchoolVo.class)
+
+	@OneToMany(targetClass = SchoolVo.class)
 	private Set<SchoolVo> schoolsSet;
-	
+
 	@Data
 	public static class SchoolVo {
 

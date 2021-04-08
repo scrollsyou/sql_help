@@ -21,7 +21,7 @@ import com.gugusong.sqlmapper.common.exception.SqlException;
 import com.gugusong.sqlmapper.common.exception.StructureException;
 import com.gugusong.sqlmapper.common.util.TextUtil;
 import com.gugusong.sqlmapper.common.util.UUIDUtil;
-import com.gugusong.sqlmapper.config.GlogalConfig;
+import com.gugusong.sqlmapper.config.GlobalConfig;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
 import com.gugusong.sqlmapper.strategy.GenerationType;
 import com.gugusong.sqlmapper.strategy.VersionGenerationType;
@@ -33,29 +33,29 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 会话 基础数据操作方法
- * 
+ *
  * @author yousongshu
  *
  */
 @Slf4j
 public class SessionImpl implements Session {
-	
+
 	private ConnectionHolper connHolper;
 	private ISqlHelp sqlHelp;
-	private GlogalConfig config;
-	
-	public SessionImpl(@NonNull ConnectionHolper connHolper, @NonNull ISqlHelp sqlHelp, @NonNull GlogalConfig config) {
+	private GlobalConfig config;
+
+	public SessionImpl(@NonNull ConnectionHolper connHolper, @NonNull ISqlHelp sqlHelp, @NonNull GlobalConfig config) {
 		this.connHolper = connHolper;
 		this.sqlHelp = sqlHelp;
 		this.config = config;
 	}
 	/**
 	 * 保存实体对象 返回带ID主键的持久化对象
-	 * 
+	 *
 	 * @param        <T>
 	 * @param entity
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@SneakyThrows
 	public <T> T save(T entity) {
@@ -66,9 +66,9 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", entity);
 		}
 		if(entityWrapper.getIdColumn() != null) {
-			if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
+			if(entityWrapper.getIdColumn().getIdstrategy() == GenerationType.UUID) {
 				entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
-			}else if(entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
+			}else if(entityWrapper.getIdColumn().getIdstrategy() == GenerationType.SNOWFLAKE) {
 				if(ColumnTypeMapping.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
 					entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
 				}else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
@@ -80,19 +80,19 @@ public class SessionImpl implements Session {
 		}
 		@Cleanup PreparedStatement preSta = null;
 		try {
-			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
-				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
+			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdstrategy() == GenerationType.IDENTITY) {
+				preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
 			}else {
-				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert);
+				preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToInsert);
 			}
 			List<BeanColumn> columns = entityWrapper.getColumns();
 			int i = 1;
 			for (BeanColumn beanColumn : columns) {
-				if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
+				if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdstrategy()) {
 					continue;
 				}
 				if(beanColumn.isVersion()) {
-					if(beanColumn.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+					if(beanColumn.getVersionStrategy() == VersionGenerationType.DEFAULT) {
 						if(ColumnTypeMapping.INT_TYPE.equals(beanColumn.getDateType())) {
 							preSta.setObject(i, 0);
 						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
@@ -100,7 +100,7 @@ public class SessionImpl implements Session {
 						}else {
 							throw new SqlException("默认乐观锁字段必须为int/long类型!");
 						}
-					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+					}else if(beanColumn.getVersionStrategy() == VersionGenerationType.SNOWFLAKE) {
 						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
 							preSta.setObject(i, config.getSnowFlake().nextId() + "");
 						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
@@ -108,7 +108,7 @@ public class SessionImpl implements Session {
 						}else {
 							throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
 						}
-					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.UUID) {
+					}else if(beanColumn.getVersionStrategy() == VersionGenerationType.UUID) {
 						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
 							preSta.setObject(i, UUIDUtil.getUUID());
 						}else {
@@ -123,7 +123,7 @@ public class SessionImpl implements Session {
 				i++;
 			}
 			preSta.executeUpdate();
-			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdstrategy() == GenerationType.IDENTITY) {
 				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
 				if(resultSet.next()) {
 					if(ColumnTypeMappingImpl.INT_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
@@ -143,7 +143,7 @@ public class SessionImpl implements Session {
 		}
 		return entity;
 	}
-	
+
 	/**
 	 * 批量插入数据
 	 * @param <T>
@@ -159,20 +159,20 @@ public class SessionImpl implements Session {
 			log.debug("Preparing: {}", sqlToInsert);
 			log.debug("parameters: list");
 		}
-		
+
 		@Cleanup PreparedStatement preSta = null;
 		try {
-			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
-				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
+			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdstrategy() == GenerationType.IDENTITY) {
+				preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToInsert, Statement.RETURN_GENERATED_KEYS);
 			}else {
-				preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToInsert);
+				preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToInsert);
 			}
 			List<BeanColumn> columns = entityWrapper.getColumns();
 			for (T entity : entitys) {
 				if(entityWrapper.getIdColumn() != null) {
-					if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.UUID) {
+					if (entityWrapper.getIdColumn().getIdstrategy() == GenerationType.UUID) {
 						entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
-					} else if (entityWrapper.getIdColumn().getIdStragegy() == GenerationType.SNOWFLAKE) {
+					} else if (entityWrapper.getIdColumn().getIdstrategy() == GenerationType.SNOWFLAKE) {
 						if (ColumnTypeMapping.LONG_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
 							entityWrapper.getIdColumn().setVal(entity, config.getSnowFlake().nextId());
 						} else if (ColumnTypeMapping.STRING_TYPE.equals(entityWrapper.getIdColumn().getDateType())) {
@@ -184,11 +184,11 @@ public class SessionImpl implements Session {
 				}
 				int i = 1;
 				for (BeanColumn beanColumn : columns) {
-					if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdStragegy()) {
+					if(beanColumn.isIdFlag() && GenerationType.IDENTITY == beanColumn.getIdstrategy()) {
 						continue;
 					}
 					if(beanColumn.isVersion()) {
-						if(beanColumn.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+						if(beanColumn.getVersionStrategy() == VersionGenerationType.DEFAULT) {
 							if(ColumnTypeMapping.INT_TYPE.equals(beanColumn.getDateType())) {
 								preSta.setObject(i, 0);
 							}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
@@ -196,7 +196,7 @@ public class SessionImpl implements Session {
 							}else {
 								throw new SqlException("默认乐观锁字段必须为int/long类型!");
 							}
-						}else if(beanColumn.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+						}else if(beanColumn.getVersionStrategy() == VersionGenerationType.SNOWFLAKE) {
 							if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
 								preSta.setObject(i, config.getSnowFlake().nextId() + "");
 							}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
@@ -204,7 +204,7 @@ public class SessionImpl implements Session {
 							}else {
 								throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
 							}
-						}else if(beanColumn.getVersionStragegy() == VersionGenerationType.UUID) {
+						}else if(beanColumn.getVersionStrategy() == VersionGenerationType.UUID) {
 							if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
 								preSta.setObject(i, UUIDUtil.getUUID());
 							}else {
@@ -221,7 +221,7 @@ public class SessionImpl implements Session {
 				preSta.addBatch();
 			}
 			preSta.executeBatch();
-			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdStragegy() == GenerationType.IDENTITY) {
+			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdstrategy() == GenerationType.IDENTITY) {
 				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
 				Iterator<T> entityIt = entitys.iterator();
 				while(resultSet.next()) {
@@ -246,11 +246,11 @@ public class SessionImpl implements Session {
 
 	/**
 	 * 按id更新实体对象
-	 * 
+	 *
 	 * @param        <T>
 	 * @param entity
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@SneakyThrows
 	public <T> int update(T entity) {
@@ -261,7 +261,7 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", entity);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToUpdate);
 			List<BeanColumn> columns = entityWrapper.getColumns();
 			int i = 1;
 			for (BeanColumn beanColumn : columns) {
@@ -272,7 +272,7 @@ public class SessionImpl implements Session {
 					if(beanColumn.getVal(entity) == null) {
 						throw new SqlException("乐观锁PO类更新时version字段必传!");
 					}
-					if(beanColumn.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+					if(beanColumn.getVersionStrategy() == VersionGenerationType.DEFAULT) {
 						if(ColumnTypeMapping.INT_TYPE.equals(beanColumn.getDateType())) {
 							preSta.setObject(i, (Integer)beanColumn.getVal(entity) + 1);
 						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
@@ -280,7 +280,7 @@ public class SessionImpl implements Session {
 						}else {
 							throw new SqlException("默认乐观锁字段必须为int/long类型!");
 						}
-					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+					}else if(beanColumn.getVersionStrategy() == VersionGenerationType.SNOWFLAKE) {
 						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
 							preSta.setObject(i, config.getSnowFlake().nextId() + "");
 						}else if(ColumnTypeMapping.LONG_TYPE.equals(beanColumn.getDateType())) {
@@ -288,7 +288,7 @@ public class SessionImpl implements Session {
 						}else {
 							throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
 						}
-					}else if(beanColumn.getVersionStragegy() == VersionGenerationType.UUID) {
+					}else if(beanColumn.getVersionStrategy() == VersionGenerationType.UUID) {
 						if(ColumnTypeMapping.STRING_TYPE.equals(beanColumn.getDateType())) {
 							preSta.setObject(i, UUIDUtil.getUUID());
 						}else {
@@ -325,21 +325,21 @@ public class SessionImpl implements Session {
 	public <T> int updateSelective(T entity) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		List<Object> values = new ArrayList<Object>();
-		StringBuilder sqlsb = new StringBuilder();
-		sqlsb.append(ISqlHelp.UPDATE);
-		sqlsb.append(ISqlHelp.SPLIT);
-		sqlsb.append(entityWrapper.getTableName());
-		sqlsb.append(ISqlHelp.SPLIT);
-		sqlsb.append(ISqlHelp.SET);
-		sqlsb.append(ISqlHelp.SPLIT);
-		sqlsb.append(Joiner.on(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.COMMA ).join(entityWrapper.getColumns().stream().filter(c -> {
+		StringBuilder sqlSb = new StringBuilder();
+		sqlSb.append(ISqlHelp.UPDATE);
+		sqlSb.append(ISqlHelp.SPLIT);
+		sqlSb.append(entityWrapper.getTableName());
+		sqlSb.append(ISqlHelp.SPLIT);
+		sqlSb.append(ISqlHelp.SET);
+		sqlSb.append(ISqlHelp.SPLIT);
+		sqlSb.append(Joiner.on(ISqlHelp.SPLIT + ISqlHelp.EQUALS + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.COMMA ).join(entityWrapper.getColumns().stream().filter(c -> {
 			try {
 				Object value = null;
 				if(c.isVersion()) {
 					if(c.getVal(entity) == null) {
 						throw new SqlException("乐观锁PO类更新时version字段必传!");
 					}
-					if(c.getVersionStragegy() == VersionGenerationType.DEFAULT) {
+					if(c.getVersionStrategy() == VersionGenerationType.DEFAULT) {
 						if(ColumnTypeMapping.INT_TYPE.equals(c.getDateType())) {
 							value = (Integer)c.getVal(entity) + 1;
 						}else if(ColumnTypeMapping.LONG_TYPE.equals(c.getDateType())) {
@@ -347,7 +347,7 @@ public class SessionImpl implements Session {
 						}else {
 							throw new SqlException("默认乐观锁字段必须为int/long类型!");
 						}
-					}else if(c.getVersionStragegy() == VersionGenerationType.SNOWFLAKE) {
+					}else if(c.getVersionStrategy() == VersionGenerationType.SNOWFLAKE) {
 						if(ColumnTypeMapping.STRING_TYPE.equals(c.getDateType())) {
 							value = config.getSnowFlake().nextId() + "";
 						}else if(ColumnTypeMapping.LONG_TYPE.equals(c.getDateType())) {
@@ -355,7 +355,7 @@ public class SessionImpl implements Session {
 						}else {
 							throw new SqlException("雪花随机数乐观锁字段必须为string/long类型!");
 						}
-					}else if(c.getVersionStragegy() == VersionGenerationType.UUID) {
+					}else if(c.getVersionStrategy() == VersionGenerationType.UUID) {
 						if(ColumnTypeMapping.STRING_TYPE.equals(c.getDateType())) {
 							value = UUIDUtil.getUUID();
 						}else {
@@ -374,35 +374,35 @@ public class SessionImpl implements Session {
 			} catch (Exception e) {
 				throw new StructureException(e);
 			}
-			
+
 			return true;
 		}).map(c -> c.getName()).toArray()));
-		sqlsb.append(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.SPLIT);
-		sqlsb.append(ISqlHelp.WHERE);
-		sqlsb.append(ISqlHelp.SPLIT);
-		sqlsb.append(entityWrapper.getIdColumn().getName());
-		sqlsb.append(ISqlHelp.SPLIT);
-		sqlsb.append(ISqlHelp.EQUEST);
-		sqlsb.append(ISqlHelp.SPLIT);
-		sqlsb.append(ISqlHelp.PARAM_TOKEN);
+		sqlSb.append(ISqlHelp.SPLIT + ISqlHelp.EQUALS + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.SPLIT);
+		sqlSb.append(ISqlHelp.WHERE);
+		sqlSb.append(ISqlHelp.SPLIT);
+		sqlSb.append(entityWrapper.getIdColumn().getName());
+		sqlSb.append(ISqlHelp.SPLIT);
+		sqlSb.append(ISqlHelp.EQUALS);
+		sqlSb.append(ISqlHelp.SPLIT);
+		sqlSb.append(ISqlHelp.PARAM_TOKEN);
 		if(entityWrapper.isVersion()) {
-			sqlsb.append(ISqlHelp.AND);
-			sqlsb.append(ISqlHelp.SPLIT);
-			sqlsb.append(entityWrapper.getVersionColumn().getName());
-			sqlsb.append(ISqlHelp.SPLIT);
-			sqlsb.append(ISqlHelp.EQUEST);
-			sqlsb.append(ISqlHelp.SPLIT);
-			sqlsb.append(ISqlHelp.PARAM_TOKEN);
+			sqlSb.append(ISqlHelp.AND);
+			sqlSb.append(ISqlHelp.SPLIT);
+			sqlSb.append(entityWrapper.getVersionColumn().getName());
+			sqlSb.append(ISqlHelp.SPLIT);
+			sqlSb.append(ISqlHelp.EQUALS);
+			sqlSb.append(ISqlHelp.SPLIT);
+			sqlSb.append(ISqlHelp.PARAM_TOKEN);
 			values.add(entityWrapper.getVersionColumn().getVal(entity));
 		}
-		String sqlToUpdate = sqlsb.toString();
+		String sqlToUpdate = sqlSb.toString();
 		try {
 			values.add(entityWrapper.getIdColumn().getVal(entity));
 			if(log.isDebugEnabled()) {
 				log.debug("Preparing: {}", sqlToUpdate);
 				log.debug("parameters: {}", values);
 			}
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToUpdate);
 			int i = 1;
 			for (Object val : values) {
 				preSta.setObject(i, val);
@@ -416,7 +416,7 @@ public class SessionImpl implements Session {
 			this.close();
 		}
 	}
-	
+
 	/**
 	 * 按条件更新
 	 */
@@ -424,14 +424,14 @@ public class SessionImpl implements Session {
 	public <T> int updateByExample(T entity, Example example) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
 		List<Object> values = new ArrayList<Object>();
-		StringBuilder sqlsb = new StringBuilder();
-		sqlsb.append(ISqlHelp.UPDATE);
-		sqlsb.append(ISqlHelp.SPLIT);
-		sqlsb.append(entityWrapper.getTableName());
-		sqlsb.append(ISqlHelp.SPLIT);
-		sqlsb.append(ISqlHelp.SET);
-		sqlsb.append(ISqlHelp.SPLIT);
-		sqlsb.append(Joiner.on(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.COMMA ).join(entityWrapper.getColumns().stream().filter(c -> {
+		StringBuilder sqlSb = new StringBuilder();
+		sqlSb.append(ISqlHelp.UPDATE);
+		sqlSb.append(ISqlHelp.SPLIT);
+		sqlSb.append(entityWrapper.getTableName());
+		sqlSb.append(ISqlHelp.SPLIT);
+		sqlSb.append(ISqlHelp.SET);
+		sqlSb.append(ISqlHelp.SPLIT);
+		sqlSb.append(Joiner.on(ISqlHelp.SPLIT + ISqlHelp.EQUALS + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.COMMA ).join(entityWrapper.getColumns().stream().filter(c -> {
 			try {
 				Object value = c.getVal(entity);
 				if(c.isIdFlag() || value == null) {
@@ -441,19 +441,19 @@ public class SessionImpl implements Session {
 			} catch (Exception e) {
 				throw new StructureException(e);
 			}
-			
+
 			return true;
 		}).map(c -> c.getName()).toArray()));
-		sqlsb.append(ISqlHelp.SPLIT + ISqlHelp.EQUEST + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.SPLIT);
-		sqlsb.append(example.toSql(entityWrapper, false));
-		String sqlToUpdate = sqlsb.toString();
+		sqlSb.append(ISqlHelp.SPLIT + ISqlHelp.EQUALS + ISqlHelp.SPLIT + ISqlHelp.PARAM_TOKEN + ISqlHelp.SPLIT);
+		sqlSb.append(example.toSql(entityWrapper, false));
+		String sqlToUpdate = sqlSb.toString();
 		try {
 			values.addAll(example.getValues());
 			if(log.isDebugEnabled()) {
 				log.debug("Preparing: {}", sqlToUpdate);
 				log.debug("parameters: {}", values);
 			}
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToUpdate);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToUpdate);
 			int i = 1;
 			for (Object val : values) {
 				preSta.setObject(i, val);
@@ -470,11 +470,11 @@ public class SessionImpl implements Session {
 
 	/**
 	 * 按实体对象进行删除
-	 * 
+	 *
 	 * @param        <T>
 	 * @param entity
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@SneakyThrows
 	public <T> int delete(T entity) {
@@ -485,7 +485,7 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", entity);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDeleteById);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToDeleteById);
 			preSta.setObject(1, entityWrapper.getIdColumn().getVal(entity));
 			return preSta.executeUpdate();
 		} catch (SQLException e) {
@@ -495,7 +495,7 @@ public class SessionImpl implements Session {
 			this.close();
 		}
 	}
-	
+
 	@SneakyThrows
 	public <E> int delete(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
@@ -507,7 +507,7 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", values);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToDelete);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToDelete);
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
@@ -522,11 +522,11 @@ public class SessionImpl implements Session {
 
 	/**
 	 * 按条件查询数据列表
-	 * 
+	 *
 	 * @param example 条件example
 	 * @param E       返回列表类型/不限entity类
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@SneakyThrows
 	public <E> List<E> findAll(Example example, Class<E> E) {
@@ -564,7 +564,7 @@ public class SessionImpl implements Session {
 						first = false;
 					}
 					sqlToSelect.append(" ");
-					
+
 				}
 				sqlToSelect.append(example.toOrderSql(entityWrapper));
 				sqlToSelect.append(" limit ?,?");
@@ -598,7 +598,7 @@ public class SessionImpl implements Session {
 					log.debug("parameters: {}", bufferValues);
 				}
 				try {
-					@Cleanup PreparedStatement bufferPreSta = this.connHolper.getTagerConnection().prepareStatement(selectIdSql.toString());
+					@Cleanup PreparedStatement bufferPreSta = this.connHolper.getTargetConnection().prepareStatement(selectIdSql.toString());
 					for (int i = 0; i < bufferValues.size(); i++) {
 						bufferPreSta.setObject(i+1, bufferValues.get(i));
 					}
@@ -636,7 +636,7 @@ public class SessionImpl implements Session {
 						first = false;
 					}
 					sqlToSelect.append(" ");
-					
+
 				}
 				sqlToSelect.append(example.toOrderSql(entityWrapper));
 			}
@@ -655,7 +655,7 @@ public class SessionImpl implements Session {
 					first = false;
 				}
 				sqlToSelect.append(" ");
-				
+
 			}
 			if(example.isForUpdate()) {
 				sqlToSelect.append(" for update ");
@@ -666,11 +666,11 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", values);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect.toString());
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelect.toString());
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
-			
+
 			List<E> entitys = new ConverMapToList<E>();
 			@Cleanup ResultSet rs = preSta.executeQuery();
 			while (rs.next()) {
@@ -710,11 +710,11 @@ public class SessionImpl implements Session {
 
 	/**
 	 * 按条件查询单行数据
-	 * 
+	 *
 	 * @param example 条件example
 	 * @param E       返回类型,不允许基础类型，如接收包装类
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@SneakyThrows
 	public <E> E findOne(Example example, Class<E> E) {
@@ -730,12 +730,12 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", values);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect.toString());
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelect.toString());
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
 			@Cleanup ResultSet rs = preSta.executeQuery();
-			
+
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
 				if (rs.next()) {
 					E entity = E.newInstance();
@@ -760,10 +760,10 @@ public class SessionImpl implements Session {
 			throw e;
 		}finally {
 			this.close();
-		}	
+		}
 		return null;
 	}
-	
+
 	/**
 	 * 递归设置数据库查询值
 	 * @param rs
@@ -843,14 +843,13 @@ public class SessionImpl implements Session {
 			}
 		}
 	}
-	
+
 	/**
 	 * 按id查询单行数据
 	 * @param <E>
-	 * @param E
 	 * @param id
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@SneakyThrows
 	public <E> E findOneById(Class<E> e, Object id) {
@@ -861,7 +860,7 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", id);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelectById);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelectById);
 			preSta.setObject(1, id);
 			@Cleanup ResultSet rs = preSta.executeQuery();
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
@@ -891,7 +890,7 @@ public class SessionImpl implements Session {
 		}
 		return null;
 	}
-	
+
 	@SneakyThrows
 	public <E> E findOneByIdForUpdate(Class<E> e, Object id) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
@@ -901,7 +900,7 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", id);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelectById);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelectById);
 			preSta.setObject(1, id);
 			@Cleanup ResultSet rs = preSta.executeQuery();
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
@@ -934,11 +933,11 @@ public class SessionImpl implements Session {
 
 	/**
 	 * 统计总行数
-	 * 
+	 *
 	 * @param example 条件
 	 * @param E       查询类/不限entity类
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@SneakyThrows
 	public <E> int findCount(Example example, Class<E> E) {
@@ -951,7 +950,7 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", values);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTagerConnection().prepareStatement(sqlToSelect);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelect);
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
@@ -967,10 +966,10 @@ public class SessionImpl implements Session {
 		}
 		return 0;
 	}
-	
+
 	@SneakyThrows
 	public void commit() {
-		this.connHolper.getTagerConnection().commit();
+		this.connHolper.getTargetConnection().commit();
 	}
 	@SneakyThrows
 	public void close() {
@@ -978,11 +977,11 @@ public class SessionImpl implements Session {
 	}
 	@SneakyThrows
 	public void setAutoCommit(boolean autoCommit) {
-		this.connHolper.getTagerConnection().setAutoCommit(autoCommit);
+		this.connHolper.getTargetConnection().setAutoCommit(autoCommit);
 	}
 	@SneakyThrows
 	public void rollback() {
-		this.connHolper.getTagerConnection().rollback();
+		this.connHolper.getTargetConnection().rollback();
 	}
-	
+
 }

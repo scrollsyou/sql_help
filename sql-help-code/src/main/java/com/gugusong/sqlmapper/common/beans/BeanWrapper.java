@@ -137,7 +137,7 @@ public class BeanWrapper {
 		}else {
 			// TODO 普通bean类，用于附值
 			this.beanType = BEAN_TYPE_SIMPLE;
-			simpleBeanInstanc(beanClazz, config);
+			simpleBeanInstance(beanClazz, config);
 		}
 		
 	}
@@ -146,7 +146,7 @@ public class BeanWrapper {
 	 * @param voClazz
 	 * @param config
 	 */
-	private void simpleBeanInstanc(Class<?> voClazz, GlogalConfig config) {
+	private void simpleBeanInstance(Class<?> voClazz, GlogalConfig config) {
 
 		Field[] physicalFields = voClazz.getDeclaredFields();
 		List<BeanColumn> columnList = new ArrayList<BeanColumn>(physicalFields.length);

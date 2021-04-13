@@ -135,7 +135,7 @@ public class BeanWrapper {
 			this.tableAliasName = voBean.entityAlias();
 			voInstancee(beanClazz, config);
 		}else {
-			// TODO 普通bean类，用于附值
+			// 普通bean类，用于附值
 			this.beanType = BEAN_TYPE_SIMPLE;
 			simpleBeanInstance(beanClazz, config);
 		}

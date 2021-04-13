@@ -28,7 +28,7 @@ public class QinghongApplication
 
 ```
 	@Resource
-	private Session session;
+	private SqlHelpBaseDao sqlHelpBaseDao;
 
 ```
 

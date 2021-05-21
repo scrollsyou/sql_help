@@ -39,6 +39,7 @@
 - [X] 支持配置执行sql输出打印
 - [X] 支持JPA一对多，多对一，注解，不支持多对多
 - [X] 支持生成一对多，多对一查询SQL
+- [X] 处理异常，如字段错误，删除只能删除po等，增加自定义异常
 - [X] 支持字段名映射策略配置，默认驼峰转换
 - [X] 支持通过VO进行查询映射，默认采用PO映射，非同名时需采用@name指定PO中字段名,@Po映射对应PO
 - [X] VO查询映射字段增加@count,@sum注解，类上增加@LeftJoin,@group,@RigthJoin,@Po,@Join注解支持
@@ -47,8 +48,14 @@
 
 ### 支持数据库
 
-| Name | Version | Supported          |
+| 名称 | 版本 | 是否支持          |
 | ---- | ------- | ------------------ |
 | mysql| 5.6.x   | :white_check_mark: |
 | oracle| x.x.x   | :x:               |
 | sqlserver| x.x.x   | :x:               |
+
+### 计划中功能
+- [ ] 支持Mongodb非关系型数据库
+- [ ] 支持异步查询逻辑
+- [ ] 支持通过maven-plugin进行编辑时生成SQL，使运行时性能更优
+- [ ] 支持mybatis框架集成

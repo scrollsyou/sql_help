@@ -1,0 +1,124 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-Instancee" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>gugusong</groupId>
+    <artifactId>sql_help</artifactId>
+    <version>0.0.1</version>
+  </parent>
+  <artifactId>sql-help-code</artifactId>
+  <name>sql-help-code</name>
+  <description>sql_help核心包</description>
+  <dependencies>
+		<dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.12</version>
+    </dependency>
+		<dependency>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
+			<version>3.26.0-GA</version>
+		</dependency>
+    <dependency>
+		  <groupId>com.google.guava</groupId>
+		  <artifactId>guava</artifactId>
+		  <version>29.0-jre</version>
+		</dependency>
+		<dependency>
+	    <groupId>org.slf4j</groupId>
+	    <artifactId>slf4j-api</artifactId>
+	    <version>1.7.30</version>
+		</dependency>
+		<dependency>
+	    <groupId>junit</groupId>
+	    <artifactId>junit</artifactId>
+	    <version>4.13.1</version>
+	    <scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid</artifactId>
+			<version>1.1.14</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Mysql驱动包 -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>8.0.19</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>1.1.11</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>1.1.11</version>
+        <scope>test</scope>
+      </dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<!--指定JDK编译版本 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+			<!-- 打包跳过测试 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<skipTests>true</skipTests>
+				</configuration>
+			</plugin>
+			<!-- <plugin>
+        <groupId>com.github.wvengen</groupId>
+        <artifactId>proguard-maven-plugin</artifactId>
+        <executions>
+           <execution>
+               <phase>package</phase>
+               <goals><goal>proguard</goal></goals>
+           </execution>
+        </executions>
+        <configuration>
+        		<attach>true</attach>
+        		<attachArtifactClassifier>out</attachArtifactClassifier>
+        		<putLibraryJarsInTempDir>true</putLibraryJarsInTempDir>
+            <options>
+            		<option>-allowaccessmodification</option>
+                <option>-dontshrink</option>
+                <option>-dontoptimize</option>
+                <option>-useuniqueclassmembernames</option>
+                <option>-adaptclassstrings</option>
+                <option>-dontusemixedcaseclassnames</option>
+                <option><![CDATA[-keepattributes Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,*Annotation*,EnclosingMethod]]></option>
+                <option><![CDATA[-keep public interface com.gugusong.sqlmapper.** {*;}]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.config.*]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.strategy.**]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.mysql.*]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.ExampleImpl]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.PageHelpImpl]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.SessionImpl]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.db.SessionFactoryImpl {*;}]]></option>
+                <option><![CDATA[-keep public class com.gugusong.sqlmapper.common.util.* {*;}]]></option>
+                <option><![CDATA[-keepclassmembers enum * { *; }]]></option>
+            </options>
+            <libs>
+                <lib>${java.home}/lib/rt.jar</lib>
+                <lib>${java.home}/lib/jce.jar</lib>
+            </libs>
+        </configuration>
+    </plugin> -->
+		</plugins>
+	</build>
+</project>

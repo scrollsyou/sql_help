@@ -1,15 +1,22 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-Instancee" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>gugusong</groupId>
   <artifactId>sql_help</artifactId>
   <version>0.0.1</version>
+  <packaging>pom</packaging>
   <name>sql_hep</name>
   <description>sql生成器，用于动态生成sql代码功能</description>
-	<dependencies>
-		<dependency>
-			<groupId>org.javassist</groupId>
-			<artifactId>javassist</artifactId>
-			<version>3.26.0-GA</version>
-		</dependency>
-	</dependencies>
+	<!-- omitted xml -->
+   <distributionManagement>
+       <repository>
+           <!--必须与 settings.xml 的 id 一致-->
+           <id>qinghongkeji-qinghongbase-tool</id>
+           <name>tool</name>
+           <url>https://qinghongkeji-maven.pkg.coding.net/repository/qinghongbase/tool/</url>
+       </repository>
+   </distributionManagement>
+   <modules>
+   	<module>sql-help-code</module>
+   	<module>sql-help-spring-boot-starter</module>
+   </modules>
 </project>

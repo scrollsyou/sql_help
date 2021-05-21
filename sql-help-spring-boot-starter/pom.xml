@@ -59,13 +59,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<!-- omitted xml -->
-   <distributionManagement>
-       <repository>
-           <!--必须与 settings.xml 的 id 一致-->
-           <id>qinghongkeji-qinghongbase-tool</id>
-           <name>tool</name>
-           <url>https://qinghongkeji-maven.pkg.coding.net/repository/qinghongbase/tool/</url>
-       </repository>
-   </distributionManagement>
 </project>

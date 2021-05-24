@@ -1,13 +1,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-Instancee" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>gugusong</groupId>
+  <groupId>io.github.scrollsyou</groupId>
   <artifactId>sql_help</artifactId>
   <version>0.0.1</version>
   <packaging>pom</packaging>
   <name>sql_hep</name>
   <description>sql生成器，用于动态生成sql代码功能</description>
-   <modules>
-   	<module>sql-help-code</module>
-   	<module>sql-help-spring-boot-starter</module>
-   </modules>
+  <modules>
+  	<module>sql-help-code</module>
+  	<module>sql-help-spring-boot-starter</module>
+  </modules>
+  <distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/releases/</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+		</repository>
+	</distributionManagement>
 </project>

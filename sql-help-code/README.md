@@ -8,7 +8,7 @@
 <dependencies>
     <dependency>
         <groupId>gugusong</groupId>
-        <artifactId>sql_help</artifactId>
+        <artifactId>sql-help-code</artifactId>
         <version>0.0.1</version>
     </dependency>
 </dependencies>

@@ -7,7 +7,7 @@
 ```xml
 <dependencies>
     <dependency>
-        <groupId>gugusong</groupId>
+        <groupId>io.github.scrollsyou</groupId>
         <artifactId>sql-help-code</artifactId>
         <version>0.0.1</version>
     </dependency>

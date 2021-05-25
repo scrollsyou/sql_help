@@ -61,4 +61,4 @@
 - [ ] 支持mybatis框架集成
 
 ### [点击查看spring-boot整合文档](https://github.com/scrollsyou/sql_help/blob/master/sql-help-spring-boot-starter/README.md)
-### [点击查看详细功能文档](https://github.com/scrollsyou/sql_help/blob/master/sql-help-core/README.md)
+### [点击查看详细功能文档](https://github.com/scrollsyou/sql_help/blob/master/sql-help-code/README.md)

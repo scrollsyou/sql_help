@@ -60,4 +60,5 @@
 - [ ] 支持通过maven-plugin进行编辑时生成SQL，使运行时性能更优
 - [ ] 支持mybatis框架集成
 
-### [点击查看完整开发文档](https://qinghongkeji.coding.net/s/6fe64a25-ae37-4cab-b401-392615b860e3/24#user-content-%E9%A1%B9%E7%9B%AE%E5%BC%80%E5%8F%91%E6%AD%A5%E9%AA%A4)
+### [点击查看spring-boot整合文档](https://github.com/scrollsyou/sql_help/blob/master/sql-help-spring-boot-starter/README.md)
+### [点击查看详细功能文档](https://github.com/scrollsyou/sql_help/blob/master/sql-help-core/README.md)

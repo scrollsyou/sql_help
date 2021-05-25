@@ -3,7 +3,7 @@
 ### maven依赖：
 ```xml
 <dependency>
-    <groupId>gugusong</groupId>
+    <groupId>io.github.scrollsyou</groupId>
     <artifactId>sql-help-spring-boot-starter</artifactId>
     <version>0.0.1</version>
 </dependency>

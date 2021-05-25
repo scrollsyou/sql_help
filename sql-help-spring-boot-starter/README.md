@@ -151,15 +151,15 @@ public void test(){
         "delFlag":"0",
         "depts":[
             {
-                "deptName":"蜻虹科技科技",
-                "leader":"蜻虹科技"
+                "deptName":"XX科技",
+                "leader":"XX科技"
             }
         ],
         "email":"ry@163.com",
         "id":1,
         "loginDate":1521171180000,
         "loginIp":"127.0.0.1",
-        "nickName":"蜻虹科技",
+        "nickName":"XX科技",
         "password":"$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2",
         "phonenumber":"15888888888",
         "sex":"0",
@@ -171,8 +171,8 @@ public void test(){
         "delFlag":"2",
         "depts":[
             {
-                "deptName":"蜻虹科技科技",
-                "leader":"蜻虹科技"
+                "deptName":"XX科技",
+                "leader":"XX科技"
             }
         ],
         "email":"22@qq.com",
@@ -190,8 +190,8 @@ public void test(){
         "delFlag":"0",
         "depts":[
             {
-                "deptName":"蜻虹科技科技",
-                "leader":"蜻虹科技"
+                "deptName":"XX科技",
+                "leader":"XX科技"
             },
             {
                 "deptName":"java研发部"
@@ -202,7 +202,7 @@ public void test(){
         "loginIp":"",
         "nickName":"test1",
         "password":"$2a$10$/HqNCw155Wi2l325lnzqg.n6T01D53PAibLPobkL/O33yirtG5zEu",
-        "phonenumber":"18188600305",
+        "phonenumber":"18188600100",
         "sex":"0",
         "status":"0",
         "userName":"test1"

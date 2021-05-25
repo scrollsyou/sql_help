@@ -1,8 +1,16 @@
-## sql-help集成说明
+## sql-help-spring-boot-starter集成说明
 
+### maven依赖：
+```xml
+<dependency>
+    <groupId>gugusong</groupId>
+    <artifactId>sql-help-spring-boot-starter</artifactId>
+    <version>0.0.1</version>
+</dependency>
+```
 ### spring项目中开始使用
-> 在spring启动配置中增加@EnableSqlHelp开启框架功能
-
+1. 在spring启动配置中增加@EnableSqlHelp开启框架功能
+如：
 ```
 /**
  * 启动程序
@@ -24,12 +32,180 @@ public class QinghongApplication
     .
 ```
 
-> 在需要使用到session时进行注入
+2. 增加PO与数据库映射类
+如：
+```java
+@Entity
+public class SysUser extends BaseEntity
+{
+	@Transient
+    private static final long serialVersionUID = 1L;
 
+    /** 用户ID */
+	@Id
+    private Long id;
+
+    /** 用户账号 */
+    private String userName;
+
+    /** 用户昵称 */
+    private String nickName;
+.
+.
+.
+
+@Entity
+public class SysUserDept extends BaseEntity
+{
+	@Transient
+    private static final long serialVersionUID = 1L;
+
+    /** $column.columnComment */
+    private Long userId;
+
+    /** $column.columnComment */
+    private Long deptId;
+.
+.
+.
+
+@Entity
+public class SysDept extends BaseEntity
+{
+	@Transient
+    private static final long serialVersionUID = 1L;
+
+    /** 部门ID */
+	@Id
+    private Long id;
+
+    /** 父部门ID */
+    private Long parentId;
+
+    /** 祖级列表 */
+    private String ancestors;
+.
+.
+.
 ```
-	@Resource
-	private SqlHelpBaseDao sqlHelpBaseDao;
+3. 增加VO与PO映射类进行查询操作
+如：
+```java
+@VOBean(mainPo = SysUser.class, entityAlias = "u")
+@Join(po = SysUserDept.class, entityAlias = "a", joinConditions = "{a.userId}= {u.id}")
+@Join(po = SysDept.class, entityAlias = "d", joinConditions = "{a.deptId} = {d.id}")
+public class SelectUserListVo {
 
+	private Long id;
+	private String nickName;
+	private String userName;
+	private String email;
+	private String avatar;
+	private String phonenumber;
+	private String password;
+	private String sex;
+	private String status;
+	private String delFlag;
+	private String loginIp;
+	private Date loginDate;
+	@OneToMany(tagerClass = Dept.class)
+	private List<Dept> depts;
+	
+	public static class Dept{
+		@PropertyMapping(originalName = "d.deptName")
+		private String deptName;
+		@PropertyMapping(originalName = "d.leader")
+		private String leader;
+		public String getDeptName() {
+			return deptName;
+		}
+		public void setDeptName(String deptName) {
+			this.deptName = deptName;
+		}
+		public String getLeader() {
+			return leader;
+		}
+		public void setLeader(String leader) {
+			this.leader = leader;
+		}
+		
+	}
+省略get/set方法
 ```
+4. 通过注入Session类进行数据库操作,通过session进行bean操作
+```java
+@Resource
+private Session session;
 
-后在方法中直接使用该功能。
+public void test(){
+	Example example = ExampleImpl.newInstance();
+	example.condition("1=1");
+	log.info(JSON.toJSONString(session.findAll(example, SelectUserListVo.class)));
+}
+```
+打印结果为：
+```json
+[
+    {
+        "avatar":"/profile/avatar/2020/06/09/2023bfcabc4c40a19f7d78e1e1a633f3.jpeg",
+        "delFlag":"0",
+        "depts":[
+            {
+                "deptName":"蜻虹科技科技",
+                "leader":"蜻虹科技"
+            }
+        ],
+        "email":"ry@163.com",
+        "id":1,
+        "loginDate":1521171180000,
+        "loginIp":"127.0.0.1",
+        "nickName":"蜻虹科技",
+        "password":"$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2",
+        "phonenumber":"15888888888",
+        "sex":"0",
+        "status":"0",
+        "userName":"admin"
+    },
+    {
+        "avatar":"",
+        "delFlag":"2",
+        "depts":[
+            {
+                "deptName":"蜻虹科技科技",
+                "leader":"蜻虹科技"
+            }
+        ],
+        "email":"22@qq.com",
+        "id":9,
+        "loginIp":"",
+        "nickName":"test",
+        "password":"$2a$10$WvdWoE3z9egzAtR2vhSSm.ablDp.I2hU5PzYyXxwWIsBvbR1wfw4O",
+        "phonenumber":"18188566545",
+        "sex":"0",
+        "status":"0",
+        "userName":"test"
+    },
+    {
+        "avatar":"",
+        "delFlag":"0",
+        "depts":[
+            {
+                "deptName":"蜻虹科技科技",
+                "leader":"蜻虹科技"
+            },
+            {
+                "deptName":"java研发部"
+            }
+        ],
+        "email":"dss@qq.com",
+        "id":10,
+        "loginIp":"",
+        "nickName":"test1",
+        "password":"$2a$10$/HqNCw155Wi2l325lnzqg.n6T01D53PAibLPobkL/O33yirtG5zEu",
+        "phonenumber":"18188600305",
+        "sex":"0",
+        "status":"0",
+        "userName":"test1"
+    }
+]
+```

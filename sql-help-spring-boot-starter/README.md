@@ -132,15 +132,15 @@ public class SelectUserListVo {
 	}
 省略get/set方法
 ```
-4. 通过注入Session类进行数据库操作,通过session进行bean操作
+4. 通过注入SqlHelpBaseDao类进行数据库操作,通过dao进行bean操作
 ```java
 @Resource
-private Session session;
+private SqlHelpBaseDao dao;
 
 public void test(){
 	Example example = ExampleImpl.newInstance();
 	example.condition("1=1");
-	log.info(JSON.toJSONString(session.findAll(example, SelectUserListVo.class)));
+	log.info(JSON.toJSONString(dao.findAll(example, SelectUserListVo.class)));
 }
 ```
 打印结果为：

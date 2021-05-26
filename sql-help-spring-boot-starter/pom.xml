@@ -5,9 +5,7 @@
     <artifactId>sql_help</artifactId>
     <version>0.0.1</version>
   </parent>
-  <groupId>io.github.scrollsyou</groupId>
   <artifactId>sql-help-spring-boot-starter</artifactId>
-  <version>0.0.1</version>
   <name>sql-help-spring-boot-starter</name>
   <description>sql-help的spring-boot整合版本</description>
   <dependencies>

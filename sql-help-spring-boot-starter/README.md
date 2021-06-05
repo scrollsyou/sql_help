@@ -9,7 +9,7 @@
 </dependency>
 ```
 ### spring项目中开始使用
-1. 在spring启动配置中增加@EnableSqlHelp开启框架功能
+1. 在spring启动配置中增加@EnableSqlHelp开启框架功能  
 如：
 ```
 /**
@@ -17,7 +17,7 @@
  * 
  * @author qinghong
  */
-@SpringBootApplication(exclude = { DataSourceAutoConfiguration.class })
+@SpringBootApplication
 @EnableSqlHelp
 public class QinghongApplication
 {
@@ -32,11 +32,17 @@ public class QinghongApplication
     .
 ```
 
-2. 增加PO与数据库映射类
+2. 增加PO与数据库映射类  
+* 声明在PO类上的注解：@Entity(tableName = "数据库表名，若驼峰命名后与类名一致此属性可不设置此属性")  
+* 声明在PO类属性上的注解：  
+    * @Id(name="主键ID列名，若驼峰命名后与PO类属性名一致此属性可不设置此属性", strategy = 主键策略，使用enum类GenerationType)  
+    * @Column(name = "数据库表的列名，若驼峰命名后与PO类属性名一致此属性可不设置此属性", comments = "注释", dateType = "在数据库中的类型")  
+    * @Version(strategy = 版本策略，使用enum类VersionGenerationType)：标记为版本号字段  
+    * @Transient：标记为非数据库字段  
 如：
 ```java
 @Entity
-public class SysUser extends BaseEntity
+public class SysUser
 {
 	@Transient
     private static final long serialVersionUID = 1L;
@@ -55,7 +61,7 @@ public class SysUser extends BaseEntity
 .
 
 @Entity
-public class SysUserDept extends BaseEntity
+public class SysUserDept
 {
 	@Transient
     private static final long serialVersionUID = 1L;
@@ -70,7 +76,7 @@ public class SysUserDept extends BaseEntity
 .
 
 @Entity
-public class SysDept extends BaseEntity
+public class SysDept
 {
 	@Transient
     private static final long serialVersionUID = 1L;
@@ -88,7 +94,7 @@ public class SysDept extends BaseEntity
 .
 .
 ```
-3. 增加VO与PO映射类进行查询操作
+3. 增加VO与PO映射类进行查询操作  
 如：
 ```java
 @VOBean(mainPo = SysUser.class, entityAlias = "u")

@@ -35,11 +35,12 @@ public class QinghongApplication
 2. 增加PO与数据库映射类  
 * 声明在PO类上的注解：@Entity(tableName = "数据库表名，若驼峰命名后与类名一致此属性可不设置此属性")  
 * 声明在PO类属性上的注解：  
-    * @Id(name="主键ID列名，若驼峰命名后与PO类属性名一致此属性可不设置此属性", strategy = 主键策略，使用enum类GenerationType)  
-    * @Column(name = "数据库表的列名，若驼峰命名后与PO类属性名一致此属性可不设置此属性", comments = "注释", dateType = "在数据库中的类型")  
-    * @Version(strategy = 版本策略，使用enum类VersionGenerationType)：标记为版本号字段  
-    * @Transient：标记为非数据库字段  
-如：
+    - @Id(name="主键ID列名，若驼峰命名后与PO类属性名一致此属性可不设置此属性", strategy = 主键策略，使用enum类GenerationType)  
+    - @Column(name = "数据库表的列名，若驼峰命名后与PO类属性名一致此属性可不设置此属性", comments = "注释", dateType = "在数据库中的类型")  
+    - @Version(strategy = 版本策略，使用enum类VersionGenerationType)：标记为版本号字段  
+    - @Transient：标记为非数据库字段  
+
+  如：
 ```java
 @Entity
 public class SysUser
@@ -95,10 +96,17 @@ public class SysDept
 .
 ```
 3. 增加VO与PO映射类进行查询操作  
-如：
+* 声明在VO类上的注解：  
+    - @VOBean(mainPo = 主表的po类.class, entityAlias = "此表在sql中的别名")：明确注解vo类，mainPo为主po关联类，sql以此表为主表，主PO类必须存在id主键，属性名默认一一映射
+    - @Join(joinType = Join.LEFT_JOIN_TYPE或者Join.INNER_JOIN_TYPE, po = po类.class, entityAlias = "此表在sql中的别名", joinConditions = "此表与主表的对应关系，例如：{b.id}= {bd.bookId}")：明确此关联表的关联属性  
+* 声明在VO类属性上的注解：
+    - @PropertyMapping(originalName = "表别名.列名") 明确数据库表的字段与VO类属性的对应关系
+
+
+  如：
 ```java
 @VOBean(mainPo = SysUser.class, entityAlias = "u")
-@Join(po = SysUserDept.class, entityAlias = "a", joinConditions = "{a.userId}= {u.id}")
+@Join(po = SysUserDept.class, joinType = Join.LEFT_JOIN_TYPE, entityAlias = "a", joinConditions = "{a.userId}= {u.id}")
 @Join(po = SysDept.class, entityAlias = "d", joinConditions = "{a.deptId} = {d.id}")
 public class SelectUserListVo {
 

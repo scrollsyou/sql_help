@@ -150,12 +150,12 @@ public class SelectUserListVo {
 使用Example：
 * 实例化一个Example对象Example example = ExampleImpl.newInstance()
 * 设置筛选条件可使用：
-    + example.condition()：编写条件使用表的列表，需要使用列名，不能使用类属性名，如：example.condition("1=1 and b.book_name like '%书%'");  
+    + example.condition()：编写条件使用表的列表，需要使用列名，不能使用类属性名，如：example.condition("1=1 and a.user_name like '%test%'");  
     + 按照where的筛选逻辑使用，example.and()、or()，之后的条件可以使用如下方法【注：条件指定的字段建议统一写法为VO类定义的别名.类属性名，其中若表字段名在sql中不重复，VO类定义的别名可省略】：  
         + equals("VO类定义的别名.类属性名", "值")
         + like("VO类定义的别名.类属性名", "值")：若要模糊查询，值需要包含% 
         + contains("VO类定义的别名.类属性名", "值")：指定字段是否包含某值，等价于%值%
-        + 例子：example.and().contains("bookName", "%书%").or().like("bd.detail", "书%");
+        + 例子：example.and().equals("a.userName", "test123").and().contains("a.userName", "test").and().like("a.userName", "te%");
 * 设置排序规则可使用：orderByAsc("VO类定义的别名.类属性名")、orderByDesc("VO类定义的别名.类属性名")
 * 设置分页：page(new Page(pageIndex, pageSize))；pageIndex第几页，从1开始，默认为1；pageSize每页返回数据量
 

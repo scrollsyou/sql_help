@@ -97,10 +97,10 @@ public class SysDept
 ```
 3. 增加VO与PO映射类进行查询操作  
 * 声明在VO类上的注解：  
-    - @VOBean(mainPo = 主表的po类.class, entityAlias = "此表在sql中的别名")：明确注解vo类，mainPo为主po关联类，sql以此表为主表，主PO类必须存在id主键，属性名默认一一映射
-    - @Join(joinType = Join.LEFT_JOIN_TYPE或者Join.INNER_JOIN_TYPE, po = po类.class, entityAlias = "此表在sql中的别名", joinConditions = "此表与主表的对应关系，例如：{b.id}= {bd.bookId}")：明确此关联表的关联属性  
+    - @VOBean(mainPo = 主表的PO类.class, entityAlias = "此表在sql中的别名")：明确注解VO类，mainPo为主PO关联类，sql以此表为主表，主PO类必须存在id主键，属性名默认一一映射
+    - @Join(joinType = Join.LEFT_JOIN_TYPE或者Join.INNER_JOIN_TYPE, po = 关联表的PO类.class, entityAlias = "此表在sql中的别名", joinConditions = "此表PO类与主表PO类中的对应关系，例如：{b.id}= {bd.bookId}")：明确两个PO类对象的关联属性  
 * 声明在VO类属性上的注解：
-    - @PropertyMapping(originalName = "表别名.列名") 明确数据库表的字段与VO类属性的对应关系
+    - @PropertyMapping(originalName = "表别名.列名") 明确数据库表的字段与VO类属性的对应关系，非主表字段不可省略
 
 
   如：
@@ -146,14 +146,38 @@ public class SelectUserListVo {
 	}
 省略get/set方法
 ```
-4. 通过注入SqlHelpBaseDao类进行数据库操作,通过dao进行bean操作
+4. 通过注入SqlHelpBaseDao类进行数据库操作,通过dao进行bean操作  
+使用Example：
+* 实例化一个Example对象Example example = ExampleImpl.newInstance()
+* 设置筛选条件可使用：
+    + example.condition()：编写条件使用表的列表，需要使用列名，不能使用类属性名，如：example.condition("1=1 and b.book_name like '%书%'");  
+    + 按照where的筛选逻辑使用，example.and()、or()，之后的条件可以使用如下方法【注：条件指定的字段建议统一写法为VO类定义的别名.类属性名，其中若表字段名在sql中不重复，VO类定义的别名可省略】：  
+        + equals("VO类定义的别名.类属性名", "值")
+        + like("VO类定义的别名.类属性名", "值")：若要模糊查询，值需要包含% 
+        + contains("VO类定义的别名.类属性名", "值")：指定字段是否包含某值，等价于%值%
+        + 例子：example.and().contains("bookName", "%书%").or().like("bd.detail", "书%");
+* 设置排序规则可使用：orderByAsc("VO类定义的别名.类属性名")、orderByDesc("VO类定义的别名.类属性名")
+* 设置分页：page(new Page(pageIndex, pageSize))；pageIndex第几页，从1开始，默认为1；pageSize每页返回数据量
+
+例子：
 ```java
 @Resource
 private SqlHelpBaseDao dao;
 
+// 保存用户
+@Transactional
+public void save(SysUser user, SysUserDept userDept) {
+	user = dao.save(user);
+	userDept.setUserId(user.getId());
+	userDept = dao.save(userDept);
+}
+
+// 查询用户列表
 public void test(){
 	Example example = ExampleImpl.newInstance();
-	example.condition("1=1");
+	example.condition("1=1 and a.user_name like '%test%'");
+	example.and().contains("a.userName", "test").and().like("a.nickName", "test%");
+	example.orderByAsc("a.version").orderByDesc("a.id").page(new Page(1, 10));
 	log.info(JSON.toJSONString(dao.findAll(example, SelectUserListVo.class)));
 }
 ```

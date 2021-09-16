@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.scrollsyou</groupId>
   <artifactId>sql_help</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <packaging>pom</packaging>
   <name>sql_hep</name>
   <description>sql生成器，用于动态生成sql代码功能</description>

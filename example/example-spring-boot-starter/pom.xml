@@ -3,7 +3,7 @@
   <parent>
     <groupId>io.github.scrollsyou</groupId>
     <artifactId>example</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
   </parent>
   <artifactId>example-spring-boot-starter</artifactId>
   <name>example-spring-boot-starter</name>
@@ -22,7 +22,7 @@
     <dependency>
         <groupId>io.github.scrollsyou</groupId>
         <artifactId>sql-help-spring-boot-starter</artifactId>
-        <version>0.0.1</version>
+        <version>0.0.2</version>
     </dependency>
     <dependency>
 			<groupId>mysql</groupId>

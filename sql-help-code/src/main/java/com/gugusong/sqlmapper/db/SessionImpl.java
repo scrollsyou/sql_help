@@ -1,5 +1,6 @@
 package com.gugusong.sqlmapper.db;
 
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -122,7 +123,10 @@ public class SessionImpl implements Session {
 				}
 				i++;
 			}
-			preSta.executeUpdate();
+			int result = preSta.executeUpdate();
+			if(log.isDebugEnabled()) {
+				log.debug("result: {}", result);
+			}
 			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdstrategy() == GenerationType.IDENTITY) {
 				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
 				if(resultSet.next()) {
@@ -220,7 +224,16 @@ public class SessionImpl implements Session {
 				}
 				preSta.addBatch();
 			}
-			preSta.executeBatch();
+			int[] resultArray = preSta.executeBatch();
+			int resultRow = 0;
+			if (resultArray != null && resultArray.length > 0) {
+				for (int oneResult : resultArray) {
+					resultRow += oneResult;
+				}
+			}
+			if(log.isDebugEnabled()) {
+				log.debug("result: {}", resultRow);
+			}
 			if(entityWrapper.getIdColumn() != null && entityWrapper.getIdColumn().getIdstrategy() == GenerationType.IDENTITY) {
 				@Cleanup ResultSet resultSet = preSta.getGeneratedKeys();
 				Iterator<T> entityIt = entitys.iterator();
@@ -307,7 +320,11 @@ public class SessionImpl implements Session {
 			if(entityWrapper.isVersion()) {
 				preSta.setObject(i+1, entityWrapper.getVersionColumn().getVal(entity));
 			}
-			return preSta.executeUpdate();
+			int result = preSta.executeUpdate();
+			if(log.isDebugEnabled()) {
+				log.debug("result: {}", result);
+			}
+			return result;
 		} catch (SQLException e) {
 			this.close();
 			throw e;
@@ -408,7 +425,11 @@ public class SessionImpl implements Session {
 				preSta.setObject(i, val);
 				i++;
 			}
-			return preSta.executeUpdate();
+			int result = preSta.executeUpdate();
+			if(log.isDebugEnabled()) {
+				log.debug("result: {}", result);
+			}
+			return result;
 		} catch (SQLException e) {
 			this.close();
 			throw e;
@@ -459,7 +480,11 @@ public class SessionImpl implements Session {
 				preSta.setObject(i, val);
 				i++;
 			}
-			return preSta.executeUpdate();
+			int result = preSta.executeUpdate();
+			if(log.isDebugEnabled()) {
+				log.debug("result: {}", result);
+			}
+			return result;
 		} catch (SQLException e) {
 			this.close();
 			throw e;
@@ -487,7 +512,11 @@ public class SessionImpl implements Session {
 		try {
 			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToDeleteById);
 			preSta.setObject(1, entityWrapper.getIdColumn().getVal(entity));
-			return preSta.executeUpdate();
+			int result = preSta.executeUpdate();
+			if(log.isDebugEnabled()) {
+				log.debug("result: {}", result);
+			}
+			return result;
 		} catch (SQLException e) {
 			this.close();
 			throw e;
@@ -511,7 +540,11 @@ public class SessionImpl implements Session {
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
-			return preSta.executeUpdate();
+			int result = preSta.executeUpdate();
+			if(log.isDebugEnabled()) {
+				log.debug("result: {}", result);
+			}
+			return result;
 		} catch (SQLException e) {
 			this.close();
 			throw e;
@@ -666,13 +699,21 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", values);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelect.toString());
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelect.toString(), ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
 
 			List<E> entitys = new ConverMapToList<E>();
 			@Cleanup ResultSet rs = preSta.executeQuery();
+			if(log.isDebugEnabled()) {
+				//移到最后一行
+				rs.last();
+				//通过getRow方法得到当前行号，也就是记录数
+				log.debug("result: {}", rs.getRow());
+				//如果还需要使用结果集，把指针再移到初始化的位置
+				rs.beforeFirst();
+			}
 			while (rs.next()) {
 				if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
 					E entity = E.newInstance();
@@ -730,12 +771,19 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", values);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelect.toString());
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelect.toString(), ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
 			@Cleanup ResultSet rs = preSta.executeQuery();
-
+			if(log.isDebugEnabled()) {
+				//移到最后一行
+				rs.last();
+				//通过getRow方法得到当前行号，也就是记录数
+				log.debug("result: {}", rs.getRow());
+				//如果还需要使用结果集，把指针再移到初始化的位置
+				rs.beforeFirst();
+			}
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
 				if (rs.next()) {
 					E entity = E.newInstance();
@@ -839,7 +887,12 @@ public class SessionImpl implements Session {
 					((ConverMapToList<Object>)listObject).add(keyAppend.toString(), varObject);
 				}
 			}else {
-				column.setVal(entity, rs.getObject(column.getAliasName()));
+				if (column.getField().getType() == java.util.Date.class
+						|| column.getField().getType() == Date.class) {
+					column.setVal(entity, rs.getDate(column.getAliasName()));
+				} else {
+					column.setVal(entity, rs.getObject(column.getAliasName()));
+				}
 			}
 		}
 	}
@@ -860,9 +913,17 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", id);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelectById);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelectById, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 			preSta.setObject(1, id);
 			@Cleanup ResultSet rs = preSta.executeQuery();
+			if(log.isDebugEnabled()) {
+				//移到最后一行
+				rs.last();
+				//通过getRow方法得到当前行号，也就是记录数
+				log.debug("result: {}", rs.getRow());
+				//如果还需要使用结果集，把指针再移到初始化的位置
+				rs.beforeFirst();
+			}
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
 				if (rs.next()) {
 					E entity = e.newInstance();
@@ -900,9 +961,17 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", id);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelectById);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelectById, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
 			preSta.setObject(1, id);
 			@Cleanup ResultSet rs = preSta.executeQuery();
+			if(log.isDebugEnabled()) {
+				//移到最后一行
+				rs.last();
+				//通过getRow方法得到当前行号，也就是记录数
+				log.debug("result: {}", rs.getRow());
+				//如果还需要使用结果集，把指针再移到初始化的位置
+				rs.beforeFirst();
+			}
 			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
 				if (rs.next()) {
 					E entity = e.newInstance();
@@ -950,11 +1019,19 @@ public class SessionImpl implements Session {
 			log.debug("parameters: {}", values);
 		}
 		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelect);
+			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelect, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 			for (int i = 0; i < values.size(); i++) {
 				preSta.setObject(i+1, values.get(i));
 			}
 			@Cleanup ResultSet rs = preSta.executeQuery();
+			if(log.isDebugEnabled()) {
+				//移到最后一行
+				rs.last();
+				//通过getRow方法得到当前行号，也就是记录数
+				log.debug("result: {}", rs.getRow());
+				//如果还需要使用结果集，把指针再移到初始化的位置
+				rs.beforeFirst();
+			}
 			if (rs.next()) {
 				return rs.getInt(1);
 			}

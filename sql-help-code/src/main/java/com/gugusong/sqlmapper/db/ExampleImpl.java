@@ -224,10 +224,12 @@ public class ExampleImpl implements Example {
 	public String toSql(BeanWrapper entityWrapper, boolean hasOrder) {
 		StringBuilder sb = new StringBuilder();
 		ConditionFragment sqlString = this.sqlFragment;
-		sb.append(sqlString.toSql(entityWrapper));
-		while (sqlString.getNextFragment() != null) {
-			sqlString = sqlString.getNextFragment();
+		if (sqlString.getNextFragment() != null) {
 			sb.append(sqlString.toSql(entityWrapper));
+			while (sqlString.getNextFragment() != null) {
+				sqlString = sqlString.getNextFragment();
+				sb.append(sqlString.toSql(entityWrapper));
+			}
 		}
 		if(orderFragment == null || !hasOrder) {
 			return sb.toString();

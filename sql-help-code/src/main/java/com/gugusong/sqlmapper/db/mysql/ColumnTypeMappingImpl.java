@@ -37,7 +37,7 @@ public class ColumnTypeMappingImpl implements ColumnTypeMapping {
 	private String mapping(Class fieldClazz, String fieldName) {
 		if(String.class == fieldClazz) {
 			return STRING_TYPE;
-		}else if(Date.class == fieldClazz) {
+		}else if(Date.class == fieldClazz || java.sql.Date.class == fieldClazz) {
 			return DATE_TYPE;
 		}else if(Integer.class == fieldClazz) {
 			return INT_TYPE;

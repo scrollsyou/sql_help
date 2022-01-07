@@ -259,7 +259,7 @@ public class BeanWrapper {
 	}
 	/**
 	 * vo 类进行包装
-	 * @param poClazz
+	 * @param voClazz
 	 * @param config
 	 * @throws Exception
 	 */

@@ -221,7 +221,8 @@ public class ExampleImpl implements Example {
 	 * @param hasOrder
 	 * @return
 	 */
-	public String toSql(BeanWrapper entityWrapper, boolean hasOrder) {
+	@Override
+    public String toSql(BeanWrapper entityWrapper, boolean hasOrder) {
 		StringBuilder sb = new StringBuilder();
 		ConditionFragment sqlString = this.sqlFragment;
 		if (sqlString.getNextFragment() != null) {
@@ -245,10 +246,12 @@ public class ExampleImpl implements Example {
 		return sb.toString();
 	}
 
+	@Override
 	public String toSql(BeanWrapper entityWrapper) {
 		return toSql(entityWrapper, true);
 	}
 
+	@Override
 	public String toOrderSql(BeanWrapper entityWrapper) {
 		if(this.orderFragment == null) {
 			return "";
@@ -268,6 +271,7 @@ public class ExampleImpl implements Example {
 	 * 获取所有值
 	 * @return
 	 */
+	@Override
 	public List<Object> getValues() {
 		List<Object> values = new LinkedList<Object>();
 		ConditionFragment sqlString = this.sqlFragment;

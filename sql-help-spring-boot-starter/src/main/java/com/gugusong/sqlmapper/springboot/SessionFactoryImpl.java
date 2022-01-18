@@ -37,16 +37,16 @@ public class SessionFactoryImpl implements SessionFactory {
 	@Override
 	public Session openSession() throws SQLException {
 		return new SessionImpl(new ConnectionHolper() {
-			private Connection targerConn;
+			private Connection targetConn;
 			@Override
 			public Connection getTargetConnection() {
-				targerConn = DataSourceUtils.getConnection(dataSource);
-				return targerConn;
+				targetConn = DataSourceUtils.getConnection(dataSource);
+				return targetConn;
 			}
 
 			@Override
 			public void releaseConnection() {
-				DataSourceUtils.releaseConnection(targerConn, dataSource);
+				DataSourceUtils.releaseConnection(targetConn, dataSource);
 			}
 		}, sqlHelp, config);
 	}

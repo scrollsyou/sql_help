@@ -29,7 +29,6 @@ public class MysqlSqlHelp implements ISqlHelp{
 	private static final String SQL_UPDATE_METHOD = "getSqlToUpdate";
 	private static final String SQL_INSERT_METHOD = "getSqlToInsert";
 	private static final String SQL_DELETE_METHOD = "getSqlToDelete";
-	private static final String SQL_DELETE_BY_ID_METHOD = "getSqlToDeleteById";
 	private static final String SQL_CREATE_METHOD = "getSqlToCreateTable";
 
 	/**
@@ -180,118 +179,6 @@ public class MysqlSqlHelp implements ISqlHelp{
 	}
 
 	@Override
-	public String getSqlToSelectById(BeanWrapper poClazz, boolean hasFormat) throws Exception {
-		String sql = poClazz.getSql(SQL_SELECT_BY_ID_METHOD);
-		if(sql != null) {
-			return sql;
-		}
-		StringBuilder sqlSb = new StringBuilder();
-		if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-			sqlSb.append(SELECT);
-			sqlSb.append(SPLIT);
-			sqlSb.append(Joiner.on(COMMA + SPLIT).join(poClazz.getColumns().stream().map(c -> c.getName()).toArray()));
-			sqlSb.append(SPLIT);
-			sqlSb.append(FROM);
-			sqlSb.append(SPLIT);
-			sqlSb.append(poClazz.getTableName());
-			sqlSb.append(SPLIT);
-			sqlSb.append(WHERE);
-			sqlSb.append(SPLIT);
-			sqlSb.append(poClazz.getIdColumn().getName());
-			sqlSb.append(SPLIT);
-			sqlSb.append(EQUALS);
-			sqlSb.append(SPLIT);
-			sqlSb.append(PARAM_TOKEN);
-		}else if(poClazz.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-			sqlSb.append(SELECT);
-			sqlSb.append(SPLIT);
-			// TODO 后期更改为VO中指定字段进行查询
-			sqlSb.append(poClazz.getTableAliasName() + POINT);
-			sqlSb.append(Joiner.on(COMMA + poClazz.getTableAliasName() + POINT).join(poClazz.getMainWrapper().getColumns().stream().map(c -> {
-				StringBuilder selectSb = new StringBuilder();
-				selectSb.append(c.getName()).append(SPLIT).append(poClazz.getTableAliasName()).append("_").append(c.getName());
-				return  selectSb.toString();
-				}).toArray()));
-			for (Entry<String, BeanJoin> entry : poClazz.getJoinBeans().entrySet()) {
-				String joinTableAlias = entry.getKey();
-				BeanJoin beanJoin = entry.getValue();
-				BeanWrapper joinBeanWrapper = beanJoin.getJoinBeanWrapper();
-				sqlSb.append(COMMA + joinTableAlias + POINT);
-				sqlSb.append(Joiner.on(COMMA + joinTableAlias + POINT).join(joinBeanWrapper.getColumns().stream().map(c -> {
-					StringBuilder selectSb = new StringBuilder();
-					selectSb.append(c.getName()).append(SPLIT).append(joinTableAlias).append("_").append(c.getName());
-					return  selectSb.toString();
-				}).toArray()));
-			}
-			if(poClazz.getFuncColumns() != null && poClazz.getFuncColumns().size() > 0) {
-				sqlSb.append(COMMA);
-				sqlSb.append(Joiner.on(COMMA).join(poClazz.getFuncColumns().stream().map(c -> {
-					StringBuilder selectSb = new StringBuilder();
-					selectSb.append(c.getFunction()).append(SPLIT).append(c.getAliasName());
-					return  selectSb.toString();
-				}).toArray()));
-			}
-			sqlSb.append(SPLIT);
-			sqlSb.append(FROM);
-			sqlSb.append(SPLIT);
-			sqlSb.append(poClazz.getTableName());
-			sqlSb.append(SPLIT);
-			sqlSb.append(poClazz.getTableAliasName());
-			for (Entry<String, BeanJoin> entry : poClazz.getJoinBeans().entrySet()) {
-				sqlSb.append(SPLIT);
-				String joinTableAlias = entry.getKey();
-				BeanJoin beanJoin = entry.getValue();
-				BeanWrapper joinBeanWrapper = beanJoin.getJoinBeanWrapper();
-				sqlSb.append(beanJoin.getToken());
-				sqlSb.append(SPLIT);
-				sqlSb.append(joinBeanWrapper.getTableName());
-				sqlSb.append(SPLIT);
-				sqlSb.append(joinTableAlias);
-				sqlSb.append(SPLIT);
-				sqlSb.append(ON + LEFT_PARENTHESIS);
-				sqlSb.append(TextUtil.replaceTemplateParams(beanJoin.getConditions(), paramName -> {
-					@NonNull
-					String columnName = poClazz.getColumnNameByPropertyName(paramName);
-					return columnName;
-				}));
-				sqlSb.append(RIGHT_PARENTHESIS);
-				sqlSb.append(SPLIT);
-
-			}
-			sqlSb.append(SPLIT);
-			sqlSb.append(WHERE);
-			sqlSb.append(SPLIT);
-			sqlSb.append(poClazz.getTableAliasName());
-			sqlSb.append(POINT);
-			sqlSb.append(poClazz.getMainWrapper().getIdColumn().getName());
-			sqlSb.append(SPLIT);
-			sqlSb.append(EQUALS);
-			sqlSb.append(SPLIT);
-			sqlSb.append(PARAM_TOKEN);
-			sqlSb.append(SPLIT);
-			if(poClazz.getGroupBys() != null && poClazz.getGroupBys().length > 0) {
-				sqlSb.append(GROUP_BY);
-				sqlSb.append(SPLIT);
-				boolean first = true;
-				for (String propertyName : poClazz.getGroupBys()) {
-					if(!first) {
-						sqlSb.append(COMMA);
-					}
-					sqlSb.append(poClazz.getColumnNameByPropertyName(propertyName));
-					first = false;
-				}
-				sqlSb.append(SPLIT);
-
-			}
-		}else {
-			throw new RuntimeException("该Bean类不支持查询，查询操作只支持VO/PO类!");
-		}
-
-		poClazz.putSql(SQL_SELECT_BY_ID_METHOD, sqlSb.toString());
-		return sqlSb.toString();
-	}
-
-	@Override
 	public String getSqlToUpdate(BeanWrapper poClazz, boolean hasFormat) {
 		String sql = poClazz.getSql(SQL_UPDATE_METHOD);
 		if(sql != null) {
@@ -364,30 +251,6 @@ public class MysqlSqlHelp implements ISqlHelp{
 		sqlSb.append(poClazz.getTableName());
 		sqlSb.append(SPLIT);
 		poClazz.putSql(SQL_DELETE_METHOD, sqlSb.toString());
-		return sqlSb.toString();
-	}
-
-	@Override
-	public String getSqlToDeleteById(BeanWrapper poClazz, boolean hasFormat) {
-		String sql = poClazz.getSql(SQL_DELETE_BY_ID_METHOD);
-		if(sql != null) {
-			return sql;
-		}
-		StringBuilder sqlSb = new StringBuilder();
-		sqlSb.append(DELETE);
-		sqlSb.append(SPLIT);
-		sqlSb.append(FROM);
-		sqlSb.append(SPLIT);
-		sqlSb.append(poClazz.getTableName());
-		sqlSb.append(SPLIT);
-		sqlSb.append(WHERE);
-		sqlSb.append(SPLIT);
-		sqlSb.append(poClazz.getIdColumn().getName());
-		sqlSb.append(SPLIT);
-		sqlSb.append(EQUALS);
-		sqlSb.append(SPLIT);
-		sqlSb.append(PARAM_TOKEN);
-		poClazz.putSql(SQL_DELETE_BY_ID_METHOD, sqlSb.toString());
 		return sqlSb.toString();
 	}
 

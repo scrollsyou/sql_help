@@ -43,6 +43,10 @@ public class ExampleImpl implements Example {
 		return new ExampleImpl();
 	}
 
+	public static Example newInstanceAnd() {
+		return new ExampleImpl(new ConditionFragment("and"), null);
+	}
+
 	@Override
 	public Example or() {
 		currentFragment = currentFragment.createNextToken("or");

@@ -2,6 +2,8 @@ package com.gugusong.sqlmapper.config;
 
 import javax.sql.DataSource;
 
+import com.gugusong.sqlmapper.common.handle.DefaultJdbcExecuteHandleImpl;
+import com.gugusong.sqlmapper.common.handle.JdbcExecuteHandle;
 import com.gugusong.sqlmapper.common.util.SnowFlake;
 import com.gugusong.sqlmapper.db.ColumnTypeMapping;
 import com.gugusong.sqlmapper.db.mysql.ColumnTypeMappingImpl;
@@ -66,5 +68,12 @@ public class GlobalConfig {
 	@Getter
 	@Setter
 	private ColumnTypeMapping columnTypeMapping = new ColumnTypeMappingImpl();
+
+	/**
+	 * 对数据库操作进行统一处理
+	 */
+	@Getter
+	@Setter
+	private JdbcExecuteHandle executeHandle = new DefaultJdbcExecuteHandleImpl();
 
 }

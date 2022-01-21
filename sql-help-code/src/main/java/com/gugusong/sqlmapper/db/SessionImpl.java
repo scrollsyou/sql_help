@@ -58,9 +58,11 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception
 	 */
-	@SneakyThrows
+	@Override
+    @SneakyThrows
 	public <T> T save(T entity) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		config.getExecuteHandle().insertHandle(entityWrapper, entity);
 		String sqlToInsert = sqlHelp.getSqlToInsert(entityWrapper, false);
 		if(log.isDebugEnabled()) {
 			log.debug("Preparing: {}", sqlToInsert);
@@ -155,6 +157,7 @@ public class SessionImpl implements Session {
 	 * @param clazz
 	 * @return
 	 */
+	@Override
 	@SneakyThrows
 	public <T> List<T> save(@NonNull List<T> entitys, Class<T> clazz) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(clazz, config);
@@ -173,6 +176,7 @@ public class SessionImpl implements Session {
 			}
 			List<BeanColumn> columns = entityWrapper.getColumns();
 			for (T entity : entitys) {
+				config.getExecuteHandle().insertHandle(entityWrapper, entity);
 				if(entityWrapper.getIdColumn() != null) {
 					if (entityWrapper.getIdColumn().getIdstrategy() == GenerationType.UUID) {
 						entityWrapper.getIdColumn().setVal(entity, UUIDUtil.getUUID());
@@ -265,10 +269,14 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception
 	 */
+	@Override
 	@SneakyThrows
 	public <T> int update(T entity) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		Example example = ExampleImpl.newInstanceAnd();
 		String sqlToUpdate = sqlHelp.getSqlToUpdate(entityWrapper, false);
+		config.getExecuteHandle().updateHandle(example, entityWrapper, entity);
+		sqlToUpdate += example.toSql(entityWrapper, false);
 		if(log.isDebugEnabled()) {
 			log.debug("Preparing: {}", sqlToUpdate);
 			log.debug("parameters: {}", entity);
@@ -317,8 +325,14 @@ public class SessionImpl implements Session {
 				i++;
 			}
 			preSta.setObject(i, entityWrapper.getIdColumn().getVal(entity));
+			i++;
 			if(entityWrapper.isVersion()) {
-				preSta.setObject(i+1, entityWrapper.getVersionColumn().getVal(entity));
+				preSta.setObject(i, entityWrapper.getVersionColumn().getVal(entity));
+				i++;
+			}
+			for (Object val : example.getValues()){
+				preSta.setObject(i, val);
+				i++;
 			}
 			int result = preSta.executeUpdate();
 			if(log.isDebugEnabled()) {
@@ -338,9 +352,12 @@ public class SessionImpl implements Session {
 	 * @param entity
 	 * @return
 	 */
+	@Override
 	@SneakyThrows
 	public <T> int updateSelective(T entity) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		Example example = ExampleImpl.newInstanceAnd();
+		config.getExecuteHandle().updateHandle(example, entityWrapper, entity);
 		List<Object> values = new ArrayList<Object>();
 		StringBuilder sqlSb = new StringBuilder();
 		sqlSb.append(ISqlHelp.UPDATE);
@@ -402,6 +419,7 @@ public class SessionImpl implements Session {
 		sqlSb.append(ISqlHelp.EQUALS);
 		sqlSb.append(ISqlHelp.SPLIT);
 		sqlSb.append(ISqlHelp.PARAM_TOKEN);
+		values.add(entityWrapper.getIdColumn().getVal(entity));
 		if(entityWrapper.isVersion()) {
 			sqlSb.append(ISqlHelp.AND);
 			sqlSb.append(ISqlHelp.SPLIT);
@@ -412,9 +430,11 @@ public class SessionImpl implements Session {
 			sqlSb.append(ISqlHelp.PARAM_TOKEN);
 			values.add(entityWrapper.getVersionColumn().getVal(entity));
 		}
+		sqlSb.append(example.toSql(entityWrapper, false));
+		values.addAll(example.getValues());
 		String sqlToUpdate = sqlSb.toString();
 		try {
-			values.add(entityWrapper.getIdColumn().getVal(entity));
+
 			if(log.isDebugEnabled()) {
 				log.debug("Preparing: {}", sqlToUpdate);
 				log.debug("parameters: {}", values);
@@ -441,9 +461,11 @@ public class SessionImpl implements Session {
 	/**
 	 * 按条件更新
 	 */
+	@Override
 	@SneakyThrows
 	public <T> int updateByExample(T entity, Example example) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
+		config.getExecuteHandle().updateHandle(example, entityWrapper, entity);
 		List<Object> values = new ArrayList<Object>();
 		StringBuilder sqlSb = new StringBuilder();
 		sqlSb.append(ISqlHelp.UPDATE);
@@ -501,33 +523,22 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception
 	 */
+	@Override
 	@SneakyThrows
 	public <T> int delete(T entity) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(entity.getClass(), config);
-		String sqlToDeleteById = sqlHelp.getSqlToDeleteById(entityWrapper, false);
-		if(log.isDebugEnabled()) {
-			log.debug("Preparing: {}", sqlToDeleteById);
-			log.debug("parameters: {}", entity);
-		}
-		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToDeleteById);
-			preSta.setObject(1, entityWrapper.getIdColumn().getVal(entity));
-			int result = preSta.executeUpdate();
-			if(log.isDebugEnabled()) {
-				log.debug("result: {}", result);
-			}
-			return result;
-		} catch (SQLException e) {
-			this.close();
-			throw e;
-		}finally {
-			this.close();
-		}
+		return delete(ExampleImpl.newInstance().equals(entityWrapper.getIdColumn().getFieldName(), entityWrapper.getIdColumn().getVal(entity)), entityWrapper);
 	}
 
+	@Override
 	@SneakyThrows
 	public <E> int delete(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
+		return delete(example, entityWrapper);
+	}
+
+	private int delete(Example example, BeanWrapper entityWrapper) throws SQLException {
+		config.getExecuteHandle().deleteHandle(example, entityWrapper);
 		String sqlToDelete = sqlHelp.getSqlToDelete(entityWrapper, false);
 		sqlToDelete += example.toSql(entityWrapper);
 		List<Object> values = example.getValues();
@@ -561,9 +572,11 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception
 	 */
+	@Override
 	@SneakyThrows
 	public <E> List<E> findAll(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
+		config.getExecuteHandle().selectHandle(example, entityWrapper);
 		StringBuilder sqlToSelect = new StringBuilder(sqlHelp.getSqlToSelect(entityWrapper, false));
 		List<Object> values = example.getValues();
 		if(example.isPage()) {
@@ -757,9 +770,15 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception
 	 */
+	@Override
 	@SneakyThrows
 	public <E> E findOne(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
+		return findOne(example, E, entityWrapper);
+	}
+
+	private <E> E findOne(Example example, Class<E> E, BeanWrapper entityWrapper) throws Exception {
+		config.getExecuteHandle().selectHandle(example, entityWrapper);
 		StringBuilder sqlToSelect = new StringBuilder(sqlHelp.getSqlToSelect(entityWrapper, false));
 		sqlToSelect.append(example.toSql(entityWrapper));
 		if(example.isForUpdate()) {
@@ -904,100 +923,35 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception
 	 */
+	@Override
 	@SneakyThrows
 	public <E> E findOneById(Class<E> e, Object id) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
-		String sqlToSelectById = sqlHelp.getSqlToSelectById(entityWrapper, false);
-		if(log.isDebugEnabled()) {
-			log.debug("Preparing: {}", sqlToSelectById);
-			log.debug("parameters: {}", id);
+		Example example = ExampleImpl.newInstance();
+		if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+			example.equals(entityWrapper.getIdColumn().getFieldName(), id);
+		}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+			example.equals(entityWrapper.getTableAliasName() + "." + entityWrapper.getMainWrapper().getIdColumn().getFieldName(), id);
+		}else {
+			throw new RuntimeException("查询对象非PO/VO对象!");
 		}
-		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelectById, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-			preSta.setObject(1, id);
-			@Cleanup ResultSet rs = preSta.executeQuery();
-			if(log.isDebugEnabled()) {
-				//移到最后一行
-				rs.last();
-				//通过getRow方法得到当前行号，也就是记录数
-				log.debug("result: {}", rs.getRow());
-				//如果还需要使用结果集，把指针再移到初始化的位置
-				rs.beforeFirst();
-			}
-			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-				if (rs.next()) {
-					E entity = e.newInstance();
-					for (BeanColumn column : entityWrapper.getColumns()) {
-						column.setVal(entity, rs.getObject(column.getName()));
-					}
-					return entity;
-				}
-			}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-				E entity = e.newInstance();
-				E result = null;
-				while (rs.next()) {
-					result = entity;
-					setValues(rs, entity, entityWrapper);
-				}
-				return result;
-			}else {
-				throw new RuntimeException("查询对象非PO/VO对象!");
-			}
-		} catch (SQLException sqlE) {
-			this.close();
-			throw sqlE;
-		}finally {
-			this.close();
-		}
-		return null;
+		return findOne(example, e, entityWrapper);
 	}
 
+	@Override
 	@SneakyThrows
 	public <E> E findOneByIdForUpdate(Class<E> e, Object id) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(e, config);
-		String sqlToSelectById = sqlHelp.getSqlToSelectById(entityWrapper, false) + " for update";
-		if(log.isDebugEnabled()) {
-			log.debug("Preparing: {}", sqlToSelectById);
-			log.debug("parameters: {}", id);
+		Example example = ExampleImpl.newInstance();
+		example.forUpdate();
+		if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
+			example.equals(entityWrapper.getIdColumn().getFieldName(), id);
+		}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
+			example.equals(entityWrapper.getTableAliasName() + "." + entityWrapper.getMainWrapper().getIdColumn().getFieldName(), id);
+		}else {
+			throw new RuntimeException("查询对象非PO/VO对象!");
 		}
-		try {
-			@Cleanup PreparedStatement preSta = this.connHolper.getTargetConnection().prepareStatement(sqlToSelectById, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-			preSta.setObject(1, id);
-			@Cleanup ResultSet rs = preSta.executeQuery();
-			if(log.isDebugEnabled()) {
-				//移到最后一行
-				rs.last();
-				//通过getRow方法得到当前行号，也就是记录数
-				log.debug("result: {}", rs.getRow());
-				//如果还需要使用结果集，把指针再移到初始化的位置
-				rs.beforeFirst();
-			}
-			if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_PO) {
-				if (rs.next()) {
-					E entity = e.newInstance();
-					for (BeanColumn column : entityWrapper.getColumns()) {
-						column.setVal(entity, rs.getObject(column.getName()));
-					}
-					return entity;
-				}
-			}else if(entityWrapper.getBeanType() == BeanWrapper.BEAN_TYPE_VO) {
-				E entity = e.newInstance();
-				E result = null;
-				while (rs.next()) {
-					result = entity;
-					setValues(rs, entity, entityWrapper);
-				}
-				return result;
-			}else {
-				throw new RuntimeException("查询对象非PO/VO对象!");
-			}
-		} catch (SQLException sqlE) {
-			this.close();
-			throw sqlE;
-		}finally {
-			this.close();
-		}
-		return null;
+		return findOne(example, e, entityWrapper);
 	}
 
 	/**
@@ -1008,9 +962,11 @@ public class SessionImpl implements Session {
 	 * @return
 	 * @throws Exception
 	 */
+	@Override
 	@SneakyThrows
 	public <E> int findCount(Example example, Class<E> E) {
 		BeanWrapper entityWrapper = BeanWrapper.instrance(E, config);
+		config.getExecuteHandle().selectHandle(example, entityWrapper);
 		String sqlToSelect = sqlHelp.getSqlToSelectCount(entityWrapper, false);
 		sqlToSelect = TextUtil.replaceTemplateParams(sqlToSelect, param -> example.toSql(entityWrapper, false));
 		List<Object> values = example.getValues();
@@ -1044,18 +1000,22 @@ public class SessionImpl implements Session {
 		return 0;
 	}
 
+	@Override
 	@SneakyThrows
 	public void commit() {
 		this.connHolper.getTargetConnection().commit();
 	}
+	@Override
 	@SneakyThrows
 	public void close() {
 		this.connHolper.releaseConnection();
 	}
+	@Override
 	@SneakyThrows
 	public void setAutoCommit(boolean autoCommit) {
 		this.connHolper.getTargetConnection().setAutoCommit(autoCommit);
 	}
+	@Override
 	@SneakyThrows
 	public void rollback() {
 		this.connHolper.getTargetConnection().rollback();

@@ -3,7 +3,7 @@
   <parent>
     <groupId>io.github.scrollsyou</groupId>
     <artifactId>example</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
   </parent>
   <artifactId>example-spring-boot-starter</artifactId>
   <name>example-spring-boot-starter</name>

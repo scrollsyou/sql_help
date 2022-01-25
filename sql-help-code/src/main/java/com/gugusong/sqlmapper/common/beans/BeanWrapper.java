@@ -347,7 +347,7 @@ public class BeanWrapper {
 				String[] nameSplit = originalName.split("\\.");
 				BeanColumn beanColumn = null;
 				if(nameSplit.length == 1 || nameSplit[0].equals(this.tableAliasName)) {
-					BeanColumn byPropertyName = mainWrapper.getByPropertyName(nameSplit[0]);
+					BeanColumn byPropertyName = mainWrapper.getByPropertyName(nameSplit[nameSplit.length - 1]);
 					beanColumn = new BeanColumn(byPropertyName.getName(),
 							physicalField.getName(), physicalField, propertyDesc.getReadMethod(), propertyDesc.getWriteMethod(),
 							this.tableAliasName, this.tableAliasName + "_" + byPropertyName.getAliasName(), null, null);
